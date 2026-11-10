@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Curl variations: standing curl vs preacher curl</title>
+<style>
+  /* same look as arm_muscle_model.html and forearm_beam.html */
+  :root{--bg:#f3f6fb;--fg:#1d2433;--mut:#5b6475;--card:#ffffff;--bd:#d9dfe9;--red:#c0392b;--blue:#1f5fa8;--green:#15803d;--bone:#ecdcb8;--bone2:#a08a5c;
+        --st:#c0392b;--pr:#1f5fa8;color-scheme:light}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,Segoe UI,Roboto,sans-serif}
+  main{max-width:1420px;margin:0 auto;padding:12px 16px 30px;display:flex;flex-direction:column;gap:10px}
+  h1{font-size:20px;margin:0}
+  h2{font-size:16px;margin:0 0 6px}
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px 12px}
+  .mut{color:var(--mut);font-size:13px}
+  .top{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:14px;align-items:end;padding:10px 14px}
+  .controls label{display:flex;flex-direction:column;font-size:13px;color:var(--mut)}
+  .controls output{color:var(--fg);font-weight:600}
+  input[type=range]{width:100%;accent-color:var(--blue);margin:2px 0 0}
+  button{font:inherit;font-size:13.5px;padding:7px 16px;border-radius:999px;border:1px solid var(--blue);background:var(--blue);color:#fff;cursor:pointer;white-space:nowrap}
+  button.ghost{background:#fff;color:var(--blue)}
+  /* first screen: two arm diagrams + four graphs */
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:12px;min-height:calc(100vh - 170px)}
+  .figs{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:10px}
+  .twin{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .fig{display:flex;flex-direction:column;min-height:0}
+  .fig h2 .dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:0}
+  .fig svg{width:100%;height:auto;display:block;background:#fbfcfe;border-radius:8px}
+  .kv{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:8px}
+  .kv div{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:4px 9px;font-size:12px;color:var(--mut)}
+  .kv b{display:block;color:var(--fg);font-size:15px;font-variant-numeric:tabular-nums}
+  .peak{font-size:13px}
+  .peak b{font-variant-numeric:tabular-nums}
+  .graphs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:10px}
+  .g{padding:6px 8px}
+  .g svg{width:100%;height:100%;min-height:230px;display:block}
+  .g.key{border:2px solid #b9c7de}
+  text:not([fill]){fill:var(--fg)}text{font-size:11px}.t2{fill:var(--mut)}
+  .ax{stroke:var(--mut)}.gr{stroke:var(--bd)}
+  .lab{paint-order:stroke;stroke:#fbfcfe;stroke-width:3px;stroke-linejoin:round}
+  /* explanation sections */
+  .txt{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .txt p,.txt li{font-size:14px;margin:0 0 7px}
+  .txt ul,.txt ol{padding-left:18px;margin:0}
+  .eqs p{font-family:"Cambria Math",Cambria,"Times New Roman",serif;font-size:15.5px;margin:4px 0}
+  .claim{border-left:5px solid var(--green);background:#f0faf3}
+  .ref{font-size:13px;color:var(--mut)}
+  .ref a{color:var(--blue)}
+  .src{display:block;margin-top:6px;font-size:12.5px;background:#fff7e0;border-radius:6px;padding:3px 8px;color:#7a5b00}
+  @media(max-width:1000px){.layout,.txt{grid-template-columns:1fr}.controls{grid-template-columns:1fr 1fr}.layout{min-height:0}}
+</style>
+</head>
+<body>
+<main>
+ <div class="top"><h1>Curl variations: standing curl vs preacher curl</h1>
+  <span class="mut">Same arm, same dumbbell, two body positions. Where in the movement is the biceps stressed the most, and how stretched is it at that moment?</span></div>
+
+ <div class="card controls">
+  <label>Elbow flexion angle φ: <output id="o_phi"></output><input type="range" id="phi" min="0" max="140" step="1" value="60"></label>
+  <label>Dumbbell mass: <output id="o_m"></output><input type="range" id="mass" min="1" max="20" step="0.5" value="8"></label>
+  <label>Preacher pad angle α (upper arm from vertical): <output id="o_a"></output><input type="range" id="alpha" min="20" max="60" step="1" value="45"></label>
+  <div style="display:flex;gap:8px"><button id="play">▶ Play a rep</button><button class="ghost" id="peakBtn">Jump to peaks</button></div>
+ </div>
+
+ <div class="layout">
+  <div class="figs">
+   <div class="twin">
+    <div class="card fig"><h2><span class="dot" style="background:var(--st)"></span>Standing biceps curl</h2>
+     <svg id="figS" viewBox="0 0 340 330" role="img" aria-label="Standing curl: upper arm vertical, forearm and dumbbell at the chosen elbow angle"></svg>
+     <div class="kv" id="kvS"></div></div>
+    <div class="card fig"><h2><span class="dot" style="background:var(--pr)"></span>Preacher curl</h2>
+     <svg id="figP" viewBox="0 0 340 330" role="img" aria-label="Preacher curl: upper arm resting on an inclined pad, forearm and dumbbell at the chosen elbow angle"></svg>
+     <div class="kv" id="kvP"></div></div>
+   </div>
+   <div class="card peak" id="peaks"></div>
+  </div>
+  <div class="graphs">
+   <div class="card g"><svg id="g1"></svg></div>
+   <div class="card g"><svg id="g2"></svg></div>
+   <div class="card g"><svg id="g3"></svg></div>
+   <div class="card g key"><svg id="g4"></svg></div>
+  </div>
+ </div>
+
+ <div class="txt">
+  <div class="card">
+   <h2>What the page shows</h2>
+   <p>Both exercises use the same arm and the same dumbbell. The only difference is where the upper arm points, and therefore where gravity pulls hardest. In a <b>standing curl</b> the upper arm hangs vertically. The dumbbell's lever arm about the elbow is largest when the forearm is horizontal, at φ = 90°, which is mid-range for the muscle.</p>
+   <p>In a <b>preacher curl</b> the upper arm rests on a pad tilted α forward. The forearm is horizontal at φ = 90° − α, much nearer full extension. There the biceps is long: <b>stretched</b>. Near the top, the forearm passes vertical and the load almost vanishes.</p>
+   <p>The biceps' own lever (its moment arm) also changes through the movement. It is shortest when the arm is straight, so a load that still pulls hard near full extension, as in the preacher curl, demands a very large muscle force there. This is why the preacher curl's peak stress sits at the bottom of the rep, while the standing curl's peak sits in mid-range.</p>
+   <p>The key graph (bottom right) plots stress against muscle strain. Each exercise reaches its peak stress at a different stretch of the same muscle.</p>
+  </div>
+  <div class="card eqs">
+   <h2>Model and equations</h2>
+   <p class="mut" style="font-family:inherit;font-size:13px">Same static setup as the <i>Elbow System</i> page (rigid segments, quasi-static, no acceleration, all elbow-flexor force carried by the biceps), with one refinement. A straight shoulder-to-insertion line gives a moment arm that falls to zero at full extension and in deep flexion. The real biceps tendon wraps the joint, so its moment arm is smallest with the arm straight, peaks in mid-range and falls again in deep flexion (Murray et al., 1995). We use a smooth curve of that shape.</p>
+   <p>d(φ) = d<sub>0</sub> + (d<sub>max</sub> − d<sub>0</sub>) · sin(πφ / 200°) &nbsp;&nbsp; moment arm</p>
+   <p>L(φ) = L<sub>90</sub> − ∫<sub>90°</sub><sup>φ</sup> d(φ′) dφ′ &nbsp;&nbsp; muscle length (tendon excursion: dL = −d dφ)</p>
+   <p>τ = W L<sub>f</sub> · sin(φ + α)<sub>+</sub> &nbsp;&nbsp; load torque (α = 0 standing)</p>
+   <p>F = τ / d &nbsp;&nbsp; muscle force</p>
+   <p>A = A<sub>0</sub> L<sub>90</sub> / L &nbsp;&nbsp; area at constant volume</p>
+   <p>σ = F / A, &nbsp; ε = (L − L<sub>90</sub>)/L<sub>90</sub></p>
+   <p class="mut" style="font-family:inherit;font-size:12.5px">φ = elbow flexion (0° = straight arm, as in the studies). ( )<sub>+</sub>: once the forearm passes vertical the load no longer pulls the elbow open, so the biceps needs no force. d<sub>0</sub> = 1.5 cm, d<sub>max</sub> = 4.5 cm at φ = 100°, L<sub>90</sub> = 30 cm, L<sub>f</sub> = 30 cm, A<sub>0</sub> = 4.6 cm²: illustrative values to check against the literature. Absolute stresses are high because the brachialis and brachioradialis, which share the load in reality, are ignored. The <i>shape</i> of each curve, and where it peaks, is what matters here.</p>
+  </div>
+  <div class="card claim">
+   <h2>Why peaking at different stretch is a good thing</h2>
+   <p><b>Claim:</b> different curl variations load the biceps hardest at different muscle lengths. Using more than one variation, and especially including one that loads the muscle when it is stretched, gives a more complete stimulus.</p>
+   <ol>
+    <li><b>Pedrosa et al. (2023).</b> Nineteen untrained women did the <i>seated dumbbell preacher curl</i> for 8 weeks, one arm in the initial range (0–68°, muscle long) and the other in the final range (68–135°, muscle short). The long-length arm gained more biceps cross-sectional area at the distal site (70% of length; similar at 50%) and more 1RM strength.</li>
+    <li><b>Sato et al. (2021).</b> Training the elbow flexors at extended angles (0–50°) increased muscle thickness about 8.9%, versus about 3.4% at flexed angles (80–130°). Only the extended group gained significant strength.</li>
+    <li><b>Kassiano et al. (2022)</b>, systematic review. Planned exercise variation, chosen on anatomical and biomechanical grounds, seems to enhance <i>regional</i> hypertrophy and strength; excessive random variation may compromise gains.</li>
+   </ol>
+   <span class="src">Caveats: small samples, mostly untrained participants, and effects that are regional and modest rather than whole-muscle. Later work in trained lifters found smaller differences.</span>
+   <p class="ref" style="margin-top:8px">
+    Pedrosa GF et al. Training in the initial range of motion promotes greater muscle adaptations than at final in the arm curl. <i>Sports</i> 2023;11(2):39. <a href="https://pubmed.ncbi.nlm.nih.gov/36828324/" target="_blank" rel="noopener">PubMed 36828324</a><br>
+    Sato S et al. Elbow joint angles in elbow flexor unilateral resistance exercise training determine its effects on muscle strength and thickness of trained and non-trained arms. <i>Front Physiol</i> 2021;12:734509. <a href="https://www.frontiersin.org/articles/10.3389/fphys.2021.734509/full" target="_blank" rel="noopener">doi:10.3389/fphys.2021.734509</a><br>
+    Murray WM, Delp SL, Buchanan TS. Variation of muscle moment arms with elbow and forearm position. <i>J Biomech</i> 1995;28(5):513–525. <a href="https://pubmed.ncbi.nlm.nih.gov/7775488/" target="_blank" rel="noopener">PubMed 7775488</a> (moment-arm shape used in the model)<br>
+    Kassiano W et al. Does varying resistance exercises promote superior muscle hypertrophy and strength gains? A systematic review. <i>J Strength Cond Res</i> 2022;36(6):1753–1762. <a href="https://pubmed.ncbi.nlm.nih.gov/35438660/" target="_blank" rel="noopener">PubMed 35438660</a></p>
+  </div>
+ </div>
+</main>
+
+<script>
+// ================= CONFIGURATION (same arm as arm_muscle_model.html) =================
+// c = insertion offset: the biceps tendon inserts on the radial tuberosity, slightly in front of the forearm's long axis,
+// so its moment arm stays finite (≈1.3 cm) at full extension instead of falling to zero.
+const CFG={Lu:0.30,a:0.04,c:0.015,Lf:0.30,A0:4.6e-4,g:9.81,phiMin:0,phiMax:140};
+const state={phi:60,mass:8,alpha:45};
+const $=id=>document.getElementById(id),RAD=Math.PI/180;
+// ================= PHYSICS =================
+// phi = elbow flexion angle (0 = straight arm, as in the studies); theta = 180 - phi = angle between upper arm and forearm.
+// alpha = tilt of the upper arm from vertical (0 for the standing curl). Geometry in the upper-arm frame: elbow O at the origin,
+// shoulder S = (0, Lu), forearm direction u = (sin θ, cos θ), front (flexor-side) normal n = (−cos θ, sin θ).
+function geom(th){const {Lu,a,c}=CFG,u=[Math.sin(th),Math.cos(th)],n=[-Math.cos(th),Math.sin(th)];
+ const B=[a*u[0]+c*n[0],a*u[1]+c*n[1]],v=[-B[0],Lu-B[1]],L=Math.hypot(v[0],v[1]),e=[v[0]/L,v[1]/L];
+ return{B,L,e,d:Math.abs(B[0]*e[1]-B[1]*e[0])}}                 // d = |OB × e|: perpendicular distance from the elbow to the muscle line
+// geom() is only used to DRAW the arm. The numbers use a measured-shape moment arm (the tendon wraps the joint):
+// d(φ) = d0 + (dmax − d0)·sin(πφ/200°): smallest with the arm straight, peak at φ = 100°, falling again in deep flexion.
+const D0=0.015,DMAX=0.045,L0=0.30;                              // m; L0 = muscle length at φ = 90°
+const dArm=phi=>D0+(DMAX-D0)*Math.sin(Math.PI*phi/200);
+// tendon excursion: dL = −d dφ  →  L(φ) = L0 − ∫ from 90° to φ of d (closed form of the integral of dArm)
+const Lmus=phi=>L0-(D0*(phi-90)*RAD+(DMAX-D0)*(10/9)*(Math.cos(Math.PI*90/200)-Math.cos(Math.PI*phi/200)));
+function model(phi,alpha,mass){
+ const {Lf,A0,g}=CFG,W=mass*g,d=dArm(phi),L=Lmus(phi);
+ const tau=W*Lf*Math.max(0,Math.sin((phi+alpha)*RAD));          // load torque; zero once the forearm passes vertical
+ const F=tau/d;                                                 // muscle force
+ const A=A0*L0/L;                                               // current area (constant volume)
+ return{W,L,d,tau,F,A,sig:F/A,eps:(L-L0)/L0}}
+const range=(a,b,n)=>Array.from({length:n+1},(_,i)=>a+(b-a)*i/n);
+function curves(){const ph=range(CFG.phiMin,CFG.phiMax,290);
+ const S=ph.map(p=>model(p,0,state.mass)),P=ph.map(p=>model(p,state.alpha,state.mass));
+ const pk=arr=>arr.reduce((b,q,i)=>q.sig>arr[b].sig?i:b,0);return{ph,S,P,iS:pk(S),iP:pk(P)}}
+// ================= ARM DIAGRAMS =================
+const SC=430;   // px per metre
+function arrow(x1,y1,x2,y2,col,w=3){const dx=x2-x1,dy=y2-y1,l=Math.hypot(dx,dy);if(l<4)return'';const ux=dx/l,uy=dy/l,hd=9;
+ return`<path d="M${x1},${y1}L${x2-ux*hd},${y2-uy*hd}" stroke="${col}" stroke-width="${w}" fill="none"/><path d="M${x2},${y2}L${x2-ux*hd-uy*5},${y2-uy*hd+ux*5}L${x2-ux*hd+uy*5},${y2-uy*hd-ux*5}Z" fill="${col}"/>`}
+function drawArm(id,alpha,m,isPreacher,refF){
+ const O=isPreacher?[150,150]:[150,165],th=(180-state.phi)*RAD,al=alpha*RAD;
+ const uU=[-Math.sin(al),-Math.cos(al)];                       // elbow → shoulder (screen; up is -y)
+ const fa=th-al,uF=[Math.sin(fa),-Math.cos(fa)];               // elbow → hand
+ const nF=[Math.sin(fa-Math.PI/2),-Math.cos(fa-Math.PI/2)];   // flexor-side normal of the forearm (screen)
+ const S=[O[0]+uU[0]*CFG.Lu*SC,O[1]+uU[1]*CFG.Lu*SC],H=[O[0]+uF[0]*CFG.Lf*SC,O[1]+uF[1]*CFG.Lf*SC],B=[O[0]+(uF[0]*CFG.a+nF[0]*CFG.c)*SC,O[1]+(uF[1]*CFG.a+nF[1]*CFG.c)*SC];
+ let s='';
+ s+=`<path d="M10,318H330" stroke="#c9d2e0" stroke-width="2"/>`;
+ // body / bench
+ if(isPreacher){const n=[uU[1],-uU[0]],off=13;    // pad under the upper arm, on the side away from the forearm
+  const p1=[S[0]+uU[0]*-6+n[0]*off,S[1]+uU[1]*-6+n[1]*off],p2=[O[0]-uU[0]*14+n[0]*off,O[1]-uU[1]*14+n[1]*off];
+  s+=`<path d="M${p1}L${p2}" stroke="#8a6d4b" stroke-width="16" stroke-linecap="round"/><path d="M${(p1[0]+p2[0])/2},${(p1[1]+p2[1])/2+8}V318" stroke="#9aa5b8" stroke-width="5"/><path d="M${(p1[0]+p2[0])/2-30},318h60" stroke="#9aa5b8" stroke-width="5"/>`;
+  s+=`<text x="${(p1[0]+p2[0])/2+36}" y="312" class="t2">preacher pad, α = ${alpha}°</text>`}
+ s+=`<circle cx="${S[0]-8}" cy="${S[1]-52}" r="17" fill="#f1e2d6" stroke="#8a7766" stroke-width="2"/><path d="M${S[0]-8},${S[1]-35}L${S[0]-10},${S[1]+(isPreacher?70:150)}" stroke="#8a7766" stroke-width="10" stroke-linecap="round" opacity=".55"/>`;
+ // bones
+ const rod=(p,q)=>`<path d="M${p}L${q}" stroke="var(--bone2)" stroke-width="10" stroke-linecap="round"/><path d="M${p}L${q}" stroke="var(--bone)" stroke-width="6" stroke-linecap="round"/>`;
+ s+=rod(O,S)+rod(O,H);
+ // biceps: spindle from shoulder to insertion, fatter when it carries more force
+ const dx=B[0]-S[0],dy=B[1]-S[1],len=Math.hypot(dx,dy),nx=-dy/len,ny=dx/len,thk=5+9*Math.min(1,m.F/refF);let up=[],dn=[];
+ for(let i=0;i<=20;i++){const t=i/20,w=thk*Math.sin(Math.PI*t)*(1-.3*t),x=S[0]+dx*t,y=S[1]+dy*t;up.push([x+nx*w,y+ny*w]);dn.push([x-nx*w,y-ny*w])}
+ const side=(nx*(H[0]-O[0])+ny*(H[1]-O[1]))>0?1:-1;   // bulge away from the forearm
+ const P=(side>0?dn:up).concat((side>0?up:dn).reverse()).map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join('L');
+ s+=`<path d="M${P}Z" fill="#d9534f" fill-opacity=".85" stroke="#9b2c2c" stroke-width="1.5"/>`;
+ // dumbbell
+ s+=`<circle cx="${H[0]}" cy="${H[1]}" r="11" fill="#374151"/><circle cx="${H[0]}" cy="${H[1]}" r="4" fill="#9ca3af"/>`;
+ // joints
+ s+=`<circle cx="${O[0]}" cy="${O[1]}" r="6" fill="#fff" stroke="#1d2433" stroke-width="2"/><circle cx="${S[0]}" cy="${S[1]}" r="5" fill="#fff" stroke="#1d2433" stroke-width="2"/>`;
+ // forces: weight (fixed scale) and muscle force (scaled to the largest force of the two exercises)
+ const kW=60/(20*CFG.g),kF=70/refF;
+ s+=arrow(H[0],H[1]+12,H[0],H[1]+12+m.W*kW,'var(--green)');
+ s+=`<text x="${H[0]+8}" y="${H[1]+20+m.W*kW/2}" class="lab" fill="var(--green)">W ${m.W.toFixed(0)} N</text>`;
+ if(m.F>1){const e=[(S[0]-B[0])/len,(S[1]-B[1])/len];s+=arrow(B[0],B[1],B[0]+e[0]*m.F*kF,B[1]+e[1]*m.F*kF,'#8b0000',3.2);
+  s+=`<text x="${B[0]+e[0]*m.F*kF+8}" y="${B[1]+e[1]*m.F*kF+4}" class="lab" fill="#8b0000">F ${m.F.toFixed(0)} N</text>`}
+ // lever arm of the load: horizontal distance elbow → hand
+ s+=`<path d="M${O[0]},${O[1]+26}H${H[0]}" stroke="#94a3b8" stroke-dasharray="4 3"/><text x="${(O[0]+H[0])/2}" y="${O[1]+40}" text-anchor="middle" class="t2">load lever ${(Math.abs(H[0]-O[0])/SC*100).toFixed(1)} cm</text>`;
+ s+=`<text x="${O[0]-12}" y="${O[1]+4}" text-anchor="end" class="lab">φ = ${state.phi}°</text>`;
+ $(id).innerHTML=s}
+function kv(id,m){$(id).innerHTML=[['Load torque τ',m.tau.toFixed(1)+' N·m'],['Muscle force F',m.F.toFixed(0)+' N'],['Stress σ',(m.sig/1e6).toFixed(2)+' MPa'],['Muscle strain ε',(m.eps>=0?'+':'')+(m.eps*100).toFixed(1)+'%']]
+ .map(([l,v])=>`<div>${l}<b>${v}</b></div>`).join('')}
+// ================= GRAPHS =================
+function plot(id,title,xs,series,mark,xl,yl,opt={}){
+ const el=$(id),W=el.clientWidth||420,H=el.clientHeight||240,l=56,r=16,t=46,b=42;el.setAttribute('viewBox',`0 0 ${W} ${H}`);
+ const all=series.flatMap(s=>s.y),lo=opt.y0??Math.min(...all),hi=Math.max(...all)*1.1||1,x0=Math.min(...xs),x1=Math.max(...xs);
+ const X=x=>l+(x-x0)/(x1-x0)*(W-l-r),Y=y=>H-b-(y-lo)/(hi-lo)*(H-b-t);
+ let h=`<text x="${l}" y="18" style="font-size:13px;font-weight:700">${title}</text>`;
+ for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4,xv=x0+(x1-x0)*i/4;
+  h+=`<path d="M${l},${Y(v)}H${W-r}" class="gr"/><text x="${l-6}" y="${Y(v)+4}" text-anchor="end" class="t2">${parseFloat(v.toPrecision(3))}</text><text x="${X(xv)}" y="${H-b+16}" text-anchor="middle" class="t2">${parseFloat(xv.toPrecision(3))}</text>`}
+ h+=`<path d="M${l},${t}V${H-b}H${W-r}" class="ax" fill="none"/><text x="${(l+W-r)/2}" y="${H-6}" text-anchor="middle" class="t2">${xl}</text><text transform="translate(13 ${(t+H-b)/2}) rotate(-90)" text-anchor="middle" class="t2">${yl}</text>`;
+ if(opt.zones)opt.zones.forEach(z=>h+=`<rect x="${X(z[0])}" y="${t}" width="${X(z[1])-X(z[0])}" height="${H-b-t}" fill="${z[2]}"/><text x="${(X(z[0])+X(z[1]))/2}" y="${H-b-6}" text-anchor="middle" class="t2" style="font-size:10px">${z[3]}</text>`);
+ series.forEach(s=>{h+=`<polyline fill="none" stroke="${s.c}" stroke-width="2.6" points="${xs.map((x,i)=>X(x).toFixed(1)+','+Y(s.y[i]).toFixed(1)).join(' ')}"/>`;
+  if(s.pk!=null){const px=X(xs[s.pk]),py=Y(s.y[s.pk]);h+=`<path d="M${px},${py}V${H-b}" stroke="${s.c}" stroke-dasharray="3 3"/><circle cx="${px}" cy="${py}" r="5" fill="#fff" stroke="${s.c}" stroke-width="2.5"/>`+(s.pkLab?`<text x="${px+(s.pkSide||1)*7}" y="${py-8}" text-anchor="${(s.pkSide||1)>0?'start':'end'}" class="lab" style="font-weight:700" fill="${s.c}">${s.pkLab}</text>`:'')}});
+ if(mark)mark.forEach(mk=>h+=`<circle cx="${X(mk[0])}" cy="${Y(mk[1])}" r="5.5" fill="${mk[2]}" stroke="#fff" stroke-width="1.8"/>`);
+ h+=`<g style="font-size:11.5px;font-weight:700"><text x="${l}" y="34"><tspan fill="var(--st)">━ standing</tspan><tspan fill="var(--pr)" dx="10">━ preacher</tspan></text></g>`;
+ el.innerHTML=h}
+function drawGraphs(){const C=curves(),ph=C.ph,mS=model(state.phi,0,state.mass),mP=model(state.phi,state.alpha,state.mass);
+ const mk=(fS,fP)=>[[state.phi,fS(mS),'var(--st)'],[state.phi,fP(mP),'var(--pr)']];
+ plot('g1','1. Load torque vs flexion',ph,[{y:C.S.map(q=>q.tau),c:'var(--st)'},{y:C.P.map(q=>q.tau),c:'var(--pr)'}],mk(q=>q.tau,q=>q.tau),'elbow flexion φ (°)   0 = straight arm','τ (N·m)',{y0:0});
+ plot('g2','2. Muscle force vs flexion',ph,[{y:C.S.map(q=>q.F),c:'var(--st)'},{y:C.P.map(q=>q.F),c:'var(--pr)'}],mk(q=>q.F,q=>q.F),'elbow flexion φ (°)','F (N)',{y0:0});
+ plot('g3','3. Muscle stress vs flexion',ph,[{y:C.S.map(q=>q.sig/1e6),c:'var(--st)',pk:C.iS},{y:C.P.map(q=>q.sig/1e6),c:'var(--pr)',pk:C.iP}],mk(q=>q.sig/1e6,q=>q.sig/1e6),'elbow flexion φ (°)','σ (MPa)',{y0:0});
+ // key graph: stress against strain (how stretched the biceps is). Strain falls as phi rises, so plot against eps directly.
+ const eS=C.S.map(q=>q.eps*100);
+ plot('g4','4. Stress vs muscle strain',eS,[
+   {y:C.S.map(q=>q.sig/1e6),c:'var(--st)',pk:C.iS,pkLab:`peak ε = ${(C.S[C.iS].eps*100).toFixed(1)}%`,pkSide:-1},
+   {y:C.P.map(q=>q.sig/1e6),c:'var(--pr)',pk:C.iP,pkLab:`peak ε = ${(C.P[C.iP].eps*100).toFixed(1)}%`,pkSide:-1}],
+  [[mS.eps*100,mS.sig/1e6,'var(--st)'],[mP.eps*100,mP.sig/1e6,'var(--pr)']],'muscle strain ε (%)  ← shortened · stretched →','σ (MPa)',
+  {y0:0,zones:[[Math.min(...eS),0,'rgba(31,95,168,.05)','shortened'],[0,Math.max(...eS),'rgba(192,57,43,.06)','stretched']]});
+ const pS=C.S[C.iS],pP=C.P[C.iP];
+ $('peaks').innerHTML=`<b>Peak stress.</b> Standing curl: <b style="color:var(--st)">${(pS.sig/1e6).toFixed(2)} MPa at φ = ${ph[C.iS].toFixed(0)}°, ε = ${(pS.eps*100).toFixed(1)}%</b>. Preacher curl: <b style="color:var(--pr)">${(pP.sig/1e6).toFixed(2)} MPa at φ = ${ph[C.iP].toFixed(0)}°, ε = ${(pP.eps*100).toFixed(1)}%</b>. The preacher curl stresses the biceps hardest when it is <b>${((pP.eps-pS.eps)*100).toFixed(1)} percentage points more stretched</b>.`;
+ return C}
+// ================= UPDATE LOOP =================
+let lastC=null;
+function update(){
+ $('o_phi').textContent=state.phi+'°  (θ = '+(180-state.phi)+'°)';$('o_m').textContent=state.mass+' kg';$('o_a').textContent=state.alpha+'°';
+ const mS=model(state.phi,0,state.mass),mP=model(state.phi,state.alpha,state.mass);
+ lastC=drawGraphs();const refF=Math.max(lastC.S[lastC.iS].F,lastC.P[lastC.iP].F,1);
+ drawArm('figS',0,mS,false,refF);drawArm('figP',state.alpha,mP,true,refF);kv('kvS',mS);kv('kvP',mP)}
+$('phi').oninput=e=>{stopPlay();state.phi=+e.target.value;update()};
+$('mass').oninput=e=>{state.mass=+e.target.value;update()};
+$('alpha').oninput=e=>{state.alpha=+e.target.value;update()};
+// play one repetition: straight arm → fully curled → back down
+let raf=0;
+function stopPlay(){cancelAnimationFrame(raf);raf=0;$('play').textContent='▶ Play a rep'}
+$('play').onclick=()=>{if(raf){stopPlay();return}$('play').textContent='■ Stop';const t0=performance.now(),T=5000;
+ (function f(now){const u=Math.min(1,(now-t0)/T),k=.5-.5*Math.cos(2*Math.PI*u);state.phi=Math.round(CFG.phiMin+(CFG.phiMax-CFG.phiMin)*k);$('phi').value=state.phi;update();
+  if(u<1)raf=requestAnimationFrame(f);else stopPlay()})(t0)};
+// jump between the two peaks so both arms can be seen at their hardest points
+let pkToggle=0;
+$('peakBtn').onclick=()=>{stopPlay();const C=lastC||curves();state.phi=Math.round(C.ph[pkToggle?C.iP:C.iS]);pkToggle^=1;$('phi').value=state.phi;
+ $('peakBtn').textContent=pkToggle?'Jump to preacher peak':'Jump to standing peak';update()};
+addEventListener('resize',update);
+update();
+</script>
+</body>
+</html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Anatomy of a muscle</title>
+<style>
+:root{--bg:#fff;--fg:#222;--mut:#666;--ac:#a8232b;--ln:#ddd}
+@media(prefers-color-scheme:dark){:root{--bg:#1b1b1d;--fg:#eee;--mut:#aaa;--ac:#e0646b;--ln:#444}}
+body{margin:0;font-family:system-ui,sans-serif;background:var(--bg);color:var(--fg)}
+.w{max-width:1040px;margin:0 auto;padding:12px}
+.bar{display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+button{font:inherit;padding:8px 18px;border:1px solid var(--ac);background:transparent;color:var(--ac);border-radius:6px;cursor:pointer}
+button.m{background:var(--ac);color:var(--bg);font-weight:600}
+button:disabled{opacity:.35;cursor:default}
+.dots{display:flex;gap:6px;margin-left:auto;align-items:center;font-size:13px;color:var(--mut)}
+.dots i{width:10px;height:10px;border-radius:50%;border:1px solid var(--ac);display:inline-block}
+.dots i.on{background:var(--ac)}
+canvas{width:100%;height:auto;display:block;border:1px solid var(--ln);border-radius:6px;background:#fdfbf8}
+.cap{margin-top:8px;line-height:1.45}.cap small{color:var(--mut)}
+.hd{font-size:22px;margin:4px 0 10px}
+.con{background:rgba(255,138,0,.08);border:1px solid rgba(255,138,0,.35);border-radius:8px;padding:6px 10px}
+.con input{flex:1;min-width:160px;accent-color:#ff8a00}
+.con .rd{font-size:13px;color:var(--mut);min-width:260px}
+#tw{border-color:#ff8a00;color:#c25e00}
+#cx{margin-top:6px;padding:6px 10px;border-left:4px solid #ff8a00;background:rgba(255,138,0,.08);border-radius:4px}
+#cx:empty{display:none}
+.steps{display:flex;gap:4px;flex-wrap:wrap}.steps .st{padding:6px 10px;font-weight:600;font-size:13px}.steps .st.on{background:var(--ac);color:var(--bg)}
+#tour{background:#ff8a00;border-color:#ff8a00;color:#fff;font-weight:600}
+</style></head><body><div class="w">
+<h1 class="hd">Anatomy of a muscle</h1>
+<div class="bar"><button id="in">◂ Zoom in</button><button id="out" class="m">Zoom out ▸</button>
+<span class="steps" id="steps"></span><button id="tour">▶ Tour</button>
+<div class="dots"><span id="lvn"></span></div></div>
+<div class="bar con"><b>Contraction</b><input type="range" id="con" min="0" max="100" step="0.5" value="0" aria-label="contraction">
+<span id="conv" class="rd"></span><button id="tw">▶ Twitch</button></div>
+<canvas id="cv"></canvas>
+<div class="cap"><b id="ct"></b> <small id="cs"></small><div id="cd"></div><div id="cx"></div>
+<small>Schematic cutaway: a quarter of each structure is removed to show its inside. Counts, proportions and step sizes are illustrative.</small></div>
+</div>
+<script>
+const W=1000,H=620,CX=560,CY=335,R=200,U=[-.8,-.38],M=[.552,-.213,-.213,.899],PER=64,MS=3,SPN=24,PI=Math.PI,hy=Math.hypot;
+const cv=document.getElementById('cv'),dpr=Math.min(2,devicePixelRatio||1);
+cv.width=W*dpr;cv.height=H*dpr;const ctx=cv.getContext('2d');
+// contraction state: CON 0 = rest … 1 = fully contracted. SHF = fractional shortening at full contraction (exaggerated for visibility)
+let CON=0,KZ=1,KR=1;const SHF=.2,kk=()=>1-SHF*CON;
+const BG='#fdfbf8',sm=t=>t<=0?0:t>=1?1:t*t*(3-2*t),ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2,lerp=(a,b,t)=>a+(b-a)*t;
+function rnd(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rg=rnd(5);
+function lat(sp,r,lim,jit,rv,col){const o=[],n=Math.ceil(R/sp)+2;
+ for(let j=-n;j<=n;j++)for(let i=-n;i<=n;i++){const x=sp*(i+j/2),y=sp*j*.866;
+  if(hy(x,y)<lim)o.push({x:x+(rg()-.5)*jit,y:y+(rg()-.5)*jit,r:r+rg()*rv,col,t:0})}return o}
+function gaps(sp,lim){const o=[],n=Math.ceil(R/sp)+2;
+ for(let j=-n;j<=n;j++)for(let i=-n;i<=n;i++){const x=sp*(i+j/2)+sp*.5,y=sp*j*.866+sp*.2887;if(hy(x,y)<lim)o.push({x,y})}return o}
+function near(a,x,y,f){let b=null,bd=1e9;a.forEach(k=>{if(f&&!f(k))return;const q=hy(k.x-x,k.y-y);if(q<bd){bd=q;b=k}});return b}
+const g1=gaps(24,R-12);
+const LV=[null,
+{D:260,d:170,face:'#f3c9c4',side:'#d99a98',wall:'#f6d8d4',rim:'#8a2a30',rw:3,kst:'#7a2229',gp:[],kids:lat(24,5.2,R-14,0,0,'#b9322b').map(k=>(k.th=1,k)).concat(g1.map(g=>({x:g.x,y:g.y,r:2.3,col:'#2f7fc1',t:0,th:2})))},
+{D:230,d:150,face:'#eaaaa6',side:'#cf7c7c',wall:'#e6a19e',rim:'#7f232a',rw:3,kst:'#7a2229',kids:lat(31,13,R-18,1,0,'#b4444c'),gp:gaps(31,R-22)},
+{D:230,d:150,face:'#f3dccb',side:'#dfc0a9',wall:'#f3dccb',rim:'#c89f84',rw:7,kst:'#7d2a2a',kids:lat(40,17.5,R-22,3,1.5,'#cc6b66'),gp:gaps(40,R-22)},
+{D:300,d:150,face:'#f9e3e3',side:'#c4616d',wall:'#f1d8c4',rim:'#2f5f9a',rw:4,kst:'#7d2a2a',kids:lat(58,22,R-28,3,2,'#c25f5a'),gp:gaps(58,R-28)}];
+// special kids
+function spec(L,x,y,r,col,t){const g=near(LV[L].gp,x,y);LV[L].kids.push({x:g.x,y:g.y,r,col,t})}
+for(const[x,y]of[[80,90],[-70,110],[-20,-120],[120,-60]])spec(3,x,y,4,'#b02a2a',5);
+spec(4,95,85,9,'#a01822',2);spec(4,-95,80,9,'#3b4f8f',3);spec(4,-40,-100,6,'#e6c85a',4);
+LV.slice(1).forEach(v=>v.focus=near(v.kids,-60,50,k=>!k.t));
+const META=[
+['Sarcomere','~2–3 µm long · the basic contractile unit','The contractile unit, Z-disc to Z-disc. Thin actin filaments hang from the Z-discs, thick myosin filaments sit between them, and titin springs hold the thick filaments centred. Myosin heads pull the actin inwards to shorten the sarcomere.'],
+['Myofibril','~1 µm across · a chain of sarcomeres','A myofibril is a chain of sarcomeres end to end. The lengthwise cut shows the bands: dark A bands (thick + thin overlap), lighter I bands (thin only) and Z-discs between sarcomeres. The cut face shows the hexagonal lattice of thick and thin filaments seen end-on.'],
+['Muscle fibre (cell)','~10–100 µm across · one muscle cell','Each fibre is packed with parallel myofibrils, which are chains of sarcomeres. Their bands line up across the cell to give the striated look. Nuclei sit at the edge, under the membrane.'],
+['Fascicle','~0.1–1 mm across · a bundle of muscle fibres','Dozens to hundreds of fibres run side by side, each wrapped in a thin endomysium. The whole bundle is sheathed in perimysium, which carries capillaries and nerve branches.'],
+['Whole muscle','centimetre scale · bundles of fascicles + tendon','Many fascicles are packed inside the epimysium. Arteries, veins and nerves run between the fascicles, and the fibres run lengthwise towards the tendon.']];
+// ---------- helpers ----------
+// KZ squeezes the length axis (shortening), KR widens the cross-section (constant volume) while contracted
+const P=(x,y,z)=>[(M[0]*x+M[2]*y)*KR+z*KZ*U[0],(M[1]*x+M[3]*y)*KR+z*KZ*U[1]],pr=p=>P(p[0],p[1],p[2]),DET=M[0]*M[3]-M[1]*M[2];
+function poly(c,p,f,s){c.beginPath();p.forEach((q,i)=>i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]));c.closePath();if(f){c.fillStyle=f;c.fill()}if(s){c.strokeStyle=s;c.lineWidth=1;c.stroke()}}
+function dot(c,x,y,r,col){c.beginPath();c.arc(x,y,r,0,7);c.fillStyle=col;c.fill()}
+function drawKid(c,k,L,sp,sa){
+ dot(c,k.x,k.y,k.r,k.col);if(L==1)return;
+ if(k.t){c.strokeStyle='rgba(0,0,0,.45)';c.lineWidth=1;c.stroke();
+  if(k.t==2)dot(c,k.x,k.y,k.r*.5,'#f6c9c9');if(k.t==3)dot(c,k.x,k.y,k.r*.5,'#cfd8f2');if(k.t==4)for(let i=0;i<5;i++)dot(c,k.x+(i%3-1)*2.2,k.y+(i>2?2:-2),1.8,'#a08420');return}
+ c.strokeStyle=LV[L].kst;c.lineWidth=1;c.stroke();
+ if(L==2)dot(c,k.x,k.y,k.r*.3,'#e8a0a6');
+ else if(L==3){for(let a=0;a<6;a++)dot(c,k.x+Math.cos(a*PI/3)*k.r*.5,k.y+Math.sin(a*PI/3)*k.r*.5,k.r*.15,'#8f2a31');dot(c,k.x,k.y,k.r*.15,'#8f2a31')}
+ else{c.fillStyle='#8f2a31';[[0,1],[.3,6],[.58,12],[.84,18]].forEach(([q,n])=>{for(let a=0;a<n;a++){c.beginPath();c.arc(k.x+Math.cos(a*2*PI/n)*k.r*q,k.y+Math.sin(a*2*PI/n)*k.r*q,k.r*.06,0,7);c.fill()}});
+  c.strokeStyle='#e8c7ad';c.lineWidth=2.4;c.beginPath();c.arc(k.x,k.y,k.r-1,0,7);c.stroke()}
+ // contraction: endomysium (around each fibre) and perimysium (around each fascicle) are pulled taut
+ if(CON>.02&&(L==3||L==4)){c.strokeStyle=`rgba(255,138,0,${(.75*Math.min(1,CON*1.8)).toFixed(3)})`;c.lineWidth=L==4?3:2;c.beginPath();c.arc(k.x,k.y,k.r+(L==4?1:.5),0,7);c.stroke()}
+ if(sp&&sa>0){c.save();c.globalAlpha*=sa;c.beginPath();c.arc(k.x,k.y,k.r,0,7);c.clip();c.translate(k.x,k.y);c.transform(M[3]/DET,-M[1]/DET,-M[2]/DET,M[0]/DET,0,0);const q=k.r/R*1.05;c.scale(q,q);c.drawImage(sp,-CX,-CY,W,H);c.restore()}}
+// myofibril: each sarcomere period shrinks with contraction; thick filaments (A band) keep their length, thin filaments slide toward the M-line
+const PERc=()=>PER*kk();
+function segs(k,L,dd){if(L!=1)return[[0,dd]];const o=[],pc=PERc();for(let m=0;m*pc<dd;m++){const b=m*pc;(k.th==1?[[pc/2-15,pc/2+15]]:[[0,22],[pc-22,pc]]).forEach(q=>{if(b+q[0]<dd)o.push([b+q[0],Math.min(dd,b+q[1])])})}return o}
+function strips(c,v,L,dd){
+ const E='rgba(40,0,10,.45)';
+ v.kids.forEach(k=>{const col=k.col,sg=segs(k,L,dd);
+  const bands=f=>{if(L!=2||k.t)return;for(let z=7;z<dd;z+=14)f(z,Math.min(dd,z+4.5))};
+  if(Math.abs(k.x)<k.r){const hw=Math.sqrt(k.r*k.r-k.x*k.x),a=Math.max(-R,k.y-hw),b=Math.min(0,k.y+hw);
+   if(a<b){sg.forEach(q=>poly(c,[P(0,a,q[0]),P(0,a,q[1]),P(0,b,q[1]),P(0,b,q[0])],col,L==1?null:E));bands((z,e)=>poly(c,[P(0,a,z),P(0,a,e),P(0,b,e),P(0,b,z)],'rgba(60,10,15,.4)'))}}
+  if(Math.abs(k.y)<k.r){const hw=Math.sqrt(k.r*k.r-k.y*k.y),a=Math.max(-R,k.x-hw),b=Math.min(0,k.x+hw);
+   if(a<b){sg.forEach(q=>poly(c,[P(a,0,q[0]),P(a,0,q[1]),P(b,0,q[1]),P(b,0,q[0])],col,L==1?null:E));bands((z,e)=>poly(c,[P(a,0,z),P(a,0,e),P(b,0,e),P(b,0,z)],'rgba(60,10,15,.4)'))}}});
+ const pc=PERc();if(L==1)for(let m=0;m*pc<=dd;m++){[[m*pc,2.4,'#e8962e'],[m*pc+pc/2,1.6,'rgba(123,63,160,.8)']].forEach(([z,w,col])=>{if(z>dd)return;
+  poly(c,[P(0,-R,z-w),P(0,-R,z+w),P(0,0,z+w),P(0,0,z-w)],col);poly(c,[P(0,0,z-w),P(0,0,z+w),P(-R,0,z+w),P(-R,0,z-w)],col)})}}
+function extra(c,L){const v=LV[L];if(L!=2)return;
+ v.gp.forEach((g,i)=>{if(i%4==0){c.beginPath();c.ellipse(g.x,g.y,5,2.6,.6,0,7);c.fillStyle='#e7a64a';c.fill()}});
+ [2.4,.9].forEach(a=>{c.save();c.translate((R-13)*Math.cos(a),(R-13)*Math.sin(a));c.rotate(a+PI/2);c.beginPath();c.ellipse(0,0,26,9,0,0,7);c.fillStyle='#5b4378';c.fill();c.restore()})}
+function disc(c,z,r,fill,st){c.save();c.translate(z*KZ*U[0],z*KZ*U[1]);c.transform(M[0],M[1],M[2],M[3],0,0);c.beginPath();c.arc(0,0,r*KR,0,7);c.fillStyle=fill;c.fill();if(st){c.strokeStyle=st;c.lineWidth=1;c.stroke()}c.restore()}
+// whole muscle: the tendon does not shorten; it is pulled toward the belly (and stretches slightly), dragging the bone with it
+const TEND=110,tendonEnd=(D,kq)=>D*kq+TEND*(1+.05*CON);
+function bone(c,zc,ghost){const ux=U[0]/Math.hypot(U[0],U[1]),uy=U[1]/Math.hypot(U[0],U[1]),nx=-uy,ny=ux,cx=zc*U[0],cy=zc*U[1],L=110;
+ c.save();c.translate(cx,cy);c.rotate(Math.atan2(ny,nx));
+ c.beginPath();c.roundRect(-L,-17,2*L,34,10);c.arc(L,-12,20,0,7);c.moveTo(L+20,16);c.arc(L,16,20,0,7);c.moveTo(-L+20,-12);c.arc(-L,-12,20,0,7);c.moveTo(-L+20,16);c.arc(-L,16,20,0,7);
+ if(ghost){c.setLineDash([6,6]);c.strokeStyle='rgba(120,100,60,.6)';c.lineWidth=2;c.stroke()}else{c.fillStyle='#f1e7cf';c.fill();c.strokeStyle='#9c8a62';c.lineWidth=2;c.stroke()}
+ c.restore()}
+function tendonAndBone(c,D,kq){const kz=KZ,kr=KR;KZ=1;KR=1;
+ const zT=tendonEnd(D,kq);
+ if(CON>.02)bone(c,D+TEND+42,true);                       // dashed outline: where the bone sat at rest
+ bone(c,zT+42,false);
+ for(let z=zT;z>=D*kq-20;z-=3)disc(c,z,R*.27*(1-.04*CON),'#e3ae45','rgba(120,80,0,.25)');disc(c,zT,R*.27*(1-.04*CON),'#f0c25f','#8a5a00');
+ KZ=kz;KR=kr}
+const prof=(L,z)=>L==4?R*(.28+.72*Math.cos(.5*PI*Math.pow(z/LV[4].D,1.25))):R;
+function sector(c){c.beginPath();c.moveTo(0,0);c.arc(0,0,R,PI,1.5*PI);c.closePath()}
+function inM(c,z,f){c.save();c.translate(z*KZ*U[0],z*KZ*U[1]);c.transform(M[0],M[1],M[2],M[3],0,0);c.scale(KR,KR);f();c.restore()}
+function block(c,L,sp,sa){
+ const kq=kk();KR=1/Math.sqrt(kq);KZ=L==1?1:kq;          // myofibril: shortening comes from its own sarcomere spacing
+ const v=LV[L],D=v.D,d=L==1?v.d*kq:v.d;
+ if(L==4)tendonAndBone(c,D,kq);
+ for(let z=D;z>=0;z-=3)disc(c,z,prof(L,z),v.side,L==4?'rgba(80,20,35,.2)':'rgba(0,0,0,.05)');
+ if(L==4){c.strokeStyle='rgba(70,15,30,.3)';c.lineWidth=1;for(let q=0;q<16;q++){const th=q*PI/8;c.beginPath();
+  for(let z=0;z<=D;z+=10){const r=prof(L,z),pt=P(r*Math.cos(th),r*Math.sin(th),z);z?c.lineTo(pt[0],pt[1]):c.moveTo(pt[0],pt[1])}c.stroke()}}
+ else{
+  for(let k=0;k<=14;k++)inM(c,d*k/14,()=>{sector(c);c.fillStyle=v.side;c.fill()});
+  poly(c,[P(0,-R,0),P(0,-R,d),P(0,0,d),P(0,0,0)],v.wall);
+  poly(c,[P(0,0,0),P(0,0,d),P(-R,0,d),P(-R,0,0)],v.wall);
+  strips(c,v,L,d);
+  inM(c,d,()=>{sector(c);c.fillStyle=v.face;c.fill();c.clip();v.kids.forEach(k=>drawKid(c,k,L,sp,sa))})}
+ inM(c,0,()=>{c.beginPath();c.moveTo(0,0);c.arc(0,0,R,L==4?0:1.5*PI,L==4?2*PI:3*PI);c.closePath();c.fillStyle=v.face;c.fill();c.save();c.clip();
+  extra(c,L);v.kids.forEach(k=>drawKid(c,k,L,sp,sa));c.restore();c.strokeStyle=v.rim;c.lineWidth=v.rw;c.lineJoin='round';c.stroke()});
+ if(L!=4)poly(c,[P(0,-R,0),P(0,-R,d),P(0,0,d),P(-R,0,d)],null,'rgba(40,0,10,.35)')}
+// ---------- flat sarcomere (level 0) ----------
+const SW=640,SH=200,ACT='#2f7fc1',MYO='#b9322b',HEAD='#ef8a80',TIT='#f0b400',ZD='#e8962e',MLN='#7b3fa0';
+// contracted sarcomere width; Z-disc at 0 and sw, M-line at sw/2. Myosin (A band, 300 wide) and actin (220 from each Z-disc) keep their lengths
+const SWc=()=>SW*kk();
+function tile(c,i,j,s,lod){const sw=SWc(),ms=sw/2-150,me=sw/2+150;c.save();c.translate(500+(i*sw-sw/2)*s,310+(j*SH-100)*s);c.scale(s,s);
+ const lw=Math.max(1,1.1/s);
+ if(lod==1){c.fillStyle=ZD;c.fillRect(-4,-50,8,200)}
+ c.lineCap='round';
+ if(lod==1){
+  [0,100].forEach(y=>{c.strokeStyle=ACT;c.lineWidth=Math.max(5,lw);c.beginPath();c.moveTo(0,y);c.lineTo(220,y);c.moveTo(sw,y);c.lineTo(sw-220,y);c.stroke()});
+  [50,150].forEach(y=>{c.fillStyle=MYO;c.fillRect(ms,y-7,300,14)})}
+ else{
+  // thin (actin) filaments: two twisted strands anchored to each Z-disc, sliding toward the M-line
+  [0,100].forEach(y=>{c.strokeStyle=ACT;c.lineWidth=2.6;[[0,1],[sw,-1]].forEach(([a,dir])=>{for(const ph of[0,PI]){c.beginPath();for(let k=0;k<=44;k++){const u=220*k/44,x=a+dir*u;k?c.lineTo(x,y+3.2*Math.sin(u/9+ph)):c.moveTo(x,y+3.2*Math.sin(u/9+ph))}c.stroke()}})});
+  [50,150].forEach(y=>{c.fillStyle=MYO;c.beginPath();c.roundRect(ms,y-7,300,14,7);c.fill();
+   // myosin heads tilt further toward the M-line as they pull (power stroke)
+   const tl=8+6*CON;c.strokeStyle=HEAD;c.lineWidth=2.4;c.beginPath();
+   for(let x=ms+8;x<=ms+92;x+=12){c.moveTo(x,y-6);c.lineTo(x+tl,y-17);c.moveTo(x,y+6);c.lineTo(x+tl,y+17)}
+   for(let x=me-8;x>=me-92;x-=12){c.moveTo(x,y-6);c.lineTo(x-tl,y-17);c.moveTo(x,y+6);c.lineTo(x-tl,y+17)}c.stroke();
+   // titin: elastic spring from each Z-disc to the end of the thick filament (compresses as the sarcomere shortens)
+   c.strokeStyle=TIT;c.lineWidth=2;c.beginPath();const zz=(x0,x1)=>{const n=16;c.moveTo(x0,y);for(let k=1;k<n;k++)c.lineTo(lerp(x0,x1,k/n),y+(k%2?-5:5));c.lineTo(x1,y)};
+   zz(0,ms);zz(sw,me);c.stroke();
+   c.lineWidth=1.4;c.beginPath();c.moveTo(ms,y);c.lineTo(me,y);c.stroke()});
+  c.fillStyle=ZD;c.fillRect(-4,-50,8,200);c.fillStyle=MLN;c.fillRect(sw/2-1.5,-50,3,200)}
+ c.restore()}
+function tiles(c,s){
+ const sw=SWc(),pw=sw*s;
+ if(pw<90){ // flat bands only: I band (light blue), A band (red), H zone (lighter, between the actin tips)
+  const ni=Math.ceil(500/pw)+1,x0=500-sw/2*s;c.save();
+  for(let i=-ni;i<=ni;i++){const X=x0+i*pw;
+   c.fillStyle='#bcd7ee';c.fillRect(X,-1200,pw,2400);
+   c.fillStyle='#b9322b';c.fillRect(X+(sw/2-150)*s,-1200,300*s,2400);
+   if(sw>440){c.fillStyle='#d88078';c.fillRect(X+220*s,-1200,(sw-440)*s,2400)}
+   c.fillStyle=ZD;c.fillRect(X-4*s-.3,-1200,8*s+.6,2400)}
+  c.restore();return}
+ const ni=Math.ceil(500/pw)+1,nj=Math.ceil(700/(SH*s))+1;
+ for(let j=-nj;j<=nj;j++)for(let i=-ni;i<=ni;i++)tile(c,i,j,s,pw<260?1:0)}
+const sE=.25,Pn=PER*MS/(SW*sE),KA=-Pn*U[0],KB=-Pn*U[1],KD=SPN*.866*MS/(100*sE);
+function flat(c,s,k,al,w){c.save();c.globalAlpha=al;
+ const x0=lerp(150,0,w),y0=lerp(185,0,w);c.beginPath();c.rect(x0,y0,lerp(850,W,w)-x0,lerp(435,H,w)-y0);c.clip();
+ c.fillStyle=BG;c.fillRect(0,0,W,H);
+ c.translate(500,310);c.transform(lerp(1,KA,k),lerp(0,KB,k),0,lerp(1,KD,k),0,0);c.translate(-500,-310);
+ tiles(c,s);c.restore()}
+// ---------- labels ----------
+const rim=a=>[R*Math.cos(a),R*Math.sin(a),0],mid=(a,b)=>[(a.x+b.x)/2,(a.y+b.y)/2,0],kp=k=>[k.x,k.y,0];
+const kf=(L,x,y,f)=>kp(near(LV[L].kids,x,y,f||(k=>!k.t))),sp0=t=>kp(near(LV[t.L].kids,0,0,k=>k.t==t.t));
+function pair(L,x,y){const a=near(LV[L].kids,x,y,k=>!k.t),b=near(LV[L].kids,a.x-30,a.y+20,k=>!k.t&&k!==a);return mid(a,b)}
+// label anchors may be functions so they follow the contracting structures
+const zL0=()=>500-SWc()/2,zR0=()=>500+SWc()/2;
+const LB=[[
+ {t:'Z-disc',s:'pulled inward',x:()=>zL0(),y:255,ty:235,c:'#b86a10',side:'L'},
+ {t:'Actin',s:'thin filament',x:()=>zL0()+55,y:310,ty:335,c:ACT,side:'L'},
+ {t:'Titin',s:'elastic spring',x:()=>zL0()*.45+350*.55,y:261,ty:435,c:'#a37a00',side:'L'},
+ {t:'M-line',s:'holds thick filaments',x:500,y:222,ty:235,c:MLN,side:'R'},
+ {t:'Myosin',s:'thick filament',x:470,y:360,ty:335,c:MYO,side:'R'},
+ {t:'Myosin heads',s:'pull actin inwards',x:603,y:346,ty:435,c:'#d2564b',side:'R'}],
+[{t:'Z-disc',s:'sarcomere boundary',p:()=>[0,-83,64*kk()],ty:80,side:'R',c:'#b86a10'},
+ {t:'Sarcomere',s:'one Z-disc to the next',p:()=>[0,-140,32*kk()],ty:60,side:'L',c:'#a8232b'},
+ {t:'A band',s:'thick + thin overlap',p:()=>[0,-83,32*kk()],ty:150,side:'R',c:MYO},
+ {t:'I band',s:'thin filaments only',p:()=>[0,-55,8*kk()],ty:220,side:'R',c:ACT},
+ {t:'M-line',s:'centre of the sarcomere',p:()=>[0,-83,96*kk()],ty:290,side:'R',c:MLN},
+ {t:'Thick filament',s:'myosin, seen end-on',p:kf(1,-70,30,k=>k.th==1),ty:200,side:'L',c:MYO},
+ {t:'Thin filament',s:'actin, seen end-on',p:kf(1,-50,100,k=>k.th==2),ty:340,side:'L',c:ACT}],
+[{t:'Sarcolemma',s:'cell membrane',p:rim(2),ty:500,side:'L'},{t:'Nucleus',s:'at the cell edge',p:rim(.9).map((v,i)=>i<2?v*(R-13)/R:v),ty:130,side:'L'},
+ {t:'Myofibril',s:'chain of sarcomeres',p:kf(2,-80,20),ty:300,side:'L'},
+ {t:'Striations',s:'bands line up across cell',p:[0,-100,80],ty:100,side:'R'},{t:'Sarcomere',s:'one dark + light repeat',p:[-93,0,70],ty:175,side:'R'},
+ {t:'Mitochondrion',s:'energy supply',p:[LV[2].gp[40].x,LV[2].gp[40].y,0],ty:470,side:'R'}],
+[{t:'Perimysium',s:'sheath around the fascicle',p:rim(2),ty:500,side:'L'},{t:'Endomysium',s:'wraps each fibre',p:pair(3,-100,-40),ty:130,side:'L'},
+ {t:'Muscle fibre (cell)',s:'one cell, full length',p:kf(3,-100,10),ty:300,side:'L'},
+ {t:'Fibres in parallel',s:'run along the axis',p:[0,-110,80],ty:100,side:'R'},{t:'Capillary',s:'blood supply',p:kp(near(LV[3].kids,80,90,k=>k.t==5)),ty:470,side:'R'}],
+[{t:'Epimysium',s:'sheath around the muscle',p:rim(2),ty:500,side:'L'},{t:'Perimysium',s:'wraps each fascicle',p:pair(4,-100,-40),ty:130,side:'L'},
+ {t:'Fascicle',s:'a bundle of fibres',p:kf(4,-110,10),ty:300,side:'L'},
+ {t:'Muscle belly',s:'fibres run lengthwise',p:[0,-110,140],ty:70,side:'R'},
+ {t:'Nerve',s:'motor / sensory',p:kp(near(LV[4].kids,0,0,k=>k.t==4)),ty:180,side:'R'},
+ {t:'Artery',s:'blood supply',p:kp(near(LV[4].kids,0,0,k=>k.t==2)),ty:300,side:'R'},{t:'Vein',s:'blood return',p:kp(near(LV[4].kids,0,0,k=>k.t==3)),ty:420,side:'L'}]];
+LB[4][6].side='L';
+LB[4].push({t:'Tendon',s:'transmits force to bone',p:()=>[0,0,(LV[4].D*kk()+100*(1+.05*CON))/kk()],ty:60,side:'L'});
+LB[4].push({t:'Bone',s:'pulled by the tendon',p:()=>[0,-30,(tendonEnd(LV[4].D,kk())+42)/kk()],ty:215,side:'L'});
+// labels: each side is ordered by where its leader points, then spaced evenly, so leader lines never cross.
+// The left column starts below the stage banner.
+const LTOP={L:112,R:40},LBOT=H-40,LGAP=46;
+function labels(c,L,al){if(al<=0)return;c.save();c.globalAlpha=al;
+ const items=LB[L].map(l=>{const pp=typeof l.p=='function'?l.p():l.p,q=pp?pr(pp):0;
+  return{l,px:pp?CX+q[0]:(typeof l.x=='function'?l.x():l.x),py:pp?CY+q[1]:l.y}});
+ for(const sd of['L','R']){const arr=items.filter(o=>o.l.side==sd).sort((a,b)=>a.py-b.py);let prev=-1e9;
+  arr.forEach(o=>{o.ty=Math.max(o.py+4,prev+LGAP,LTOP[sd]);prev=o.ty});
+  let lim=LBOT;for(let j=arr.length-1;j>=0;j--){if(arr[j].ty>lim)arr[j].ty=lim;lim=arr[j].ty-LGAP}}
+ items.forEach(({l,px,py,ty})=>{
+  c.font='600 13px system-ui';const w=Math.max(c.measureText(l.t).width,(c.font='11px system-ui',c.measureText(l.s).width)),L2=l.side=='L',tx=L2?22:W-22,sx=L2?tx+w+8:tx-w-8;
+  c.strokeStyle='rgba(40,40,40,.7)';c.lineWidth=1;c.beginPath();c.moveTo(sx,ty-4);c.lineTo(px,py);c.stroke();
+  c.fillStyle='#fff';c.strokeStyle='#222';c.beginPath();c.arc(px,py,3.2,0,7);c.fill();c.stroke();
+  c.textAlign=L2?'left':'right';c.font='600 13px system-ui';c.fillStyle=l.c||'#222';c.fillText(l.t,tx,ty);
+  c.font='11px system-ui';c.fillStyle='#666';c.fillText(l.s,tx,ty+14)});c.restore()}
+// stage banner on the picture: which level of the hierarchy we are looking at
+const STAGES=['Sarcomere','Myofibril','Muscle fibre (cell)','Fascicle','Whole muscle'];
+function stageBanner(){const c=ctx;c.setTransform(dpr,0,0,dpr,0,0);
+ const tr=st.tr,a=tr==null?st.lv:tr,b=tr==null?st.lv:tr+1,cur=tr==null?st.lv:(st.p<.5?a:b);
+ const title=tr==null?STAGES[cur]:`${STAGES[a]}  →  ${STAGES[b]}`,tag=tr==null?`STAGE ${cur+1} OF 5`:'ZOOMING';
+ c.save();c.font='700 21px system-ui';const tw=c.measureText(title).width;
+ c.font='12px system-ui';const crumbs=STAGES.map(s=>s.replace(' (cell)',''));let cw=0;crumbs.forEach((s,i)=>{c.font=(i==cur?'700 ':'')+'12px system-ui';cw+=c.measureText(s).width+(i<4?22:0)});
+ const bw=Math.max(tw,cw)+30;
+ c.fillStyle='rgba(255,255,255,.94)';c.strokeStyle='#c9c9c9';c.lineWidth=1.2;c.beginPath();c.roundRect(10,10,bw,78,10);c.fill();c.stroke();
+ c.textAlign='left';c.fillStyle='#a8232b';c.font='700 11px system-ui';c.fillText(tag,24,30);
+ c.fillStyle='#1b1b1b';c.font='700 21px system-ui';c.fillText(title,24,54);
+ let x=24;crumbs.forEach((s,i)=>{c.font=(i==cur?'700 ':'')+'12px system-ui';c.fillStyle=i==cur?'#a8232b':'#888';c.fillText(s,x,76);x+=c.measureText(s).width;
+  if(i<4){c.fillStyle='#bbb';c.font='12px system-ui';c.fillText(' › ',x+2,76);x+=22}});
+ c.restore()}
+// live band brackets for the flat sarcomere: I band and H zone shrink, A band (myosin length) stays the same
+function brackets(c,al){const Zl=zL0(),Zr=zR0(),sw=SWc(),pct=Math.round(kk()*100);
+ c.save();c.globalAlpha=al;c.lineWidth=1.4;c.font='600 12px system-ui';c.textAlign='center';
+ const br=(a,b,t,y,col)=>{if(b-a<4)return;c.strokeStyle=col;c.fillStyle=col;c.beginPath();c.moveTo(a+2,y+6);c.lineTo(a+2,y);c.lineTo(b-2,y);c.lineTo(b-2,y+6);c.stroke();c.fillText(t,(a+b)/2,y-6)};
+ br(Zl,350,'I band',172,ACT);br(350,650,'A band',172,MYO);br(650,Zr,'I band',172,ACT);
+ if(sw>444)br(Zl+220,Zr-220,'H zone',146,'#c26a00');else{c.fillStyle='#c26a00';c.fillText('H zone gone',500,146)}
+ c.strokeStyle='#333';c.fillStyle='#222';c.beginPath();c.moveTo(Zl,580);c.lineTo(Zr,580);c.moveTo(Zl,572);c.lineTo(Zl,588);c.moveTo(Zr,572);c.lineTo(Zr,588);c.stroke();
+ c.fillText(`1 sarcomere: Z-disc to Z-disc${CON>.01?`  (${pct}% of rest length)`:''}`,500,572);
+ c.strokeStyle='#bbb';c.beginPath();c.roundRect(150,185,700,250,6);c.stroke();c.restore()}
+// ---------- the outcome of contraction: pull arrows, ghost rest positions, tension in connective tissue ----------
+function arrow(c,a,b,col,w){const dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1,ux=dx/l,uy=dy/l,h=w*3.4;
+ c.strokeStyle=col;c.fillStyle=col;c.lineWidth=w;c.lineCap='round';
+ c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0]-ux*h*.8,b[1]-uy*h*.8);c.stroke();
+ c.beginPath();c.moveTo(b[0],b[1]);c.lineTo(b[0]-ux*h-uy*h*.6,b[1]-uy*h+ux*h*.6);c.lineTo(b[0]-ux*h+uy*h*.6,b[1]-uy*h-ux*h*.6);c.closePath();c.fill()}
+const PULL='#ff8a00';
+function pull0(c){if(CON<.01)return;const a=Math.min(1,CON*2),Zl=zL0(),Zr=zR0();c.save();c.globalAlpha=a;
+ c.setLineDash([6,6]);c.strokeStyle='#888';c.lineWidth=2;c.beginPath();c.moveTo(180,190);c.lineTo(180,430);c.moveTo(820,190);c.lineTo(820,430);c.stroke();c.setLineDash([]);
+ c.font='600 11px system-ui';c.fillStyle='#777';c.textAlign='center';c.fillText('Z-disc at rest',180,446);c.fillText('Z-disc at rest',820,446);
+ arrow(c,[Zl-46,212],[Zl+30,212],PULL,4);arrow(c,[Zr+46,212],[Zr-30,212],PULL,4);c.restore()}
+function pull(c,L){if(CON<.02)return;const v=LV[L],a=Math.min(1,CON*1.8),zE=L==4?v.D:L==1?v.d*kk():v.d;c.save();
+ // membranes / connective-tissue sheaths carry the pull: they light up orange as tension rises
+ if(L>=2)inM(c,0,()=>{c.beginPath();c.arc(0,0,R,L==4?0:1.5*PI,L==4?2*PI:3*PI);c.strokeStyle=`rgba(255,138,0,${(.85*a).toFixed(3)})`;c.lineWidth=v.rw+5;c.stroke()});
+ // arrows: both ends are drawn toward the middle
+ c.globalAlpha=a;const y=-R*1.25;
+ arrow(c,P(0,y,-90/KZ),P(0,y,-16/KZ),PULL,4);
+ if(L<4)arrow(c,P(0,y,zE+90/KZ),P(0,y,zE+16/KZ),PULL,4);
+ else{const kz=KZ,kr=KR;KZ=1;KR=1;const zT=tendonEnd(v.D,kk());arrow(c,P(0,0,zT+70),P(0,0,zT-40),PULL,5);KZ=kz;KR=kr}
+ c.restore()}
+// ---------- sprites & frames ----------
+const spr={};
+function sprite(L){if(spr[L])return spr[L];const o=document.createElement('canvas');o.width=W*dpr;o.height=H*dpr;
+ const c=o.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.translate(CX,CY);block(c,L,null,0);return spr[L]=o}
+const st={lv:0,tr:null,p:0,busy:false};
+function frame(){frame0();stageBanner()}
+function frame0(){const c=ctx;c.setTransform(dpr,0,0,dpr,0,0);c.fillStyle=BG;c.fillRect(0,0,W,H);
+ if(st.tr==null){
+  if(st.lv==0){c.save();c.beginPath();c.rect(150,185,700,250);c.clip();tiles(c,1);c.restore();pull0(c);brackets(c,1);labels(c,0,1)}
+  else{c.save();c.translate(CX,CY);block(c,st.lv,null,0);pull(c,st.lv);c.restore();labels(c,st.lv,1)}return}
+ const tr=st.tr,p=st.p;
+ if(tr==0){
+  const u=sm((p-.45)/.55);
+  if(p>.45){c.save();const s1=Math.pow(3,1-u);c.translate(CX,CY);c.scale(s1,s1);c.translate(-(M[2]*-83+70*U[0])*(1-u),-(M[3]*-83+70*U[1])*(1-u));block(c,1,null,0);c.restore()}
+  const s=Math.exp(lerp(0,Math.log(sE),sm(Math.min(1,p/.55))));
+  flat(c,s,sm((p-.35)/.6),1-sm((p-.6)/.3),sm(p/.2));
+  if(p<.25){c.save();c.globalAlpha=1-sm(p/.25);brackets(c,1);labels(c,0,1);c.restore()}
+ }else{
+  const L=tr+1,v=LV[L],k=v.focus,s0=R/k.r*.9,s=Math.pow(s0,1-p),kr=1/Math.sqrt(kk());
+  const im=sprite(tr);
+  c.save();c.globalAlpha=sm(p/.12);c.translate(CX,CY);c.scale(s,s);c.translate(-(M[0]*k.x+M[2]*k.y)*kr*(1-p),-(M[1]*k.x+M[3]*k.y)*kr*(1-p));
+  block(c,L,im,1-sm((p-.6)/.4));c.restore();
+  c.globalAlpha=1-sm(p/.12);c.drawImage(im,0,0,W,H);c.globalAlpha=1}}
+// ---------- UI ----------
+const bi=document.getElementById('in'),bo=document.getElementById('out');
+const CXT=[
+ 'Contracting: myosin heads pull the thin (actin) filaments toward the M-line, so the Z-discs are dragged together. The I band and H zone shrink; the A band (the myosin length) stays the same. Titin is compressed.',
+ 'Every sarcomere in the chain shortens at the same time, so their shortening adds up along the myofibril. The Z-discs pass the pull sideways, through costameres, to the cell membrane.',
+ 'All the myofibrils shorten together: the fibre gets shorter and fatter (its volume stays the same) and pulls on its membrane (sarcolemma) and the endomysium wrapped around it.',
+ 'Each fibre pulls on its endomysium; the perimysium gathers those pulls, so the whole fascicle shortens as one unit and its sheath is put under tension.',
+ 'The fascicles shorten and the belly gets shorter and thicker. The epimysium funnels the force into the tendon, which is pulled toward the belly and drags the bone with it.'];
+const conEl=document.getElementById('con'),conv=document.getElementById('conv'),tw=document.getElementById('tw'),cx=document.getElementById('cx');
+function conUI(){const sw=SWc();
+ conv.textContent=`sarcomere ${Math.round(kk()*100)}%  ·  I band ${Math.round(Math.max(0,sw-300)/(SW-300)*100)}%  ·  H zone ${Math.round(Math.max(0,sw-440)/(SW-440)*100)}%  ·  A band 100%`;
+ cx.textContent=CON>.01?CXT[st.lv]:''}
+function setCon(v){CON=Math.max(0,Math.min(1,v));conEl.value=CON*100;for(const k in spr)delete spr[k];conUI();if(!st.busy)frame()}
+let twRaf=0,twDone=null;
+function stopTw(){cancelAnimationFrame(twRaf);twRaf=0;tw.textContent='▶ Twitch';const d=twDone;twDone=null;return d}
+// twitch: contract, hold briefly, relax; calls done() when finished
+function playTwitch(done){stopTw();twDone=done||null;tw.textContent='■ Stop';const t0=performance.now(),T=3600;
+ (function f(now){const u=(now-t0)/T,v=u<.4?sm(u/.4):u<.55?1:1-sm((u-.55)/.45);setCon(v);
+  if(u<1)twRaf=requestAnimationFrame(f);else{setCon(0);const d=stopTw();if(d)d()}})(t0)}
+tw.onclick=()=>{if(twRaf){stopTour();stopTw();return}playTwitch()};
+conEl.oninput=()=>{stopTour();stopTw();setCon(conEl.value/100)};
+const NAMES=STAGES,SHORT=['Sarcomere','Myofibril','Muscle fibre','Fascicle','Whole muscle'];
+const stepsEl=document.getElementById('steps'),tourBtn=document.getElementById('tour');
+NAMES.forEach((n,i)=>{const b=document.createElement('button');b.textContent=(i+1)+'  '+SHORT[i];b.title='Stage '+(i+1)+': '+n;b.className='st';b.onclick=()=>{stopTour();goTo(i)};stepsEl.appendChild(b)});
+function ui(){const m=META[st.lv];ct.textContent=m[0];cs.textContent=' · '+m[1];cd.textContent=m[2];
+ bi.disabled=st.busy||st.lv==0;bo.disabled=st.busy||st.lv==4;
+ [...stepsEl.children].forEach((b,i)=>{b.classList.toggle('on',i==st.lv);b.disabled=st.busy});
+ lvn.innerHTML=NAMES.map((n,i)=>'<i class="'+(i==st.lv?'on':'')+'" title="'+n+'"></i>').join('')+' '+(st.lv+1)+' / 5';
+ conUI()}
+function go(dir,done){if(st.busy)return;const L=st.lv;if(dir>0&&L>=4||dir<0&&L<=0){if(done)done();return}
+ st.busy=true;st.tr=dir>0?L:L-1;ui();const t0=performance.now(),dur=st.tr==0?3600:3000;
+ (function step(now){const q=Math.min(1,(now-t0)/dur);st.p=dir>0?ease(q):1-ease(q);frame();
+  if(q<1)requestAnimationFrame(step);else{st.lv=L+dir;st.tr=null;st.busy=false;frame();ui();if(done)done()}})(t0)}
+// jump to any level by zooming one level at a time (each step shows how one level is built from the one below)
+function goTo(n,done){if(st.lv===n){if(done)done();return}go(n>st.lv?1:-1,()=>goTo(n,done))}
+// tour: start at the sarcomere, twitch, then build up one level at a time with a twitch at each scale
+let touring=false,tourTimer=0;
+function stopTour(){if(!touring)return;touring=false;clearTimeout(tourTimer);tourBtn.textContent='▶ Tour'}
+function tourStep(){if(!touring)return;
+ playTwitch(()=>{if(!touring)return;if(st.lv>=4){stopTour();return}tourTimer=setTimeout(()=>go(1,()=>{tourTimer=setTimeout(tourStep,700)}),900)})}
+tourBtn.onclick=()=>{if(touring){stopTour();stopTw();return}touring=true;tourBtn.textContent='■ Stop tour';goTo(0,()=>{tourTimer=setTimeout(tourStep,500)})};
+bo.onclick=()=>{stopTour();go(1)};bi.onclick=()=>{stopTour();go(-1)};
+frame();ui();
+</script></body></html>

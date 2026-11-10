@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Temporal Summation &amp; Motor Unit Recruitment | The Elbow as a Deformable Solid System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ===== same palette as index.html (muscle reds + bone cream) ===== */
+  :root{
+    --crimson:#9e1b32;   /* headings, key accents  */
+    --red:#c8344a;       /* accents                */
+    --rose:#e8a5ad;      /* soft highlights        */
+    --blush:#fbe9e7;     /* panels                 */
+    --cream:#fff8f6;     /* page background        */
+    --bone:#ead9b8;      /* bone tone, used in the background glow */
+    --ink:#3b1a20;       /* body text              */
+    --muted:#7a5a60;     /* secondary text         */
+    --font:'Nunito','Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+    color-scheme:light;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{font-family:var(--font);color:var(--ink);background:var(--cream);overflow:hidden}
+
+  /* soft muscle blobs + faint fibre lines, so the glass has something to blur */
+  .bg{position:fixed;inset:0;z-index:0;overflow:hidden;
+      background:repeating-linear-gradient(100deg,rgba(158,27,50,.035) 0 2px,transparent 2px 15px),var(--cream)}
+  .bg i{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55}
+  .bg i:nth-child(1){width:42vw;height:42vw;left:-10vw;top:-12vw;background:#e8a5ad}
+  .bg i:nth-child(2){width:36vw;height:36vw;right:-8vw;top:20vh;background:#d9546a}
+  .bg i:nth-child(3){width:40vw;height:30vw;left:30vw;bottom:-14vw;background:#f3c1b8}
+  .bg i:nth-child(4){width:26vw;height:26vw;left:6vw;bottom:-6vw;background:var(--bone);opacity:.7}
+
+  /* ===== layout: everything fits in one screen, no scrolling ===== */
+  .stage{position:relative;z-index:1;height:100vh;width:100vw;display:flex;flex-direction:column;
+         align-items:center;justify-content:center;gap:clamp(12px,2.4vh,28px);padding:2vh 4vw}
+  .head{text-align:center;width:min(92vw,780px)}
+  .head h1{margin:0;font-size:clamp(28px,4vw,60px);line-height:1.08;font-weight:800;color:var(--crimson);letter-spacing:-.02em}
+  .head .line{width:64px;height:4px;border-radius:4px;margin:clamp(8px,1.4vh,16px) auto;
+              background:linear-gradient(90deg,var(--crimson),var(--rose))}
+  .head p,.foot p{margin:0;color:var(--muted);font-size:clamp(13px,1.15vw,17px);line-height:1.5}
+
+  .panes{display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,3vw,44px);width:min(92vw,1240px)}
+
+  /* ===== the glass pane: identical to the floating .glass in index.html ===== */
+  .glass{position:relative;height:clamp(170px,40vh,440px);padding:10px;cursor:pointer;
+         border-radius:28px;overflow:hidden;
+         background:rgba(255,255,255,.38);border:1px solid rgba(255,255,255,.8);
+         backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);
+         box-shadow:0 22px 60px rgba(158,27,50,.28),0 4px 14px rgba(158,27,50,.12),inset 0 1px 0 rgba(255,255,255,.95);
+         animation:glassPop .9s .15s cubic-bezier(.2,.9,.3,1.25) both,glassFloat 6s 1.1s ease-in-out infinite}
+  .glass:nth-child(2){animation-delay:.3s,2.1s}   /* second pane pops and drifts slightly out of step */
+  .glass::after{content:"";position:absolute;inset:0;border-radius:28px;pointer-events:none;
+         background:linear-gradient(135deg,rgba(255,255,255,.6),transparent 42%)}
+  @keyframes glassPop{from{opacity:0;transform:scale(.78) translateY(18px)}to{opacity:1;transform:none}}
+  @keyframes glassFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+  .glass:hover,.glass:focus-visible{box-shadow:0 28px 70px rgba(158,27,50,.4),0 4px 14px rgba(158,27,50,.16),inset 0 1px 0 #fff;outline:none}
+
+  /* live preview: the real page in an iframe, drawn at 1280 px wide and scaled to fit (scale set by script) */
+  .scr{position:relative;width:100%;height:100%;border-radius:19px;overflow:hidden;background:rgba(255,255,255,.55)}
+  .live{position:absolute;left:0;top:0;width:1280px;border:0;background:#fff;transform-origin:0 0;pointer-events:none}
+  .empty{position:absolute;inset:0;display:grid;place-items:center;padding:20px;text-align:center;color:var(--muted);font-weight:600;font-size:clamp(12px,1vw,15px)}
+  .chip{position:absolute;left:22px;bottom:20px;z-index:2;padding:.35em .9em;border-radius:999px;background:var(--crimson);color:#fff;
+        font-weight:700;font-size:clamp(11px,.95vw,14px);pointer-events:none}
+
+  /* ===== expanded view: same idea as index.html (page behind blurs, glass card grows to fill the page) ===== */
+  #ov{position:fixed;inset:0;z-index:10;visibility:hidden;opacity:0;transition:opacity .5s,visibility 0s .5s;
+      background:rgba(255,240,238,.4);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px)}
+  #ov.on{visibility:visible;opacity:1;transition:opacity .5s}
+  #panel{position:fixed;z-index:11;display:none;overflow:hidden;padding:10px;border-radius:28px;
+         background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.85);
+         box-shadow:0 30px 80px rgba(158,27,50,.4),inset 0 1px 0 rgba(255,255,255,.95);
+         transition:left .65s cubic-bezier(.65,0,.25,1),top .65s cubic-bezier(.65,0,.25,1),width .65s cubic-bezier(.65,0,.25,1),height .65s cubic-bezier(.65,0,.25,1)}
+  #panel.anim{transition:none}
+  #panel .frame{position:relative;width:100%;height:100%;border-radius:19px;overflow:hidden;background:#fff}
+  #panel iframe{position:absolute;left:0;top:0;border:0;background:#fff;pointer-events:auto;opacity:0;transition:opacity .4s}
+  #panel.open iframe{opacity:1;transition-delay:.45s}
+  #close{position:fixed;top:max(6px,.8vh);right:3vw;z-index:12;width:38px;height:38px;border-radius:50%;border:0;cursor:pointer;
+         font:inherit;font-size:22px;line-height:1;color:#fff;background:var(--crimson);opacity:0;visibility:hidden;transition:opacity .4s .5s}
+  #ov.on~#close{opacity:1;visibility:visible}
+  #close:focus-visible{outline:3px solid var(--rose)}
+
+  .foot{text-align:center;width:min(92vw,900px)}
+
+  @media(max-width:700px){
+    .panes{grid-template-columns:1fr}
+    .glass{height:clamp(90px,19vh,200px)}
+  }
+  @media(prefers-reduced-motion:reduce){.glass{animation:none}#panel,#ov,#panel iframe{transition:none!important}}
+</style>
+</head>
+<body>
+  <div class="bg"><i></i><i></i><i></i><i></i></div>
+
+  <main class="stage">
+    <header class="head">
+      <h1>Temporal Summation &amp; Motor Unit Recruitment</h1>
+      <div class="line"></div>
+      <p>A single twitch is weak and brief, so how does the body pull harder on purpose? On the left, fire one motor unit faster and watch its twitches add up into a tetanus; on the right, recruit more motor units, smallest first, and turn the active share of the muscle into force with a stress–strain model.</p>
+    </header>
+
+    <section class="panes">
+      <div class="glass" id="pane1" role="button" tabindex="0"></div>
+      <div class="glass" id="pane2" role="button" tabindex="0"></div>
+    </section>
+
+    <footer class="foot">
+      <p>Click a pane to open it full size. The takeaway: the nervous system grades force in two ways, by <b>firing each motor unit faster</b> (temporal summation, up to a fused tetanus) and by <b>recruiting more motor units</b> (size principle). Together they set how much of the muscle's cross-section is active, and so the force the elbow model needs.</p>
+    </footer>
+  </main>
+
+  <div id="ov"></div>
+  <div id="panel" role="dialog" aria-modal="true"></div>
+  <button id="close" aria-label="Close">&times;</button>
+
+<script>
+/* ============================================================
+   ADD YOUR LINKS HERE: one entry per glass pane, left to right.
+     title : the name shown on the pane's label
+     href  : the file of the page to show, e.g. 'forearm_beam.html'
+             (keep it in the same folder as this file)
+   ============================================================ */
+const PANES = [
+  { title: 'Temporal summation', href: 'Temporal Summation.html' },       // <-- link for the LEFT pane
+  { title: 'Motor unit recruitment', href: 'Motor Unit Recruitment.html' }  // <-- link for the RIGHT pane
+];
+
+const $ = id => document.getElementById(id);
+const ov = $('ov'), panel = $('panel');
+let cur = null;
+
+/* fill each pane with a live, non-clickable preview of its page, scaled to fit */
+PANES.forEach((p, i) => {
+  const el = $('pane' + (i + 1));
+  el.setAttribute('aria-label', 'Open ' + p.title);
+  el.innerHTML = '<div class="scr">' +
+    (p.href ? '<iframe class="live" src="' + p.href + '" tabindex="-1" scrolling="no" loading="lazy" aria-hidden="true"></iframe>'
+            : '<div class="empty">Add this pane’s link in the PANES list at the top of the script</div>') +
+    '</div><span class="chip">' + p.title + ' · click to open</span>';
+  const fit = () => {
+    const scr = el.querySelector('.scr'), f = el.querySelector('.live');
+    if (!f) return;
+    const s = scr.clientWidth / 1280;
+    f.style.transform = 'scale(' + s + ')';
+    f.style.height = (scr.clientHeight / s) + 'px';
+  };
+  new ResizeObserver(fit).observe(el.querySelector('.scr'));
+  el.addEventListener('click', () => openPane(i));
+  el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPane(i); } });
+});
+
+/* where the expanded glass pane sits: almost the whole page */
+function target() {
+  const w = innerWidth, h = innerHeight, top = Math.max(46, h * .055);
+  return { left: w * .03, top, width: w * .94, height: h - top - h * .025 };
+}
+function place(r) {
+  panel.style.left = r.left + 'px'; panel.style.top = r.top + 'px';
+  panel.style.width = r.width + 'px'; panel.style.height = r.height + 'px';
+}
+function sizeFrame() {
+  const f = panel.querySelector('iframe'), t = target();
+  if (f) { f.style.width = (t.width - 20) + 'px'; f.style.height = (t.height - 20) + 'px'; }
+}
+
+function openPane(i) {
+  if (cur !== null) return;
+  cur = i;
+  const el = $('pane' + (i + 1)), r = el.getBoundingClientRect(), p = PANES[i];
+  panel.innerHTML = '<div class="frame">' +
+    (p.href ? '<iframe src="' + p.href + '" title="' + p.title + '"></iframe>'
+            : '<div class="empty">No link set for this pane yet</div>') + '</div>';
+  panel.classList.add('anim'); panel.style.display = 'block';
+  place(r); sizeFrame();                 /* start exactly on top of the small pane */
+  el.style.visibility = 'hidden';
+  ov.classList.add('on');
+  panel.getBoundingClientRect();         /* flush, then animate out to the big size */
+  panel.classList.remove('anim');
+  place(target());
+  panel.classList.add('open');
+  $('close').focus({ preventScroll: true });
+}
+
+function closePane() {
+  if (cur === null) return;
+  const el = $('pane' + (cur + 1)), i = cur;
+  panel.classList.remove('open');
+  place(el.getBoundingClientRect());
+  ov.classList.remove('on');
+  setTimeout(() => {
+    panel.style.display = 'none'; panel.innerHTML = '';
+    el.style.visibility = ''; cur = null; el.focus({ preventScroll: true });
+  }, 680);
+}
+
+ov.addEventListener('click', closePane);
+$('close').addEventListener('click', closePane);
+addEventListener('keydown', e => { if (e.key === 'Escape') closePane(); });
+addEventListener('resize', () => { if (cur !== null) { place(target()); sizeFrame(); } });
+</script>
+</body>
+</html>

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Motor unit recruitment</title>
+<style>
+:root{--fg:#1d1d1f;--mut:#5f6368;--ln:#dcdcdc;--bg:#f6f5f2;--A:#0e8f80;--B:#d9822b;--act:#b8250f;--pas:#2a5fd0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;line-height:1.5}
+.wrap{max-width:1240px;margin:0 auto;padding:22px 20px 40px}
+h1{font-size:34px;margin:0 0 4px}
+h2{font-size:24px;margin:34px 0 8px;padding-top:6px;border-top:2px solid #e2e0da}
+h3{font-size:17px;margin:18px 0 6px}
+.lead{color:var(--mut);margin:0 0 16px;font-size:15.5px;max-width:960px}
+.card{background:#fff;border:1px solid var(--ln);border-radius:14px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+/* whiteboard diagram (same look as the neuromuscular-junction drawing) */
+#mu{width:100%;height:auto;display:block;background:#fbfbf7;border-radius:10px}
+#mu text{font-family:"Segoe Print","Bradley Hand","Marker Felt","Chalkboard SE","Comic Sans MS",cursive;font-size:15px;fill:#222}
+#mu .num{font-family:"Segoe UI",system-ui,sans-serif;font-size:12px;font-weight:700;fill:#fff}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13.5px;color:var(--mut);margin:8px 2px 0}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:6px}
+/* definition boxes */
+.defs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+@media(max-width:860px){.defs{grid-template-columns:1fr}}
+.def{display:grid;grid-template-columns:30px 1fr;gap:8px;align-items:start;background:#fff;border:1px solid var(--ln);border-radius:10px;padding:9px 10px}
+.def .n{width:26px;height:26px;border-radius:50%;background:#333;color:#fff;font-weight:700;font-size:13px;display:grid;place-items:center}
+.def b{display:block;font-size:14.5px}
+.def .box{min-height:46px;margin-top:4px;padding:6px 8px;border:1.5px dashed #c9c9c9;border-radius:7px;font-size:14px;color:#333;background:#fcfcfa;outline:none}
+.def .box:focus{border-color:var(--A);background:#fff}
+.def .box:empty:before{content:attr(data-ph);color:#aaa}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+button{font:inherit;font-size:13.5px;padding:6px 14px;border-radius:18px;border:1px solid #bbb;background:#fff;cursor:pointer}
+button.pri{background:var(--A);border-color:var(--A);color:#fff}
+/* model section */
+.asm{counter-reset:a;list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.asm li{counter-increment:a;background:#fff;border:1px solid var(--ln);border-radius:10px;padding:10px 12px 10px 52px;position:relative;font-size:14.5px}
+.asm li:before{content:"A" counter(a);position:absolute;left:12px;top:10px;font-weight:700;color:#fff;background:#555;border-radius:6px;padding:1px 6px;font-size:12.5px}
+.asm li>b:first-child{display:block;font-size:15px}
+.src{display:block;margin-top:4px;font-size:12.5px;color:#7a5b00;background:#fff7e0;border-radius:6px;padding:3px 8px}
+.eq{font-family:"Cambria Math","Cambria","Times New Roman",serif;font-size:21px;background:#fff;border:1px solid var(--ln);border-left:5px solid var(--act);border-radius:8px;padding:12px 16px;margin:10px 0;overflow-x:auto;white-space:nowrap}
+.eq small{font-family:"Segoe UI",sans-serif;font-size:13px;color:var(--mut);display:block;white-space:normal;margin-top:4px}
+.where{font-size:14.5px;margin:4px 0 10px 4px}.where div{margin:2px 0}
+var{font-family:"Cambria Math","Cambria","Times New Roman",serif;font-style:italic;font-size:1.05em}
+.note{background:#eef6ff;border-left:4px solid var(--pas);border-radius:6px;padding:8px 12px;font-size:14.5px;margin:10px 0}
+.warn{background:#fff7ec;border-left:4px solid #e08a00;border-radius:6px;padding:8px 12px;font-size:14.5px;margin:10px 0}
+/* calculator */
+.calc{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px}
+@media(max-width:960px){.calc{grid-template-columns:1fr}}
+.ctl{display:grid;grid-template-columns:150px 1fr 90px;gap:8px;align-items:center;margin:6px 0;font-size:14px}
+.ctl input{width:100%}
+.ctl b{text-align:right;font-variant-numeric:tabular-nums}
+svg.g{width:100%;height:auto;display:block;background:#fcfbf9;border:1px solid #ececec;border-radius:10px}
+.out{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.out div{background:#f6f6f4;border-radius:8px;padding:6px 9px}
+.out span{display:block;font-size:11px;letter-spacing:.05em;color:var(--mut);text-transform:uppercase}
+.out b{font-size:19px;font-variant-numeric:tabular-nums}
+#live{font-family:"Cambria Math","Cambria","Times New Roman",serif;font-size:16px;background:#fbfaf7;border:1px dashed #ccc;border-radius:8px;padding:8px 10px;margin-top:10px;overflow-x:auto;white-space:nowrap}
+.foot{margin-top:24px;color:var(--mut);font-size:12.5px}
+.deriv{background:#fff;border:1px solid var(--ln);border-left:6px solid var(--act);border-radius:12px;padding:12px 20px 14px;font-size:15px}
+.deriv .st{padding:9px 0;border-bottom:1px dashed #e4e4e4}
+.deriv .st:last-of-type{border-bottom:none}
+.deriv .k{color:var(--act)}
+.deriv .f{font-family:"Cambria Math","Cambria","Times New Roman",serif;font-size:19px;margin:6px 0 4px 22px;overflow-x:auto;white-space:nowrap}
+.deriv .f.big{font-size:21px;background:#fff6f3;border-radius:8px;padding:8px 12px;margin-left:10px}
+.deriv .where{border-top:1px solid #eee;padding-top:8px;margin-top:6px;font-size:13.5px;color:#444}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+.g2{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:12px;margin-top:12px}
+@media(max-width:960px){.g3,.g2{grid-template-columns:1fr}}
+.gt{font-size:14px;font-weight:600;margin:0 0 8px}
+select{font:inherit;font-size:13.5px;padding:4px 6px;border-radius:8px;border:1px solid #bbb;width:100%}
+/* v3: clean angled-section diagram, notes area, compact dashboard */
+#mu text{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;font-size:13.5px;fill:#222;paint-order:stroke;stroke:#fbfbf7;stroke-width:4px;stroke-linejoin:round}
+.notes{min-height:150px;background:#fff;border:1.5px dashed #c9c9c9;border-radius:12px;padding:12px 16px;font-size:15px;line-height:1.6;outline:none;white-space:pre-wrap}
+.notes:focus{border:1.5px solid var(--A);box-shadow:0 0 0 3px rgba(14,143,128,.12)}
+.hint{font-size:13px;color:var(--mut);align-self:center;margin-right:auto}
+.ctlbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 16px;padding:8px 12px;font-size:13px}
+.ctlbar label{display:grid;grid-template-columns:auto minmax(60px,1fr) auto;gap:6px;align-items:center;white-space:nowrap}
+.ctlbar input{width:100%}
+.ctlbar select{font-size:12px;padding:2px 4px;min-width:0}
+.ctlbar b{font-variant-numeric:tabular-nums}
+.ctlbar .res{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 18px;align-items:baseline;border-top:1px solid #eee;padding-top:5px;margin-top:2px}
+.ctlbar .res b{font-size:15px}
+#live{font-family:"Cambria Math","Cambria","Times New Roman",serif;font-size:14px;color:#333;margin:0;padding:0;border:none;background:none;white-space:normal}
+.dash{display:grid;grid-template-columns:1.25fr 1fr 1fr;grid-template-areas:"xs gp ga" "xs gb st";gap:10px;margin-top:10px}
+.dash .p{padding:8px 10px}
+.dash .gt{font-size:12.5px;margin-bottom:4px}
+#xsC{grid-area:xs;display:flex;flex-direction:column;justify-content:center}#gpC{grid-area:gp}#gaC{grid-area:ga}#gbC{grid-area:gb}#stC{grid-area:st}
+@media(max-width:980px){.ctlbar{grid-template-columns:1fr 1fr}.dash{grid-template-columns:1fr;grid-template-areas:"xs" "gp" "ga" "gb" "st"}}
+</style></head><body><div class="wrap">
+
+<h1>Motor unit recruitment</h1>
+<p class="lead">How the nervous system grades the force of a whole muscle by choosing <b>how many motor units</b> to switch on. First we look at what a motor unit is, then we set up a simple mechanical model that turns the number of recruited units into a muscle force.</p>
+
+<!-- ===================== 1. WHAT IS A MOTOR UNIT ===================== -->
+<h2>1 · What is a motor unit?</h2>
+<div class="card">
+<svg id="mu" viewBox="0 0 1200 600" role="img" aria-label="Angled section of a muscle showing its fascicles and fibres, with two motor neurons in the spinal cord whose axons enter the muscle and branch to their own scattered fibres"></svg>
+<div class="legend"><span><i style="background:#9fe0d6;border:2px solid var(--A)"></i>Motor unit A: one motor neuron + every fibre it supplies</span><span><i style="background:#f8d2a8;border:2px solid var(--B)"></i>Motor unit B (a smaller unit)</span><span><i style="background:#efc4c4;border:2px solid #c48d8d"></i>Fibres belonging to other motor units</span></div>
+</div>
+<h3>Definitions and notes</h3>
+<div class="notes" id="notes" contenteditable="true" spellcheck="true" aria-label="Definitions and notes (editable)"></div>
+<div class="tools"><span class="hint">Click in the box to write · what you type is saved in this browser</span><button id="resetNotes">Reset to the default text</button></div>
+
+<!-- ===================== 2. MODEL ===================== -->
+<h2>2 · A quasi-static model: from recruited units to muscle force</h2>
+<p class="lead">From this point onwards we deliberately simplify the muscle so that its force can be written down directly. Each assumption is listed separately so it can later be checked against published research and refined.</p>
+
+<h3>Assumptions</h3>
+<ol class="asm">
+ <li><b>No viscoelastic or time-dependent behaviour.</b> We ignore force–velocity effects, stress relaxation, creep, activation and deactivation dynamics, fatigue and potentiation. The muscle is treated as quasi-static: every state is an equilibrium (isometric or very slow).
+  <span class="src">To substantiate: conditions under which a quasi-static (isometric) description is acceptable.</span></li>
+ <li><b>Two stress–strain curves only.</b> Every muscle fibre follows exactly one of two curves. An inactive fibre follows the <b>passive</b> curve <var>σ</var><sub>p</sub>(<var>ε</var>). An activated fibre follows the <b>active</b> curve <var>σ</var><sub>a</sub>(<var>ε</var>) = <var>σ</var><sub>p</sub>(<var>ε</var>) + <var>σ</var><sub>iso</sub>(<var>ε</var>), where <var>σ</var><sub>iso</sub> is the active isometric (force–length) contribution. All fibres share the same two curves.
+  <span class="src">To substantiate: passive and active force–length relations of skeletal muscle fibres.</span></li>
+ <li><b>All-or-none recruitment of motor units.</b> A motor unit is either fully off (all its fibres on <var>σ</var><sub>p</sub>) or fully on (all its fibres on <var>σ</var><sub>a</sub>, i.e. fused tetanus). Rate coding and partial (unfused) activation are not modelled.
+  <span class="src">To substantiate: link between maximal firing rate and the active curve.</span></li>
+ <li><b>Fibres are ropes (uniaxial).</b> Each fibre carries only a tensile force along its own axis (tangential to the fibre). There is no transverse normal stress, no shear stress and no bending. Fibres cannot push, so they carry no compression: stress is zero below slack length.</li>
+ <li><b>No lateral force transmission.</b> Fibres do not pass force sideways to each other or to the surrounding connective tissue; their axial forces simply add up at the tendon. The connective tissue carries no load of its own (its contribution, if any, is lumped into the passive curve).
+  <span class="src">To substantiate: size of lateral (myofascial) force transmission.</span></li>
+ <li><b>Parallel, full-length fibres with equal strain.</b> All fibres run parallel to the line of pull (pennation angle <var>θ</var> = 0) and span the muscle from tendon to tendon. They therefore all experience the same strain <var>ε</var> as the muscle. For a pennate muscle each force would be multiplied by cos <var>θ</var>.</li>
+ <li><b>Rigid tendon.</b> Series elasticity is ignored, so the muscle strain is set directly by the joint position.</li>
+ <li><b>Constant volume: the area changes with strain.</b> Muscle tissue is nearly incompressible, so a fibre that is stretched gets thinner and one that shortens gets fatter. Its current area is <var>A</var>(<var>L</var>) = <var>V</var>/<var>L</var> = <var>A</var><sub>0</sub>/(1 + <var>ε</var>). The two curves give <b>true (Cauchy) stress</b> on this current area. If the muscle's cross-section also varies along its length (e.g. a fusiform belly), the area becomes a function <var>A</var>(<var>x</var>, <var>ε</var>) of position <var>x</var> and is handled numerically, slice by slice (step 6 of the derivation).
+  <span class="src">To substantiate: incompressibility of muscle; whether published stress–strain data are nominal or true stress.</span></li>
+ <li><b>Fibre areas add up to the physiological cross-sectional area (PCSA).</b> Because the fibre forces add linearly (A4–A6), only the <i>total</i> area of a group of fibres matters. We therefore use the muscle's PCSA, the area cut perpendicular to the fibres, instead of individual fibre areas. Each motor unit owns a fraction <var>a</var><sub><var>k</var></sub> of the PCSA, and Σ<var>a</var><sub><var>k</var></sub> = 1.
+  <span class="src">To substantiate: estimating PCSA from muscle volume and fibre length; fraction of PCSA occupied by fibres.</span></li>
+ <li><b>Recruitment by the size principle.</b> The nervous system switches units on from smallest to largest, stopping at the smallest set whose force meets the required external force.
+  <span class="src">To substantiate: Henneman's size principle.</span></li>
+</ol>
+
+<h3>Derivation</h3>
+<div class="deriv">
+ <div class="st"><b class="k">1 · Force in one fibre.</b> By A4 a fibre is a rope: it carries only an axial tension, equal to its stress times its current area.
+  <div class="f"><var>F</var><sub><var>i</var></sub> = <var>σ</var>(<var>ε</var>) · <var>A</var><sub><var>i</var></sub>(<var>L</var>)</div></div>
+ <div class="st"><b class="k">2 · Equilibrium at the tendon.</b> With no shear, no transverse stress and no lateral transfer (A4, A5), and all fibres parallel to the line of pull (A6), the muscle force is just the sum of the fibre forces. Split the fibres into the activated set 𝒜 (active curve) and the inactive set ℐ (passive curve):
+  <div class="f"><var>F</var> = Σ<sub><var>i</var>∈𝒜</sub> <var>σ</var><sub>a</sub>(<var>ε</var>) · <var>A</var><sub><var>i</var></sub>(<var>L</var>) + Σ<sub><var>j</var>∈ℐ</sub> <var>σ</var><sub>p</sub>(<var>ε</var>) · <var>A</var><sub><var>j</var></sub>(<var>L</var>)</div></div>
+ <div class="st"><b class="k">3 · Equal strain.</b> All fibres have the same strain (A6) and the same two curves (A2), so the stresses come out of each sum:
+  <div class="f"><var>F</var> = <var>σ</var><sub>a</sub>(<var>ε</var>) · <var>A</var><sub>act</sub>(<var>L</var>) + <var>σ</var><sub>p</sub>(<var>ε</var>) · <var>A</var><sub>inact</sub>(<var>L</var>)</div></div>
+ <div class="st"><b class="k">4 · Area: constant volume.</b> Each fibre keeps its volume (A8): <var>A</var><sub><var>i</var></sub>(<var>L</var>) · <var>L</var> = <var>A</var><sub>0,<var>i</var></sub> · <var>L</var><sub>0</sub>, so <var>A</var><sub><var>i</var></sub>(<var>L</var>) = <var>A</var><sub>0,<var>i</var></sub>/(1 + <var>ε</var>). The resting areas add up to the resting PCSA (A9), and the recruited units own the fraction <var>f</var> = Σ<sub><var>k</var> recruited</sub> <var>a</var><sub><var>k</var></sub> of it:
+  <div class="f"><var>A</var><sub>act</sub>(<var>L</var>) = <var>f</var> · <var>PCSA</var><sub>0</sub>/(1 + <var>ε</var>),&nbsp;&nbsp; <var>A</var><sub>inact</sub>(<var>L</var>) = (1 − <var>f</var>) · <var>PCSA</var><sub>0</sub>/(1 + <var>ε</var>)</div></div>
+ <div class="st"><b class="k">5 · Muscle force.</b> Substituting, and using <var>σ</var><sub>a</sub> = <var>σ</var><sub>p</sub> + <var>σ</var><sub>iso</sub>:
+  <div class="f big"><var>F</var>(<var>f</var>, <var>ε</var>) = [<var>PCSA</var><sub>0</sub>/(1 + <var>ε</var>)] · [ <var>f</var> · <var>σ</var><sub>a</sub>(<var>ε</var>) + (1 − <var>f</var>) · <var>σ</var><sub>p</sub>(<var>ε</var>) ] = <var>A</var>(<var>L</var>) · [ <var>σ</var><sub>p</sub>(<var>ε</var>) + <var>f</var> · <var>σ</var><sub>iso</sub>(<var>ε</var>) ]</div>
+  The force is linear in the recruited fraction <var>f</var>, which is why the total PCSA is enough and individual fibre areas are not needed. If the curves are given as nominal stress (force per <i>resting</i> area), drop the factor 1/(1 + <var>ε</var>).</div>
+ <div class="st"><b class="k">6 · Area that varies along the muscle, <var>A</var>(<var>x</var>).</b> If the cross-section changes with position <var>x</var> along the muscle, the rope assumption still gives the same force at every cross-section (d<var>F</var>/d<var>x</var> = 0). The stress, and so the strain, then varies with <var>x</var>. Cut the muscle into <var>n</var> thin slices of resting length Δ<var>x</var><sub><var>m</var></sub> and solve each one numerically:
+  <div class="f"><var>F</var> = [<var>A</var><sub>0</sub>(<var>x</var><sub><var>m</var></sub>)/(1 + <var>ε</var><sub><var>m</var></sub>)] · [ <var>σ</var><sub>p</sub>(<var>ε</var><sub><var>m</var></sub>) + <var>f</var> · <var>σ</var><sub>iso</sub>(<var>ε</var><sub><var>m</var></sub>) ]&nbsp;&nbsp; for every slice <var>m</var>,&nbsp;&nbsp; Δ<var>L</var> = Σ<sub><var>m</var></sub> <var>ε</var><sub><var>m</var></sub> · Δ<var>x</var><sub><var>m</var></sub></div>
+  For a given muscle length, adjust <var>F</var> until the slice elongations add up to the imposed Δ<var>L</var>. For a uniform area this collapses back to step 5.</div>
+ <div class="st"><b class="k">7 · How the brain picks the number of units.</b> Rearranging step 5 for a required external force <var>F</var><sub>req</sub> at the current strain gives the recruited fraction needed:
+  <div class="f"><var>f</var><sub>req</sub> = [ <var>F</var><sub>req</sub> · (1 + <var>ε</var>)/<var>PCSA</var><sub>0</sub> − <var>σ</var><sub>p</sub>(<var>ε</var>) ] / <var>σ</var><sub>iso</sub>(<var>ε</var>)</div>
+  The nervous system recruits units in size order, 1, 2, 3, …, until Σ<var>a</var><sub><var>k</var></sub> ≥ <var>f</var><sub>req</sub> (A10). If <var>f</var><sub>req</sub> ≤ 0 the passive tissue alone is enough; if <var>f</var><sub>req</sub> &gt; 1 the force is beyond what the muscle can produce at this length. Small units come first, so force can be adjusted finely at low effort, and big jumps come only when high force is needed.</div>
+ <div class="where"><b>Symbols:</b> <var>F</var> force on the tendon (N) · <var>ε</var> = (<var>L</var> − <var>L</var><sub>0</sub>)/<var>L</var><sub>0</sub> muscle (= fibre) strain, <var>L</var><sub>0</sub> optimal length · <var>σ</var><sub>p</sub>, <var>σ</var><sub>a</sub> passive and active true stress (kPa), <var>σ</var><sub>iso</sub> = <var>σ</var><sub>a</sub> − <var>σ</var><sub>p</sub> · <var>PCSA</var><sub>0</sub> resting physiological cross-sectional area · <var>A</var>(<var>L</var>) = <var>PCSA</var><sub>0</sub>/(1 + <var>ε</var>) current area · <var>a</var><sub><var>k</var></sub> share of the PCSA owned by motor unit <var>k</var> · <var>f</var> recruited fraction.</div>
+</div>
+<div class="warn"><b>What this model leaves out (on purpose):</b> twitch dynamics and temporal summation (see the Temporal summation page), rate coding, force–velocity, fatigue, pennation, tendon stretch and lateral force transmission. These can be added back once the base model is checked against data.</div>
+
+<!-- ===================== 3. TRY IT ===================== -->
+<h2>3 · Try it: recruiting motor units to meet a required force</h2>
+<div class="card ctlbar">
+ <label><span>Strain <var>ε</var></span><input type="range" id="eps" min="-0.3" max="0.45" step="0.01" value="0"><b id="epsv"></b></label>
+ <label><span>Required <var>F</var><sub>req</sub></span><input type="range" id="freq" min="0" max="520" step="1" value="150"><b id="freqv"></b></label>
+ <label><span><var>PCSA</var><sub>0</sub></span><input type="range" id="pcsa" min="5" max="40" step="1" value="20"><b id="pcsav"></b></label>
+ <label><span>Area</span><select id="amod"><option value="v" selected>constant volume A = PCSA₀/(1+ε)</option><option value="n">constant area A = PCSA₀</option></select><b id="av"></b></label>
+ <div class="res"><span>units recruited <b id="nu"></b></span><span>recruited fraction <var>f</var> <b id="ff"></b></span><span>muscle force <var>F</var> <b id="fo"></b></span><span id="live"></span></div>
+</div>
+<div class="dash">
+ <div class="card p" id="xsC"><div class="gt">Angled cross-section: fibres of recruited units light up (size order)</div><svg class="g" id="xs" viewBox="0 0 520 420" role="img" aria-label="Angled view of the muscle cross-section with recruited fibres coloured by motor unit"></svg></div>
+ <div class="card p" id="gpC"><div class="gt">Inactivated fibres: passive curve <var>σ</var><sub>p</sub>(<var>ε</var>)</div><svg class="g" id="gp" viewBox="0 0 380 270" role="img" aria-label="Passive stress-strain curve"></svg></div>
+ <div class="card p" id="gaC"><div class="gt">Activated fibres: active curve <var>σ</var><sub>a</sub>(<var>ε</var>)</div><svg class="g" id="ga" viewBox="0 0 380 270" role="img" aria-label="Active stress-strain curve"></svg></div>
+ <div class="card p" id="gbC"><div class="gt">Both, plus the muscle average for the recruited fraction <var>f</var></div><svg class="g" id="gb" viewBox="0 0 380 270" role="img" aria-label="Passive, active and average stress-strain curves"></svg></div>
+ <div class="card p" id="stC"><div class="gt">Force vs number of units recruited</div><svg class="g" id="steps" viewBox="0 0 440 260" role="img" aria-label="Force versus number of recruited motor units"></svg></div>
+</div>
+<p class="foot">Illustrative numbers, to be replaced by values from the literature: active isometric stress peaks at 225 kPa (22.5 N/cm²) at <var>ε</var> = 0 with a bell-shaped force–length curve; passive stress rises exponentially above <var>ε</var> = 0 and is zero below slack. The muscle has 10 motor units whose share of the PCSA grows geometrically (about 30× from smallest to largest). Fibres of each unit are scattered through the cross-section.</p>
+</div>
+<script>
+/* ============ 1. motor unit diagram: angled section of a muscle, with its motor neurons ============ */
+const A='#0e8f80',Bc='#d9822b';
+let h='';
+// geometry of the muscle: front cut face (rotated ellipse) and the belly running back along AX
+const FC=[545,345],RX=135,RY=168,ROT=-12*Math.PI/180,AX=[470,-85],cR=Math.cos(ROT),sR=Math.sin(ROT);
+const loc=(u,w)=>[FC[0]+u*cR-w*sR,FC[1]+u*sR+w*cR],rimP=(t,k=1)=>loc(RX*k*Math.cos(t),RY*k*Math.sin(t));
+const hull=P=>{P=P.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]),lo=[],up=[];
+ for(const p of P){while(lo.length>1&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p)}
+ for(const p of P.slice().reverse()){while(up.length>1&&cr(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p)}lo.pop();up.pop();return lo.concat(up)};
+const RIM=[...Array(90)].map((_,i)=>rimP(i/90*2*Math.PI));
+const HULL=hull(RIM.concat(RIM.map(p=>[p[0]+AX[0],p[1]+AX[1]])));
+const UPV=(()=>{const l=Math.hypot(AX[0],AX[1]);return[AX[1]/l,-AX[0]/l]})(),updot=p=>(p[0]-FC[0])*UPV[0]+(p[1]-FC[1])*UPV[1];
+let rs=11;const rnd=()=>(rs=(rs*16807)%2147483647)/2147483647;
+const own2=()=>{const r=rnd();return r<.1?'A':r<.16?'B':'o'};
+const COL={A:['#9fe0d6',A],B:['#f8d2a8',Bc],o:['#efc4c4','#c48d8d']};
+const pts=a=>a.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join('L');
+// muscle belly with its epimysium
+h+=`<path d="M${pts(HULL)}Z" fill="#e3a7a2" stroke="#b98d75" stroke-width="5"/>`;
+// fibres running the full length on the visible upper surface
+let streakA=null;
+for(let i=0;i<54;i++){const t=i/54*2*Math.PI,p=rimP(t,.95);if(updot(p)<=8)continue;
+ const u=own2(),c=u=='o'?'#c27373':COL[u][1];if(u=='A'&&!streakA)streakA=p;
+ h+=`<path d="M${p[0].toFixed(1)},${p[1].toFixed(1)}l${(AX[0]*.96).toFixed(1)},${(AX[1]*.96).toFixed(1)}" stroke="${c}" stroke-width="${u=='o'?1.4:2.8}"/>`}
+// front cut face: fascicles (perimysium) packed with fibres (each wrapped in endomysium)
+h+=`<ellipse cx="${FC[0]}" cy="${FC[1]}" rx="${RX}" ry="${RY}" transform="rotate(-12 ${FC[0]} ${FC[1]})" fill="#f7e4d6" stroke="#b98d75" stroke-width="5"/>`;
+const FAS=[];for(let j=-4;j<=4;j++)for(let i=-4;i<=4;i++){const u=60*(i+(j&1)/2),w=52*j;if((u/(RX-28))**2+(w/(RY-28))**2<1)FAS.push(loc(u,w))}
+const FIBA=[],FIBB=[],FIBO=[];
+FAS.forEach(c=>{h+=`<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="27" fill="#f1caca" stroke="#c9a98f" stroke-width="2.6"/>`;
+ for(let b=-2;b<=2;b++)for(let a=-2;a<=2;a++){const dx=10.6*(a+b/2),dy=9.2*b;if(Math.hypot(dx,dy)>20.5)continue;const u=own2(),q=[c[0]+dx,c[1]+dy];
+  (u=='A'?FIBA:u=='B'?FIBB:FIBO).push(q);
+  h+=`<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="4.5" fill="${COL[u][0]}" stroke="${COL[u][1]}" stroke-width="1.1"/>`}});
+// spinal cord cross-section with the two motor neurons in the ventral horn
+h+=`<ellipse cx="125" cy="150" rx="102" ry="80" fill="#fbf4ea" stroke="#a49a8c" stroke-width="2.2"/>`;
+h+=`<path transform="translate(125 150) scale(.62) translate(-190 -262)" d="M108,196 C132,166 170,186 190,214 C210,186 248,166 272,196 C288,222 252,240 246,262 C268,292 280,334 248,348 C222,358 206,322 190,300 C174,322 158,358 132,348 C100,334 112,292 134,262 C128,240 92,222 108,196Z" fill="#eadfd2" stroke="#b5a593" stroke-width="3"/>`;
+h+=`<circle cx="125" cy="145" r="3.5" fill="#fff" stroke="#999" stroke-width="1.5"/>`;
+const soma=(x,y,r,col,fill)=>{let s='';[[-1.1,-1.2],[-1.6,.2],[-.6,1.3],[.4,-1.5]].forEach(([dx,dy])=>s+=`<path d="M${x},${y}l${dx*r*1.9},${dy*r*1.9}m0,0l${dx*r*.7-dy*r*.4},${dy*r*.7+dx*r*.4}" stroke="${col}" stroke-width="1.8" fill="none"/>`);
+ return s+`<path d="M${x-r},${y} L${x-r*.4},${y-r*1.1} L${x+r*.7},${y-r*.9} L${x+r*1.1},${y+r*.2} L${x+r*.3},${y+r} L${x-r*.8},${y+r*.7}Z" fill="${fill}" stroke="${col}" stroke-width="2"/><circle cx="${x}" cy="${y}" r="${(r*.38).toFixed(1)}" fill="#fff" stroke="${col}" stroke-width="1.5"/>`};
+const SA=[160,190],SB=[137,181];
+h+=soma(SB[0],SB[1],7,Bc,'#f8d2a8')+soma(SA[0],SA[1],11,A,'#9fe0d6');
+// motor nerve: both axons leave the cord, run in one nerve and enter the muscle (NE), then branch to their own fibres
+const TOP=RIM.reduce((b,p)=>updot(p)>updot(b)?p:b,RIM[0]),NE=[TOP[0]+AX[0]*.2,TOP[1]+AX[1]*.2+4];
+const bz=(p0,c1,c2,p3,t)=>[0,1].map(i=>(1-t)**3*p0[i]+3*(1-t)**2*t*c1[i]+3*(1-t)*t*t*c2[i]+t**3*p3[i]);
+const NV=[[170,198],[270,300],[390,70],NE];
+h+=`<path d="M${NV[0]} C${NV[1]} ${NV[2]} ${NV[3]}" fill="none" stroke="#efe3cf" stroke-width="18" stroke-linecap="round"/><path d="M${NV[0]} C${NV[1]} ${NV[2]} ${NV[3]}" fill="none" stroke="#c8b596" stroke-width="1.2" stroke-dasharray="1 0"/>`;
+h+=`<path d="M${SB[0]+4},${SB[1]+4} C262,306 384,78 ${NE[0]+5},${NE[1]+3}" fill="none" stroke="${Bc}" stroke-width="2.4"/>`;
+h+=`<path d="M${SA[0]+6},${SA[1]+6} C${NV[1]} ${NV[2]} ${NE}" fill="none" stroke="${A}" stroke-width="3.6"/>`;
+for(let t=.14;t<.9;t+=.085){const p=bz([SA[0]+6,SA[1]+6],NV[1],NV[2],NE,t),q=bz([SA[0]+6,SA[1]+6],NV[1],NV[2],NE,t+.01),ang=Math.atan2(q[1]-p[1],q[0]-p[0])*180/Math.PI;
+ h+=`<rect x="${(p[0]-11).toFixed(1)}" y="${(p[1]-4.5).toFixed(1)}" width="22" height="9" rx="4.5" fill="#1b1b1b" transform="rotate(${ang.toFixed(1)} ${p[0].toFixed(1)} ${p[1].toFixed(1)})"/>`}
+// inside the muscle each axon branches to every fibre of its own unit; the dark dot on each fibre is its neuromuscular junction
+const pickA=FIBA.filter((_,i)=>i%2==0).slice(0,9),pickB=FIBB.filter((_,i)=>i%2==0).slice(0,4);
+pickB.forEach(q=>h+=`<path d="M${NE[0]+5},${NE[1]+3} Q${((NE[0]+q[0])/2+20).toFixed(1)},${((NE[1]+q[1])/2-10).toFixed(1)} ${q[0].toFixed(1)},${q[1].toFixed(1)}" fill="none" stroke="${Bc}" stroke-width="1.5" stroke-dasharray="4 3"/><circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="2.4" fill="#5a3200"/>`);
+pickA.forEach(q=>h+=`<path d="M${NE[0]},${NE[1]} Q${((NE[0]+q[0])/2).toFixed(1)},${((NE[1]+q[1])/2-14).toFixed(1)} ${q[0].toFixed(1)},${q[1].toFixed(1)}" fill="none" stroke="${A}" stroke-width="1.7" stroke-dasharray="4 3"/><circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="2.4" fill="#063f38"/>`);
+h+=`<circle cx="${NE[0]}" cy="${NE[1]}" r="5" fill="${A}" stroke="#fff" stroke-width="1.5"/>`;
+// labels: text + leader line + dot on the part
+const lab=(t,tx,ty,p,anc='start')=>{const lx=anc=='start'?tx-6:anc=='end'?tx+6:tx;
+ h+=`<path d="M${lx},${ty-5}L${p[0].toFixed(1)},${p[1].toFixed(1)}" stroke="#777" stroke-width="1.2" fill="none"/><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="#fff" stroke="#333" stroke-width="1.4"/><text x="${tx}" y="${ty}" text-anchor="${anc}">${t}</text>`};
+const far=(arr,fx,fy)=>arr.reduce((b,q)=>q[0]*fx+q[1]*fy>b[0]*fx+b[1]*fy?q:b,arr[0]);
+const BOT=RIM.reduce((b,p)=>updot(p)<updot(b)?p:b,RIM[0]),fasL=far(FAS,-1,.2),fasLo=far(FAS,-.4,1);
+lab('<tspan font-weight="700">Spinal cord</tspan> (ventral horn)',20,268,[92,206]);
+lab('<tspan font-weight="700" fill="#0e8f80">Motor neuron A</tspan>: cell body (soma)',20,296,SA);
+lab('<tspan font-weight="700" fill="#b0600f">Motor neuron B</tspan>: a smaller motor neuron',20,324,SB);
+lab('<tspan font-weight="700">Axon</tspan> (myelinated) in the motor nerve',300,34,bz([SA[0]+6,SA[1]+6],NV[1],NV[2],NE,.62));
+lab('Nerve enters the muscle and <tspan font-weight="700">branches</tspan> to every fibre of its unit',640,26,NE);
+lab('<tspan font-weight="700">Fascicle</tspan> (wrapped in perimysium)',20,400,[fasL[0]-27,fasL[1]]);
+lab('<tspan font-weight="700">Muscle fibre</tspan> (each wrapped in endomysium)',20,436,FIBO.reduce((b,q)=>q[0]<b[0]?q:b,FIBO[0]));
+lab('<tspan font-weight="700">Neuromuscular junction</tspan> (one per fibre)',20,472,pickA.reduce((b,q)=>q[1]>b[1]?q:b,pickA[0]));
+lab('<tspan font-weight="700" fill="#0e8f80">Fibres of motor unit A</tspan>: scattered over many fascicles',20,508,far(FIBA,-.3,1));
+lab('<tspan font-weight="700" fill="#b0600f">Fibres of motor unit B</tspan>',20,544,far(FIBB,-.5,1));
+lab('<tspan font-weight="700">Whole muscle</tspan> (epimysium around the outside)',1185,548,[BOT[0]+AX[0]*.62,BOT[1]+AX[1]*.62],'end');
+lab('Each fibre runs the <tspan font-weight="700">full length</tspan> of the muscle',1185,62,streakA?[streakA[0]+AX[0]*.8,streakA[1]+AX[1]*.8]:TOP,'end');
+lab('<tspan font-weight="700">Motor unit A</tspan> = neuron A + all of its fibres',1185,580,far(FIBA,1,.4),'end');
+document.getElementById('mu').innerHTML=h;
+
+/* ============ definitions and notes (one free-text area, saved in this browser) ============ */
+{const KEY='mu-notes-v1',DEF='Motor unit: one motor neuron together with all of the muscle fibres it innervates. It is the smallest unit of force that the nervous system can switch on: when the neuron fires, every one of its fibres contracts together (all-or-none).';
+ const el=document.getElementById('notes');let s=null;try{s=localStorage.getItem(KEY)}catch(e){}
+ el.textContent=s!=null&&s.trim()?s:DEF;
+ el.addEventListener('input',()=>{try{localStorage.setItem(KEY,el.innerText)}catch(e){}});
+ document.getElementById('resetNotes').onclick=()=>{if(!confirm('Replace your notes with the default text?'))return;el.textContent=DEF;try{localStorage.setItem(KEY,DEF)}catch(e){}}}
+
+/* ============ 3. recruitment calculator ============ */
+const SMAX=225,W0=.35,KP=3.1,E0=.12;                                  // kPa; illustrative
+const sIso=e=>SMAX*Math.exp(-((e/W0)**2)),sP=e=>e>0?KP*(Math.exp(e/E0)-1):0,sA=e=>sP(e)+sIso(e);
+const NU=10,RAT=1.45,raw=[...Array(NU)].map((_,k)=>Math.pow(RAT,k)),tot=raw.reduce((a,b)=>a+b,0),ak=raw.map(v=>v/tot);
+const cum=ak.reduce((o,v,k)=>(o.push((o[k-1]||0)+v),o),[]);
+const HUE=k=>`hsl(${(170+k*29)%360} 62% ${46+(k%2)*6}%)`;
+// fibres packed in a circular cross-section, each assigned to a motor unit (scattered), counts ∝ a_k
+const FIB=[],RC=200;{const sp=13.5;for(let j=-16;j<=16;j++)for(let i=-16;i<=16;i++){const x=sp*(i+j/2),y=sp*j*.866;if(Math.hypot(x,y)<RC-8)FIB.push({x,y})}}
+{let r=7;const rn=()=>(r=(r*16807)%2147483647)/2147483647;const lab=[];ak.forEach((a,k)=>{const n=Math.round(a*FIB.length);for(let q=0;q<n;q++)lab.push(k)});
+ while(lab.length<FIB.length)lab.push(NU-1);lab.length=FIB.length;for(let i=lab.length-1;i>0;i--){const j=Math.floor(rn()*(i+1));[lab[i],lab[j]]=[lab[j],lab[i]]}FIB.forEach((f,i)=>f.u=lab[i])}
+const $=id=>document.getElementById(id),eps=$('eps'),freq=$('freq'),pcsa=$('pcsa'),amod=$('amod');
+function calc(){
+ const e=+eps.value,Fr=+freq.value,P0=+pcsa.value,vol=amod.value=='v',Aeff=P0*(vol?1/(1+e):1);   // cm²
+ const sp=sP(e),si=sIso(e),N=1e3*1e-4;                                                          // kPa·cm² → N
+ const Fk=k=>Aeff*N*(sp+(k?cum[k-1]:0)*si);
+ const fr=(Fr/(Aeff*N)-sp)/si;let k=0;while(k<NU&&Fk(k)<Fr)k++;
+ const f=k?cum[k-1]:0,F=Fk(k),over=Fk(NU)<Fr;
+ $('epsv').textContent=(e>=0?'+':'')+e.toFixed(2);$('freqv').textContent=Fr+' N';$('pcsav').textContent=P0+' cm²';$('av').textContent='A = '+Aeff.toFixed(1)+' cm²';
+ $('nu').textContent=`${k} of ${NU}`;$('ff').textContent=f.toFixed(2);$('fo').textContent=Math.round(F)+' N'+(over?' (max)':'');
+ $('live').innerHTML=`F = A·[σ<sub>p</sub> + f·σ<sub>iso</sub>] = ${vol?`(${P0} cm² / ${(1+e).toFixed(2)})`:`${P0} cm²`} × [${sp.toFixed(1)} + ${f.toFixed(2)} × ${si.toFixed(1)}] kPa = <b>${Math.round(F)} N</b>`+
+  `&nbsp;&nbsp;·&nbsp;&nbsp;f<sub>req</sub> = ${fr<=0?'≤ 0 (passive tissue is enough)':fr>1?fr.toFixed(2)+' &gt; 1 (beyond maximum at this length)':fr.toFixed(2)}`;
+ graphs(e,f);drawXS(k);drawSteps(k,Fk,Fr)}
+// ---- the three stress–strain graphs ----
+const GX0=52,GX1=368,GY0=16,GY1=214,EM=-.3,EMX=.45,SM=320,gx=v=>GX0+(v-EM)/(EMX-EM)*(GX1-GX0),gy=v=>GY1-Math.min(v,SM)/SM*(GY1-GY0);
+function axes(){let s='';for(const v of[0,100,200,300])s+=`<path d="M${GX0},${gy(v)}H${GX1}" stroke="#eee"/><text x="${GX0-6}" y="${gy(v)+4}" text-anchor="end" font-size="11" fill="#666">${v}</text>`;
+ for(const v of[-.3,-.15,0,.15,.3,.45])s+=`<path d="M${gx(v)},${GY1}v5" stroke="#555"/><text x="${gx(v)}" y="${GY1+17}" text-anchor="middle" font-size="11" fill="#666">${v}</text>`;
+ return s+`<path d="M${GX0},${GY0}V${GY1}H${GX1}" fill="none" stroke="#555" stroke-width="1.3"/><text x="${(GX0+GX1)/2}" y="${GY1+40}" text-anchor="middle" font-size="12" fill="#444">strain ε  (0 = optimal length)</text><text transform="translate(14 ${(GY0+GY1)/2}) rotate(-90)" text-anchor="middle" font-size="12" fill="#444">true stress σ (kPa)</text>`}
+const curve=(fn,col,w,dash)=>{let d='';for(let q=0;q<=150;q++){const v=EM+(EMX-EM)*q/150;d+=(q?'L':'M')+gx(v).toFixed(1)+','+gy(fn(v)).toFixed(1)}return`<path d="${d}" fill="none" stroke="${col}" stroke-width="${w}"${dash?' stroke-dasharray="6 4"':''}/>`};
+const mark=(e,v,col,txt,dy=-9)=>`<path d="M${gx(e)},${GY0}V${GY1}" stroke="#777" stroke-dasharray="3 3"/><circle cx="${gx(e)}" cy="${gy(v)}" r="5.5" fill="${col}" stroke="#fff" stroke-width="1.6"/>`+(txt?`<text x="${gx(e)+(e>.2?-8:8)}" y="${gy(v)+dy}" text-anchor="${e>.2?'end':'start'}" font-size="12" font-weight="700" fill="${col}">${txt}</text>`:'');
+function graphs(e,f){
+ $('gp').innerHTML=axes()+curve(sP,'#2a5fd0',3)+mark(e,sP(e),'#2a5fd0',`σp = ${sP(e).toFixed(1)} kPa`)+
+  `<text x="${gx(-.28)}" y="${gy(290)}" font-size="11.5" fill="#2a5fd0">Inactive fibre: only the passive elastic</text><text x="${gx(-.28)}" y="${gy(290)+15}" font-size="11.5" fill="#2a5fd0">tissue resists stretch; zero below slack.</text>`;
+ $('ga').innerHTML=axes()+curve(sP,'#9db4e6',1.5,1)+curve(sIso,'#e9a596',1.8,1)+curve(sA,'#b8250f',3)+mark(e,sA(e),'#b8250f',`σa = ${sA(e).toFixed(1)} kPa`)+
+  `<text x="${gx(-.29)}" y="${gy(sIso(-.29))+18}" font-size="11" fill="#c47b6b">σiso (cross-bridges)</text><text x="${gx(.33)}" y="${gy(sP(.33))+16}" font-size="11" fill="#7d93c9">σp</text><text x="${gx(-.28)}" y="${gy(300)}" font-size="11.5" fill="#b8250f">Active fibre: σa = σp + σiso</text>`;
+ const av=v=>sP(v)+f*sIso(v);
+ $('gb').innerHTML=axes()+curve(sP,'#2a5fd0',2.6)+curve(sA,'#b8250f',2.6)+curve(av,'#6b2fa0',3,1)+mark(e,sA(e),'#b8250f','')+mark(e,sP(e),'#2a5fd0','')+mark(e,av(e),'#6b2fa0',`average = ${av(e).toFixed(1)} kPa`,14)+
+  `<g font-size="11.5" font-weight="700"><text x="${gx(-.28)}" y="${gy(300)}" fill="#b8250f">— active σa</text><text x="${gx(-.28)}" y="${gy(300)+15}" fill="#2a5fd0">— passive σp</text><text x="${gx(-.28)}" y="${gy(300)+30}" fill="#6b2fa0">- - average σp + f·σiso  (f = ${f.toFixed(2)})</text></g>`}
+// ---- angled cross-section of the muscle: recruited units' fibres light up ----
+const XC=[175,222],XA=[230,-62],xsc=.47,ysc=.76,xr=-8*Math.PI/180,cxr=Math.cos(xr),sxr=Math.sin(xr);
+const xm=(x,y)=>{const u=x*xsc,w=y*ysc;return[XC[0]+u*cxr-w*sxr,XC[1]+u*sxr+w*cxr]};
+const XRIM=[...Array(80)].map((_,i)=>{const t=i/80*2*Math.PI;return xm((RC+4)*Math.cos(t),(RC+4)*Math.sin(t))});
+const XH=hull(XRIM.concat(XRIM.map(p=>[p[0]+XA[0],p[1]+XA[1]]))),XUP=(()=>{const l=Math.hypot(XA[0],XA[1]);return[XA[1]/l,-XA[0]/l]})();
+const RIMF=FIB.filter(f=>Math.hypot(f.x,f.y)>RC-22).filter(f=>{const p=xm(f.x,f.y);return(p[0]-XC[0])*XUP[0]+(p[1]-XC[1])*XUP[1]>4});
+function drawXS(k){
+ let s=`<path d="M${XH.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join('L')}Z" fill="#e7b4a8" stroke="#c9a98f" stroke-width="5"/>`;
+ RIMF.forEach(f=>{const p=xm(f.x,f.y),on=f.u<k;s+=`<path d="M${p[0].toFixed(1)},${p[1].toFixed(1)}l${XA[0]*.97},${XA[1]*.97}" stroke="${on?HUE(f.u):'#d39b9b'}" stroke-width="${on?2.6:1.2}"/>`});
+ s+=`<path d="M${XRIM.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join('L')}Z" fill="#f6e5d8" stroke="#c9a98f" stroke-width="5"/>`;
+ FIB.forEach(f=>{const p=xm(f.x,f.y),on=f.u<k;s+=`<ellipse cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" rx="${(6.2*xsc).toFixed(2)}" ry="${(6.2*ysc).toFixed(2)}" transform="rotate(-8 ${p[0].toFixed(1)} ${p[1].toFixed(1)})" fill="${on?HUE(f.u):'#f6dede'}" stroke="${on?'#333':'#d4a9a9'}" stroke-width="${on?.8:.6}"/>`});
+ s+=`<text x="260" y="408" text-anchor="middle" font-size="13" fill="#444">${k} of ${NU} motor units recruited · coloured fibres are active (one colour per unit)</text>`;
+ $('xs').innerHTML=s}
+function drawSteps(k,Fk,Fr){const X0=52,X1=430,Y0=14,Y1=200,Fm=Math.max(Fk(NU),Fr)*1.06||1,px=i=>X0+i/NU*(X1-X0),py=v=>Y1-v/Fm*(Y1-Y0);
+ let s=`<path d="M${X0},${Y0}V${Y1}H${X1}" fill="none" stroke="#555" stroke-width="1.3"/>`;
+ for(let i=0;i<=NU;i++)s+=`<text x="${px(i)}" y="${Y1+16}" text-anchor="middle" font-size="11" fill="#666">${i}</text>`;
+ for(const v of[0,.25,.5,.75,1].map(q=>q*Fm/1.06))s+=`<text x="${X0-6}" y="${py(v)+4}" text-anchor="end" font-size="10.5" fill="#666">${Math.round(v)}</text>`;
+ let d=`M${px(0)},${py(Fk(0))}`;for(let i=1;i<=NU;i++)d+=`H${px(i)}V${py(Fk(i))}`;d+=`H${X1}`;
+ s+=`<path d="${d}" fill="none" stroke="#b8250f" stroke-width="2.6"/>`;
+ s+=`<path d="M${X0},${py(Fr)}H${X1}" stroke="#555" stroke-dasharray="5 4"/><text x="${X1-2}" y="${py(Fr)-5}" text-anchor="end" font-size="11" fill="#444">required force</text>`;
+ s+=`<circle cx="${px(k)}" cy="${py(Fk(k))}" r="6" fill="#b8250f" stroke="#fff" stroke-width="2"/>`;
+ s+=`<text x="${(X0+X1)/2}" y="${Y1+38}" text-anchor="middle" font-size="12" fill="#444">number of motor units recruited (smallest first)</text><text transform="translate(14 ${(Y0+Y1)/2}) rotate(-90)" text-anchor="middle" font-size="12" fill="#444">force (N)</text>`;
+ $('steps').innerHTML=s}
+[eps,freq,pcsa,amod].forEach(el=>el.oninput=calc);amod.onchange=calc;calc();
+</script></body></html>

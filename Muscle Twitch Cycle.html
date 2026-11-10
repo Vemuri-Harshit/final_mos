@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Muscle Twitch Cycle: interactive neuromuscular junction and sarcomere</title>
+<style>
+:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{height:100%;margin:0;background:#e6e5df}
+#s{user-select:none;-webkit-user-select:none;display:block;width:100%;height:100%;background:#fbfbf7}
+text{font-family:"Segoe Print","Bradley Hand","Marker Felt","Chalkboard SE","Comic Sans MS",cursive;font-size:16px;fill:#222}
+.b{fill:#2a5fd0}.r{fill:#d9253a}.g{fill:#1b8a5a}.p{fill:#6a3fb5}.t{fill:#0e8f80}.k{fill:#222}.pk{fill:#c02b8a}
+#vmGraph text{font-family:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif}
+.ld{stroke:#888;stroke-width:1.3;fill:none}
+#hdr{position:fixed;top:10px;left:12px;z-index:3;max-width:calc(60vw - 40px);padding:8px 16px 9px;background:rgba(255,255,255,.95);border:1.5px solid #b9b9b9;border-radius:12px;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.1);pointer-events:none}
+#hdr .h1{font-size:22px;font-weight:700;color:#1b1b1b;letter-spacing:.01em}
+#hdr .h2{font-size:13px;color:#555;margin-top:1px}
+#panel{position:fixed;top:10px;right:10px;width:min(40vw,720px);z-index:3;filter:drop-shadow(0 2px 6px rgba(0,0,0,.12))}
+#vmSvg{display:block;width:100%;height:auto}
+#tnSvg{display:block;width:100%;height:auto;margin-top:8px}
+#vmGraph2 text{font-family:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif}
+#hud .hb{font-size:12px;font-weight:700}
+#hud{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
+#hud text{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round}
+#hud .hl{font-size:15px;font-weight:600;fill:#1b1b1b}
+#hud .hc1{font-size:19px;font-weight:700;fill:#1b1b1b;stroke:none}
+#hud .hc2{font-size:15px;fill:#444;stroke:none}
+#hud .ht{font-size:14px;font-weight:700;fill:#fff;stroke:none}
+#hud .c-done{fill:#e3f3ea;stroke:#8cc9a6}#hud .c-now{fill:#262626;stroke:#ff9500;stroke-width:2}#hud .c-next{fill:#f1f1f1;stroke:#ddd}
+#hud .ct-done,#hud .ct-now,#hud .ct-next,#hud .ca{font-size:11.5px;stroke:none}#hud .ct-done{fill:#1b6b43}#hud .ct-now{fill:#fff;font-weight:700}#hud .ct-next{fill:#888}#hud .ca{fill:#999;font-size:15px}
+</style></head><body>
+<svg id="s" viewBox="0 0 1760 990" preserveAspectRatio="xMinYMin meet" role="img" aria-label="Interactive diagram of a muscle twitch: neuromuscular junction, T-tubule, sarcoplasmic reticulum and sarcomeres">
+<defs>
+<filter id="w" x="-2%" y="-2%" width="104%" height="104%"><feTurbulence type="fractalNoise" baseFrequency=".018" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="4"/></filter>
+</defs>
+<g id="art" fill="none" stroke="#222" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#w)"></g>
+</svg>
+<svg id="hud" aria-hidden="true"></svg>
+<div id="hdr"><div class="h1">Muscle Twitch Cycle</div></div>
+<div id="panel"><svg id="vmSvg" viewBox="1046 8 704 346"></svg><svg id="tnSvg" viewBox="0 0 704 200"></svg></div>
+<script>
+const T='#19b3a0',R='#d9253a',B='#2a5fd0',LB='#3b8de0',P='#6a3fb5',G='#2fae6b',PK='#d63a9a',RD='#d61f1f';
+let h='';const A=s=>h+=`<g id="${s[0]}">${s[1]}</g>`;
+const dots=[[-8,-6],[0,-11],[9,-5],[-5,3],[6,6],[0,11],[-11,8],[12,3]];
+const ves=(x,y,r=22)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="${T}" stroke-width="3"/>`+dots.map(d=>`<circle cx="${x+d[0]*r/24}" cy="${y+d[1]*r/24}" r="1.8" fill="#111" stroke="none"/>`).join('');
+const mito=(x,y)=>`<ellipse cx="${x}" cy="${y}" rx="38" ry="20" fill="#fff" stroke="#333" stroke-width="2.5"/>`+[-22,-9,4,17].map((d,i)=>`<path d="M${x+d},${y-(i%2?-18:18)}V${y+(i%2?2:-2)}" stroke="#333" stroke-width="2"/>`).join('');
+
+/* NEURON */
+let n=`<path d="M0,45H400M0,95H300"/><path d="M300,95C300,60 340,45 400,45H880C990,45 1030,120 1030,190C1030,280 990,300 930,300H390C330,300 300,240 300,95" stroke="${T}" stroke-width="5"/>`;
+n+=`<path d="M0,45H400M0,95H300" stroke="${T}" stroke-width="5"/>`;
+n+=[20,150].map(x=>`<rect x="${x}" y="32" width="110" height="13" rx="6" fill="#111"/><rect x="${x}" y="95" width="110" height="13" rx="6" fill="#111"/>`).join('');
+n+=mito(405,125)+mito(495,92);
+const pool=[[470,215],[545,150],[605,222],[700,165],[780,215],[640,108],[860,135],[940,205],[780,120]];
+n+=`<path d="M470,215L545,150L640,108L700,165L780,120L860,135M700,165L690,242M605,222L668,262M780,215L825,248" stroke="#e08a2b" stroke-width="2" stroke-dasharray="2 5"/>`;
+n+=pool.map(p=>ves(p[0],p[1])).join('');
+for(const x of[470,498])n+=`<rect x="${x-6}" y="287" width="12" height="26" rx="5" fill="#fff" stroke="${B}"/>`;
+n+=`<rect x="400" y="286" width="20" height="28" rx="3" fill="#fff" stroke="${PK}"/><path d="M404,296L416,290M404,306L416,300" stroke="${PK}" stroke-width="2"/>`;
+A(['neuron',n]);
+
+/* CLEFT */
+let c='';
+for(let x=330;x<=950;x+=62)c+=`<path d="M${x-6},352a7,7 0 1,1 7,5l-1,-5z" fill="#fde7c8" stroke="#e76f51" stroke-width="2"/>`;
+A(['cleft',c]);
+
+/* END PLATE */
+let d='M140,985V380Q140,360 180,360H330';
+for(let k=0;k<7;k++){const x=330+90*k;d+=`H${x+50}C${x+60},360 ${x+58},415 ${x+70},415C${x+82},415 ${x+80},360 ${x+90},360`}
+d+='H1118V740Q1130,758 1142,740V360H1330V985';
+let e=`<path d="${d}" stroke="${R}" stroke-width="5"/>`;
+A(['endplate',e]);
+
+/* T-TUBULE + SR */
+let sr='';
+const wav=(x0,a,ph,xe)=>{let p=`M${xe},430`;for(let y=430;y<=700;y+=5)p+=`L${x0+a*Math.sin(y/15+ph)},${y}`;return p+`L${xe},700Z`};
+sr+=`<path d="${wav(1005,18,0,1096)}" fill="#eef4ff" stroke="${LB}"/><path d="${wav(1255,18,2,1164)}" fill="#eef4ff" stroke="${LB}"/>`;
+let ls='';for(const o of[0,12]){ls+=`M160,${540+o}`;for(let x=160;x<=1005;x+=8)ls+=`L${x},${540+o+12*Math.sin(x/24)}`}
+sr+=`<path d="${ls.split('M').filter(Boolean).map(s=>'M'+s).join('')}" stroke="${LB}" stroke-width="3"/>`;
+for(const x of[240,400,560,720,880])sr+=`<path d="M${x-5},${566+12*Math.sin(x/24)}h10l-5,9z" fill="#f4a261" stroke="none"/>`;
+A(['sr',sr]);
+
+/* SARCOMERES: Z-discs + thin filaments and the thick filaments are separate groups so the timeline can slide them.
+   Myosin heads, titin, tropomyosin and troponin are drawn (and moved) by the timeline. */
+let s='';
+const rowsT=[610,690,770,850],rowsK=[650,730,810];
+const tmSides=i=>i===0?[1]:i===rowsT.length-1?[-1]:[-1,1];   // which side(s) of each thin filament face myosin
+const zdisc=z=>{let p=`M${z},575`;for(let y=590;y<=890;y+=15)p+=`L${z+(((y-590)/15)%2?7:-7)},${y}`;return`<path d="${p}" stroke="${PK}" stroke-width="5"/>`};
+const thinF=(a,b)=>{let t='';rowsT.forEach((y,i)=>{
+ t+=`<path d="M${a},${y}H${b}" stroke="#111" stroke-width="3.5"/><path d="M${a},${y}H${b}" stroke="${B}" stroke-width="2" stroke-dasharray="2 7"/>`;
+ for(let x=a+12;x<b-8;x+=24){if(i<3)t+=`<path d="M${x},${y+2}a6,7 0 0 0 12,0" stroke="${B}" stroke-width="2.5"/>`;if(i>0)t+=`<path d="M${x},${y-2}a6,7 0 0 1 12,0" stroke="${B}" stroke-width="2.5"/>`}});return t};
+s+=`<g id="sgL0">${zdisc(200)}${thinF(200,340)}</g>`;                 // left Z-disc of sarcomere 1 + its thin filaments
+s+=`<g id="sgM">${zdisc(520)}${thinF(380,520)}${thinF(520,660)}</g>`;  // shared middle Z-disc (stays put)
+s+=`<g id="sgR1">${zdisc(840)}${thinF(700,840)}</g>`;                 // right Z-disc of sarcomere 2
+for(let q=0;q<2;q++){const o=320*q,cx=360+o;let k='';
+ rowsK.forEach(y=>k+=`<rect x="${265+o}" y="${y-7}" width="190" height="14" rx="7" fill="${RD}" stroke="none"/>`);
+ k+=`<path d="M${cx},592V872" stroke="#999" stroke-width="1.5" stroke-dasharray="4 5"/>`;
+ s+=`<g id="sgK${q}">${k}</g>`}
+A(['sarcomere',s]);
+
+/* FORCE-GENERATION PARTS: stored Ca²⁺, muscle mitochondria (tropomyosin/troponin are drawn by the timeline) */
+const CA='#ffc21a',CAS='#a66a00';
+const ca=(x,y,r=3.4)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${CA}" stroke="${CAS}" stroke-width="1.3"/>`;
+let f='';
+// Ca²⁺ stored in the terminal cisternae of the SR
+const rs=rnd=>{let s=rnd;return()=>(s=(s*16807)%2147483647)/2147483647};const r1=rs(7);
+// Ca²⁺ stored in the SR: positions only; the timeline draws (and later releases) them
+const SRCA=[];for(let i=0;i<16;i++){SRCA.push([1036+r1()*48,450+r1()*230]);SRCA.push([1178+r1()*46,450+r1()*230])}
+// mitochondria in the muscle fibre (ATP for cross-bridge cycling and SERCA)
+f+=mito(935,780)+mito(935,870)+mito(700,488);
+A(['force',f]);
+document.getElementById('art').innerHTML=h;
+
+/* ================= INTERACTIVE TIMELINE: graph + slider drive a camera that follows the ions ================= */
+(()=>{
+const NS='http://www.w3.org/2000/svg',svg=document.getElementById('s'),$=id=>document.getElementById(id);
+const sm=u=>u<=0?0:u>=1?1:u*u*(3-2*u),lerp=(a,b,u)=>a+(b-a)*u,clamp01=u=>u<0?0:u>1?1:u;
+const win=(t,a,b,f=.012)=>sm((t-a)/f)*(1-sm((t-b)/f));   // 0→1 fade in at a, 1→0 fade out at b
+const T0=0,T1=12,VMAX=40,VMIN=-100,RMP=-90,NRMP=-70,THR=-55;
+
+/* ---------- membrane potentials (illustrative) ---------- */
+// muscle fibre: rest, end-plate potential, upstroke, repolarisation, after-hyperpolarisation
+function Vm(t){
+ if(t<1)return RMP;
+ if(t<1.8)return RMP+(THR-RMP)*(1-Math.exp(-(t-1)/.35))/(1-Math.exp(-.8/.35));
+ if(t<2.3){const u=(t-1.8)/.5;return THR+(30-THR)*(1-Math.pow(1-u,3))}
+ if(t<3.8)return 30-125*sm((t-2.3)/1.5);
+ return -95+5*(1-Math.exp(-(t-3.8)/.8))}
+// motor axon terminal: the action potential arrives and invades the terminal
+function Vn(t){
+ if(t<.24)return NRMP;
+ if(t<.33)return NRMP+(THR-NRMP)*(1-Math.exp(-(t-.24)/.04))/(1-Math.exp(-.09/.04));
+ if(t<.42){const u=(t-.33)/.09;return THR+(35-THR)*(1-Math.pow(1-u,3))}
+ if(t<.75)return 35-113*sm((t-.42)/.33);
+ return -78+8*(1-Math.exp(-(t-.75)/.25))}
+// story text for each moment: [heading, explanation]
+function phase(t){
+ if(t<.05)return['At rest','The inside of each cell is negative (neuron −70 mV, muscle −90 mV). Na⁺ and Ca²⁺ are concentrated outside.'];
+ if(t<.12)return['An action potential arrives','An action potential is a brief, travelling reversal of the membrane voltage: the inside flips from negative to positive.'];
+ if(t<.20)return['Node of Ranvier: Na⁺ rushes in','Voltage-gated Na⁺ channels open. Na⁺ floods in and makes the inside positive: this is the action potential.'];
+ if(t<.24)return['Saltatory conduction','The positive charge spreads inside the axon, under the insulating myelin, to the next node.'];
+ if(t<.31)return['Last node: Na⁺ rushes in again','More Na⁺ channels open, regenerating the action potential at full size.'];
+ if(t<.38)return['The action potential invades the terminal','The depolarisation spreads through the presynaptic terminal (inside turns positive).'];
+ if(t<.46)return['Ca²⁺ channels open','The depolarisation opens voltage-gated Ca²⁺ channels in the presynaptic membrane.'];
+ if(t<.58)return['Ca²⁺ rushes in','Ca²⁺ flows down its steep gradient into the terminal and binds the Ca²⁺ sensor (synaptotagmin) on docked vesicles.'];
+ if(t<.72)return['Exocytosis: ACh is released','SNARE proteins zip the vesicles into the membrane; the vesicles open and ACh spills into the cleft.'];
+ if(t<.92)return['ACh crosses the synaptic cleft','ACh diffuses about 50 nm to the end plate. Acetylcholinesterase in the cleft breaks some of it down.'];
+ if(t<1.0)return['ACh binds nicotinic receptors','Two ACh molecules bind each nicotinic receptor, which opens its cation pore.'];
+ if(t<1.8)return['Na⁺ flows into the muscle: end-plate potential','Na⁺ floods in (and a little K⁺ leaks out) through the open receptors, depolarising the muscle towards threshold.'];
+ if(t<2.2)return['Muscle action potential fires','The end-plate potential reaches threshold and opens voltage-gated Na⁺ channels; Na⁺ rushes into the muscle fibre.'];
+ if(t<2.5)return['The action potential spreads','It races along the sarcolemma in both directions, away from the end plate.'];
+ if(t<2.75)return['Down the T-tubule','T-tubules carry the action potential deep into the fibre, right next to the sarcoplasmic reticulum (SR).'];
+ if(t<3.05)return['DHPR senses the voltage','The voltage sensor (DHPR) in the T-tubule changes shape and mechanically pulls open the ryanodine receptor (RyR) on the SR.'];
+ if(t<3.9)return['Ca²⁺ is released from the SR','Ca²⁺ pours out of the SR through the open RyRs into the cytoplasm around the myofibrils.'];
+ if(t<4.55)return['Ca²⁺ diffuses to the myofilaments','Ca²⁺ released from the SR spreads through the cytoplasm to the thin (actin) filaments.'];
+ if(t<4.95)return['Ca²⁺ binds troponin','Ca²⁺ binds troponin C on the thin filaments, all along the fibre (Ca²⁺ arrives from every triad).'];
+ if(t<5.3)return['Tropomyosin moves aside','Ca²⁺-bound troponin changes shape and drags tropomyosin off the myosin-binding sites on actin.'];
+ if(t<5.41)return['A cross-bridge forms','The myosin head, already cocked and holding ADP + Pi, binds to the exposed site on actin.'];
+ if(t<5.63)return['Power stroke','Pi is released and the head swings, pulling the thin filament toward the M-line; then ADP is released.'];
+ if(t<5.74)return['ATP releases the head','A fresh ATP binds the myosin head, which lets go of actin.'];
+ if(t<6.75)return['Head re-cocks: the cycle repeats','Myosin splits ATP into ADP + Pi, which re-cocks the head so it can bind further along the actin.'];
+ if(t<9.0)return['Sliding filaments: the sarcomere shortens','Thousands of heads cycling out of step slide the thin filaments toward the M-line. Z-discs move closer and the muscle pulls.'];
+ if(t<9.65)return['SERCA pumps Ca²⁺ back into the SR','With no new impulse, SERCA pumps (using ATP) move Ca²⁺ from the cytoplasm back into the SR.'];
+ if(t<10.05)return['Tropomyosin blocks actin again','Ca²⁺ leaves troponin; tropomyosin slides back over the binding sites, so heads can no longer attach.'];
+ if(t<11.6)return['Relaxation','Heads stay detached (cocked, ready). Titin and the fibre’s elasticity return the sarcomere to its resting length.'];
+ return['Back at rest','Everything is reset and ready for the next nerve impulse.']}
+// cause → effect chain shown in the caption (start time, short label)
+const CHAIN=[[.05,'AP travels down axon'],[.12,'AP opens Na⁺ gates'],[.37,'AP opens Ca²⁺ gates'],[.46,'Ca²⁺ triggers ACh release'],[.72,'ACh crosses cleft'],
+ [.95,'ACh opens muscle gates'],[1.0,'Na⁺ in: end-plate potential'],[1.8,'Na⁺ gates: muscle AP'],[2.2,'AP down T-tubule'],[2.75,'DHPR pulls RyR open'],[3.05,'Ca²⁺ out of SR'],
+ [4.55,'Ca²⁺ binds troponin'],[4.95,'Tropomyosin moves aside'],[5.3,'Cross-bridges form'],[5.41,'Power stroke'],[5.63,'ATP: detach & re-cock'],[6.75,'Sarcomere shortens'],[9.0,'SERCA pumps Ca²⁺ back'],[10.05,'Relaxation']];
+const wrap=(s,n)=>{const out=[];let line='';for(const w of s.split(' ')){if(line&&(line+' '+w).length>n){out.push(line);line=w}else line=line?line+' '+w:w}if(line)out.push(line);return out};
+
+/* ---------- slider → time warp: slow where things happen, fast after hyperpolarisation ---------- */
+function dens(t){if(t<.05)return 6;if(t<1)return 16;if(t<3.9)return 3;if(t>=5.25&&t<6.75){const f=((t-5.3)/.72)%1;return t>=5.3&&f>=.45?2.5:10}if(t<6.75)return 7;if(t<11.9)return 2.5;return 1}
+const WT=[],WS=[];{let s=0;for(let i=0;i<=T1/.002+.5;i++){const t=i*.002;WT.push(t);WS.push(s);s+=dens(t)*.002}}
+const SMAX=8000,STOT=WS[WS.length-1];
+function s2t(v){const g=v/SMAX*STOT;let lo=0,hi=WS.length-1;while(hi-lo>1){const m=(lo+hi)>>1;if(WS[m]<=g)lo=m;else hi=m}
+ return lerp(WT[lo],WT[hi],(g-WS[lo])/((WS[hi]-WS[lo])||1))}
+
+/* ---------- graph panel (fixed overlay, does not zoom with the diagram) ---------- */
+const X0=1122,X1=1500,Y0=66,Y1=262,SX0=1068,SX1=1728,PX=1046,PY=8,PW=704,PH=346,IX=1526;
+const px=t=>X0+(t-T0)/(T1-T0)*(X1-X0),py=v=>Y0+(VMAX-v)/(VMAX-VMIN)*(Y1-Y0);
+const mv=v=>(v<0?'−':v>0?'+':'')+Math.abs(Math.round(v));
+const ptsM=[],ptsN=[];for(let t=T0;t<=T1+1e-9;t+=.005){ptsM.push([t,Vm(t)]);ptsN.push([t,Vn(t)])}
+const path=a=>a.map((p,i)=>(i?'L':'M')+px(p[0]).toFixed(1)+','+py(p[1]).toFixed(1)).join('');
+const upTo=(a,t,f)=>path(a.filter(p=>p[0]<=t+1e-9).concat([[t,f(t)]]));
+const NC='#0e8f80',MC='#d9253a';
+let g=`<rect x="${PX}" y="${PY}" width="${PW}" height="${PH}" rx="12" fill="#fff" stroke="#b9b9b9" stroke-width="1.5"/>`;
+g+=`<text x="${PX+20}" y="${PY+32}" style="font-size:21px;font-weight:600">Membrane potential</text>`;
+g+=`<text x="${PX+222}" y="${PY+32}" style="font-size:14px;fill:${NC};font-weight:600">● axon terminal</text><text x="${PX+340}" y="${PY+32}" style="font-size:14px;fill:${MC};font-weight:600">● muscle fibre</text>`;
+for(const v of[40,20,0,-20,-40,-60,-80,-100]){g+=`<path d="M${X0},${py(v)}H${X1}" stroke="#eee" stroke-width="1"/><text x="${X0-8}" y="${py(v)+5}" text-anchor="end" style="font-size:14px">${mv(v)}</text>`}
+for(let t=0;t<=T1;t++)g+=`<path d="M${px(t)},${Y1}v${t%2?4:7}" stroke="#555"/>`+(t%2?'':`<text x="${px(t)}" y="${Y1+24}" text-anchor="middle" style="font-size:14px">${t}</text>`);
+g+=`<path d="M${X0},${Y0}V${Y1}H${X1}" fill="none" stroke="#555" stroke-width="1.5"/>`;
+g+=`<path d="M${X0},${py(RMP)}H${X1}" stroke="${MC}" stroke-opacity=".6" stroke-width="1.3" stroke-dasharray="6 4"/><text x="${X1-4}" y="${py(RMP)-6}" text-anchor="end" style="font-size:13px;fill:${MC}">muscle rest −90</text>`;
+g+=`<path d="M${X0},${py(NRMP)}H${X1}" stroke="${NC}" stroke-opacity=".6" stroke-width="1.3" stroke-dasharray="6 4"/><text x="${X1-4}" y="${py(NRMP)-6}" text-anchor="end" style="font-size:13px;fill:${NC}">neuron rest −70</text>`;
+g+=`<path d="M${X0},${py(THR)}H${X1}" stroke="#1b8a5a" stroke-width="1.3" stroke-dasharray="2 4"/><text x="${X1-4}" y="${py(THR)-6}" text-anchor="end" style="font-size:13px;fill:#1b8a5a">threshold −55</text>`;
+g+=`<text x="${(X0+X1)/2}" y="${Y1+44}" text-anchor="middle" style="font-size:15px">time (ms)</text>`;
+g+=`<text transform="translate(${PX+22} ${(Y0+Y1)/2}) rotate(-90)" text-anchor="middle" style="font-size:15px">membrane potential (mV)</text>`;
+g+=`<path d="${path(ptsM)}" fill="none" stroke="#f1c4c8" stroke-width="2" stroke-dasharray="3 4"/><path d="${path(ptsN)}" fill="none" stroke="#b5ddd7" stroke-width="2" stroke-dasharray="3 4"/>`;
+// name the two spikes on the graph: these are the action potentials
+g+=`<path d="M${px(.6)},${py(30)}L${px(.44)+2},${py(33)}" stroke="${NC}" stroke-width="1.2"/><text x="${px(.6)+3}" y="${py(30)+4}" style="font-size:12.5px;font-weight:600;fill:${NC}">nerve action potential</text>`;
+g+=`<path d="M${px(3.4)},${py(-2)}L${px(2.5)+2},${py(20)}" stroke="${MC}" stroke-width="1.2"/><text x="${px(3.4)+3}" y="${py(-2)+4}" style="font-size:12.5px;font-weight:600;fill:${MC}">muscle action potential</text>`;
+// muscle force (relative units, own scale): rises after the action potential, falls during relaxation
+// muscle tension (relative): rises after the muscle action potential, falls during relaxation (plotted in its own panel)
+const Fm=t=>sm((t-5.35)/2.6)*(1-sm((t-9.7)/1.9));
+g+=`<path id="vmTraceN" fill="none" stroke="${NC}" stroke-width="3" stroke-linejoin="round"/><path id="vmTrace" fill="none" stroke="${MC}" stroke-width="3.5" stroke-linejoin="round"/>`;
+g+=`<path id="vmCursor" stroke="#888" stroke-width="1" stroke-dasharray="3 3"/><circle id="vmDotN" r="5.5" fill="${NC}" stroke="#fff" stroke-width="2"/><circle id="vmDot" r="6.5" fill="${MC}" stroke="#fff" stroke-width="2"/>`;
+g+=`<path d="M${IX-10},${Y0-6}V${Y1+10}" stroke="#e3e3e3" stroke-width="1.5"/>`;
+g+=`<text x="${IX}" y="${Y0+6}" style="font-size:12px;fill:#666;letter-spacing:.05em">TIME</text><text id="vmT" x="${IX}" y="${Y0+33}" style="font-size:25px;font-weight:600"></text>`;
+g+=`<text x="${IX}" y="${Y0+58}" style="font-size:12px;fill:#666;letter-spacing:.05em">AXON TERMINAL</text><text id="vmVN" x="${IX}" y="${Y0+84}" style="font-size:23px;font-weight:600;fill:${NC}"></text>`;
+g+=`<text x="${IX}" y="${Y0+108}" style="font-size:12px;fill:#666;letter-spacing:.05em">MUSCLE FIBRE</text><text id="vmV" x="${IX}" y="${Y0+134}" style="font-size:23px;font-weight:600;fill:${MC}"></text>`;
+g+=`<text x="${IX}" y="${Y0+158}" style="font-size:12px;fill:#666;letter-spacing:.05em">WHAT IS HAPPENING</text>`;
+g+=`<text id="vmP0" x="${IX}" y="${Y0+178}" style="font-size:14px;font-weight:600"></text>`+[0,1,2].map(i=>`<text id="vmQ${i}" x="${IX}" y="${Y0+195+i*15}" style="font-size:12px;fill:#444"></text>`).join('');
+g+=`<text x="${SX0}" y="${PY+PH-8}" style="font-size:12px;fill:#666">start</text><text x="${SX1}" y="${PY+PH-8}" text-anchor="end" style="font-size:12px;fill:#666">${T1} ms</text><text x="${(SX0+SX1)/2}" y="${PY+PH-8}" text-anchor="middle" style="font-size:12px;fill:#666">drag to move through time (slows down where the action is)</text>`;
+const gsv=$('vmSvg'),grp=document.createElementNS(NS,'g');grp.setAttribute('id','vmGraph');grp.innerHTML=g;gsv.appendChild(grp);
+const fo=document.createElementNS(NS,'foreignObject');
+fo.setAttribute('x',SX0-6);fo.setAttribute('y',Y1+52);fo.setAttribute('width',SX1-SX0+12);fo.setAttribute('height',30);
+const sl=document.createElement('input');
+Object.assign(sl,{type:'range',min:0,max:SMAX,step:'any',value:0});sl.setAttribute('aria-label','time');
+sl.style.cssText='width:100%;margin:6px 0 0;accent-color:#d9253a;cursor:pointer';
+fo.appendChild(sl);grp.appendChild(fo);
+
+/* ---------- tension graph: a separate panel under the membrane-potential graph, same time axis ---------- */
+const TX0=X0-PX,TX1=X1-PX,TY0=50,TY1=150,TIX=IX-PX,TC='#b8650a';
+const tpx=t=>TX0+(t-T0)/(T1-T0)*(TX1-TX0),tpy=f=>TY1-f*(TY1-TY0);
+const ptsT=[];for(let t=T0;t<=T1+1e-9;t+=.02)ptsT.push([t,Fm(t)]);
+const pathT=a=>a.map((p,i)=>(i?'L':'M')+tpx(p[0]).toFixed(1)+','+tpy(p[1]).toFixed(1)).join('');
+let tg=`<rect x="1" y="1" width="702" height="198" rx="12" fill="#fff" stroke="#b9b9b9" stroke-width="1.5"/>`;
+tg+=`<text x="20" y="31" style="font-size:20px;font-weight:600">Muscle tension</text><text x="178" y="31" style="font-size:13px;fill:#777">relative · mechanical events compressed in time</text>`;
+[[1.8,5.35,'latent period','#f1f1f1'],[5.35,9.0,'contraction','#fdeedd'],[9.0,11.6,'relaxation','#e6f1fa']].forEach(([a,b,l,c])=>
+ tg+=`<rect x="${tpx(a)}" y="${TY0}" width="${tpx(b)-tpx(a)}" height="${TY1-TY0}" fill="${c}"/><text x="${(tpx(a)+tpx(b))/2}" y="${TY0+14}" text-anchor="middle" style="font-size:11.5px;fill:#777">${l}</text>`);
+for(const f of[0,.5,1])tg+=`<path d="M${TX0},${tpy(f)}H${TX1}" stroke="#e6e6e6"/><text x="${TX0-8}" y="${tpy(f)+5}" text-anchor="end" style="font-size:13px">${f*100}%</text>`;
+for(let t=0;t<=T1;t++)tg+=`<path d="M${tpx(t)},${TY1}v${t%2?4:7}" stroke="#555"/>`+(t%2?'':`<text x="${tpx(t)}" y="${TY1+22}" text-anchor="middle" style="font-size:13px">${t}</text>`);
+tg+=`<path d="M${TX0},${TY0}V${TY1}H${TX1}" fill="none" stroke="#555" stroke-width="1.5"/><text x="${(TX0+TX1)/2}" y="${TY1+42}" text-anchor="middle" style="font-size:14px">time (ms)</text>`;
+tg+=`<text transform="translate(24 ${(TY0+TY1)/2}) rotate(-90)" text-anchor="middle" style="font-size:14px">tension</text>`;
+tg+=`<path d="${pathT(ptsT)}" fill="none" stroke="#efcfa8" stroke-width="2" stroke-dasharray="3 4"/><path id="tnTrace" fill="none" stroke="${TC}" stroke-width="3.5" stroke-linejoin="round"/>`;
+tg+=`<path id="tnCursor" stroke="#888" stroke-width="1" stroke-dasharray="3 3"/><circle id="tnDot" r="6" fill="${TC}" stroke="#fff" stroke-width="2"/>`;
+tg+=`<path d="M${TIX-10},${TY0-6}V${TY1+10}" stroke="#e3e3e3" stroke-width="1.5"/>`;
+[['TENSION','tnV',TC],['SARCOMERE LENGTH','tnS','#333'],['I BAND  ·  H ZONE','tnI','#2a5fd0']].forEach(([l,id,c],i)=>
+ tg+=`<text x="${TIX}" y="${TY0+2+i*50}" style="font-size:12px;fill:#666;letter-spacing:.05em">${l}</text><text id="${id}" x="${TIX}" y="${TY0+27+i*50}" style="font-size:21px;font-weight:600;fill:${c}"></text>`);
+const tsv=$('tnSvg'),tgrp=document.createElementNS(NS,'g');tgrp.setAttribute('id','vmGraph2');tgrp.innerHTML=tg;tsv.appendChild(tgrp);
+function drawTension(t){const x=tpx(t),f=Fm(t),c=contr(t);
+ $('tnTrace').setAttribute('d',pathT(ptsT.filter(p=>p[0]<=t+1e-9).concat([[t,f]])));
+ $('tnCursor').setAttribute('d',`M${x},${TY0}V${TY1}`);$('tnDot').setAttribute('cx',x);$('tnDot').setAttribute('cy',tpy(f));
+ $('tnV').textContent=`${Math.round(f*100)}% of max`;$('tnS').textContent=`${Math.round((320-c)/320*100)}% of rest`;
+ $('tnI').textContent=`${Math.round((130-c)/130*100)}%  ·  ${Math.round(Math.max(0,40-c)/40*100)}%`}
+function drawGraph(t){const x=px(t),ph=phase(t);
+ $('vmTrace').setAttribute('d',upTo(ptsM,t,Vm));$('vmTraceN').setAttribute('d',upTo(ptsN,t,Vn));
+ $('vmCursor').setAttribute('d',`M${x},${Y0}V${Y1}`);
+ $('vmDot').setAttribute('cx',x);$('vmDot').setAttribute('cy',py(Vm(t)));
+ $('vmDotN').setAttribute('cx',x);$('vmDotN').setAttribute('cy',py(Vn(t)));
+ $('vmT').textContent=`${t.toFixed(3)} ms`;$('vmVN').textContent=`${mv(Vn(t))} mV`;$('vmV').textContent=`${mv(Vm(t))} mV`;
+ const hd=wrap(ph[0],27);$('vmP0').textContent=hd[0]+(hd.length>1?'…':'');
+ const ln=wrap(ph[1],33);[0,1,2].forEach(i=>$('vmQ'+i).textContent=(ln[i]||'')+(i==2&&ln.length>3?'…':''))}
+
+/* ---------- camera: zooms the diagram to where things are happening ---------- */
+// keyframes: [time, rect in diagram units (x,y,w,h) or null = whole diagram]
+const CAM=[[0,null],[.04,null],[.10,[0,0,330,140]],[.12,[55,0,180,140]],[.19,[55,0,180,140]],[.24,[195,0,175,140]],[.30,[195,0,175,140]],
+ [.37,[585,215,345,150]],[.72,[585,215,345,150]],[.80,[318,232,620,200]],[.92,[318,232,620,200]],[1.0,[318,292,350,155]],[1.7,[318,292,350,155]],
+ [1.82,[625,328,375,120]],[2.15,[625,328,375,120]],[2.45,[840,300,460,260]],[2.68,[985,400,300,370]],[3.85,[985,400,300,370]],[4.35,[180,525,700,450]],[5.1,[180,525,700,450]],
+ [5.3,[662,575,150,108]],[6.72,[662,575,150,108]],[7.0,[180,525,700,450]],[11.5,[180,525,700,450]],[11.95,null]];
+let SW=0,SH=0,FR=null,PWd=0,PB=0,HB=0;
+let CAPH=130;   // height reserved for the caption at the bottom (recomputed in layout)
+function layout(){SW=innerWidth;SH=innerHeight;const pw=$('panel').getBoundingClientRect();PWd=pw.width;PB=pw.bottom;HB=$("hdr").getBoundingClientRect().bottom+6;
+ CAPH=captionHeight();FR={x0:0,x1:SW,y0:0,y1:SH-CAPH}}
+// the zoomed shot is framed in whichever free area is bigger: left of the graph panel, or below it
+function camState(r){
+ if(!r){const s=Math.min(SW/1760,(SH-HB)/990);return{s,cx:880,cy:495,fx:SW/2,fy:HB+(SH-HB)/2}}
+ const regs=[{x0:0,x1:Math.max(200,SW-PWd-30),y0:HB,y1:SH-CAPH},{x0:0,x1:SW,y0:Math.max(PB,HB)+8,y1:SH-CAPH}];
+ let best=null;for(const q of regs){const s=Math.min((q.x1-q.x0)/r[2],(q.y1-q.y0)/r[3])*.92;if(!best||s>best.s)best={s,q}}
+ const q=best.q;return{s:best.s,cx:r[0]+r[2]/2,cy:r[1]+r[3]/2,fx:(q.x0+q.x1)/2,fy:(q.y0+q.y1)/2}}
+let CS=null;
+function camera(t){let i=0;while(i<CAM.length-2&&t>=CAM[i+1][0])i++;
+ const a=camState(CAM[i][1]),b=camState(CAM[i+1][1]),u=sm((t-CAM[i][0])/(CAM[i+1][0]-CAM[i][0]));
+ const s=Math.exp(lerp(Math.log(a.s),Math.log(b.s),u)),c={s,cx:lerp(a.cx,b.cx,u),cy:lerp(a.cy,b.cy,u),fx:lerp(a.fx,b.fx,u),fy:lerp(a.fy,b.fy,u)};
+ c.vx=c.cx-c.fx/s;c.vy=c.cy-c.fy/s;
+ svg.setAttribute('viewBox',`${c.vx.toFixed(2)} ${c.vy.toFixed(2)} ${(SW/s).toFixed(2)} ${(SH/s).toFixed(2)}`);CS=c}
+const toScreen=p=>[(p[0]-CS.vx)*CS.s,(p[1]-CS.vy)*CS.s];
+
+/* ---------- story layer ---------- */
+const defs=svg.querySelector('defs');
+defs.insertAdjacentHTML('beforeend',`<clipPath id="neuronIn"><rect x="-400" y="47" width="700" height="46"/><path d="M302,95C302,62 340,47 400,47H880C988,47 1028,120 1028,190C1028,278 990,298 930,298H390C332,298 302,240 302,95Z"/></clipPath>
+<clipPath id="muscleIn"><path d="${d}H140Z"/></clipPath>
+<linearGradient id="dep" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#ffcf33" stop-opacity="0"/><stop offset=".45" stop-color="#ffcf33" stop-opacity=".55"/><stop offset="1" stop-color="#ffb000" stop-opacity=".7"/></linearGradient>
+<radialGradient id="epp" gradientUnits="userSpaceOnUse" cx="490" cy="380" r="300"><stop offset="0" stop-color="#ffb000" stop-opacity=".7"/><stop offset=".6" stop-color="#ffcf33" stop-opacity=".3"/><stop offset="1" stop-color="#ffcf33" stop-opacity="0"/></radialGradient>`);
+const story=document.createElementNS(NS,'g');story.setAttribute('id','story');svg.appendChild(story);
+const BG='#fbfbf7';
+// ion / molecule icons
+const ION={na:{f:'#d6e4ff',s:'#2a5fd0',t:'#173b8f',l:'Na⁺',fs:6.2,r:7},ca:{f:'#ffe27a',s:'#a66a00',t:'#5c3b00',l:'Ca²⁺',fs:5.3,r:7},
+ k:{f:'#ffd9de',s:'#d9253a',t:'#8d1020',l:'K⁺',fs:6.4,r:7},ach:{f:'#ece0ff',s:'#6a3fb5',t:'#45207f',l:'ACh',fs:4.3,r:5.6},
+ atp:{f:'#dcf5d2',s:'#1b8a5a',t:'#0d5c33',l:'ATP',fs:4.3,r:5.8},adp:{f:'#f3f7ee',s:'#5b8f4a',t:'#33522a',l:'ADP',fs:4.3,r:5.8},pi:{f:'#fff',s:'#777',t:'#444',l:'Pi',fs:4.8,r:4.6}};
+const ion=(k,p,a,sc=1)=>{if(a<=.003)return'';const q=ION[k];return`<g transform="translate(${p[0].toFixed(1)} ${p[1].toFixed(1)}) scale(${sc.toFixed(3)})" opacity="${a.toFixed(3)}"><circle r="${q.r}" fill="${q.f}" stroke="${q.s}" stroke-width="1.5"/><text y="${(q.fs*.36).toFixed(2)}" text-anchor="middle" style="font:700 ${q.fs}px 'Segoe UI',system-ui,sans-serif;fill:${q.t}">${q.l}</text></g>`};
+const via=(a,m,b,p)=>p<.5?[lerp(a[0],m[0],p*2),lerp(a[1],m[1],p*2)]:[lerp(m[0],b[0],p*2-1),lerp(m[1],b[1],p*2-1)];
+const poly=(pts,p)=>{const n=pts.length-1,u=clamp01(p)*n,i=Math.min(n-1,Math.floor(u)),f=u-i;return[lerp(pts[i][0],pts[i+1][0],f),lerp(pts[i][1],pts[i+1][1],f)]};
+const qb=(a,c,b,p)=>[(1-p)*(1-p)*a[0]+2*(1-p)*p*c[0]+p*p*b[0],(1-p)*(1-p)*a[1]+2*(1-p)*p*c[1]+p*p*b[1]];
+// voltage-gated channel drawn as two halves that part when open (o = 0 closed … 1 open)
+const chan=(x,y,o,rx,ry,fill,st,gap,spread)=>[-1,1].map(sd=>`<ellipse cx="${(x+sd*(gap+spread*o)).toFixed(2)}" cy="${y}" rx="${rx}" ry="${ry}" fill="${fill}" stroke="${st}" stroke-width="1.5"/>`).join('');
+
+/* -- part 1: action potential along the axon -- */
+const NODES=[{x:140,t0:.13,open:[.12,.20]},{x:280,t0:.25,open:[.24,.31]}];
+const naIons=nx=>[[[nx-14,14],[nx,45],[nx-24,60]],[[nx-1,5],[nx,45],[nx+2,64]],[[nx+13,20],[nx,45],[nx+26,59]],
+ [[nx-13,128],[nx,95],[nx-22,81]],[[nx,137],[nx,95],[nx+4,78]],[[nx+13,121],[nx,95],[nx+24,82]]];
+const NA_POOL=[[38,16],[86,124],[206,17],[236,131],[332,18],[18,128]];
+const front=t=>t<.05?-80:t<.12?lerp(-80,140,sm((t-.05)/.07)):t<.19?140:t<.24?lerp(140,282,sm((t-.19)/.05)):t<.30?282:t<.38?lerp(282,1040,sm((t-.30)/.08)):1040;
+// membrane charge: inside − / outside + at rest; flipped (inside +) where the action potential is
+const SIGNS=[];for(let x=-36;x<=300;x+=24)SIGNS.push(x);
+const apHere=(x,t)=>{const f=front(t);return t<.36&&x<=f+4&&x>f-120};
+
+/* -- part 2: terminal, Ca²⁺ entry, exocytosis -- */
+const CAX=[640,740,790,890],CA_POOL=[[608,338],[702,346],[856,343],[934,330]];
+const CA_IN=[[[664,287],[652,276]],[[716,289],[726,277]],[[812,289],[806,277]],[[866,289],[874,278]]];
+const VES=[{x:690,y0:268,r:26,t0:.58,n:8},{x:840,y0:274,r:22,t0:.60,n:6}];
+const DOTS=[[-8,-6],[0,-11],[9,-5],[-5,3],[6,6],[0,11],[-11,8],[12,3]];
+const fus=(v,t)=>sm((t-v.t0)/.1);
+function vesicle(v,t){const f=fus(v,t),r=v.r;
+ const cy=lerp(v.y0,300-r,sm(f/.3));                         // docked → pulled onto the membrane
+ const pw=(r-2)*sm((f-.3)/.7);                               // fusion pore widens
+ const re=Math.max(pw+1,r*(1-.4*sm((f-.6)/.4)));             // vesicle collapses into the membrane
+ if(pw<.6)return{d:`<circle cx="${v.x}" cy="${cy.toFixed(2)}" r="${r}" fill="#fff" stroke="#19b3a0" stroke-width="3"/>`,cy,f};
+ return{d:`<rect x="${(v.x-pw).toFixed(2)}" y="296" width="${(2*pw).toFixed(2)}" height="10" fill="${BG}" stroke="none"/><path d="M${(v.x-pw).toFixed(2)},300A${re.toFixed(2)},${re.toFixed(2)} 0 1 1 ${(v.x+pw).toFixed(2)},300" fill="#fff" stroke="#19b3a0" stroke-width="3"/>`,cy,f}}
+
+/* -- part 3: ACh crosses the cleft, binds nicotinic receptors; Na⁺ in, K⁺ out -- */
+const RX=[355,445,535,625],RROT=[6,-7,6,-7];
+const ACHE=[516,578,640,702,764,826].map(x=>[x+1,341]);
+// each ACh: [vesicle index, dot index, target, binds receptor?]
+const ACH=[[0,0,[620,341],1],[0,1,[630,341],1],[0,2,[530,341],1],[0,3,[540,341],1],[0,4,[450,341],1],[0,5,ACHE[2],0],[0,6,ACHE[3],0],[0,7,ACHE[1],0],
+ [1,0,[440,341],1],[1,1,[350,341],1],[1,2,[360,341],1],[1,3,ACHE[4],0],[1,4,ACHE[5],0],[1,5,ACHE[0],0]];
+const recOpen=(k,t)=>sm((t-.965-k*.008)/.03)*(1-sm((t-1.84)/.05));
+function receptor(k,o){const cx=RX[k],sp=3.2*o;
+ return`<g transform="rotate(${RROT[k]} ${cx} 360)">`+
+  `<rect x="${(cx-12-sp).toFixed(2)}" y="346" width="11.5" height="28" rx="3" fill="#fff" stroke="#6a3fb5" stroke-width="3"/>`+
+  `<rect x="${(cx+.5+sp).toFixed(2)}" y="346" width="11.5" height="28" rx="3" fill="#fff" stroke="#6a3fb5" stroke-width="3"/>`+
+  (o>.25?`<rect x="${(cx-.5-sp+1).toFixed(2)}" y="348" width="${(2*sp-1).toFixed(2)}" height="24" fill="#fff3c4" stroke="none"/>`:'')+'</g>'}
+const NA_NM=[],K_NM=[];
+RX.forEach((cx,k)=>{for(let j=0;j<4;j++){const sx=cx+[-14,12,-4,16][j],sy=[322,316,330,326][j];
+  NA_NM.push({s:[sx,sy],m:[cx,360],e:[cx+[-9,8,-2,10][j],[392,404,416,386][j]],t0:1.0+j*.12+k*.025,dur:.16})}
+ K_NM.push({s:[cx+7,398],m:[cx,360],e:[cx+15,318],t0:1.18+k*.04,dur:.2})});
+
+/* -- part 4: muscle action potential: voltage-gated Na⁺ channels in the junctional folds, spread, T-tubule -- */
+const MNA=[];for(let k=3;k<7;k++){const x=330+90*k;MNA.push({x:x+57,rot:12,sd:-1,b:x},{x:x+83,rot:-12,sd:1,b:x})}
+const mnaOpen=(i,t)=>sm((t-1.82-(i>>1)*.015)/.03)*(1-sm((t-2.2)/.06));   // open at threshold, then inactivate
+const MNA_IONS=[];MNA.forEach((c,i)=>{for(let j=0;j<2;j++){const b=c.b;
+ MNA_IONS.push(c.sd<0?{s:[b+68,376+j*18],m:[c.x,392],e:[b+38,398+j*15],t0:1.86+i*.022+j*.06}:{s:[b+73,384+j*16],m:[c.x,392],e:[b+102,398+j*15],t0:1.87+i*.022+j*.06})}});
+// the muscle action potential spreads along the sarcolemma (the end-plate membrane path) and down the T-tubule
+const mp=document.createElementNS(NS,'path');mp.setAttribute('d',d);defs.appendChild(mp);
+const ML=mp.getTotalLength();
+const arcNear=(x,y)=>{let b=0,bd=1e18;for(let s=0;s<=ML;s+=3){const p=mp.getPointAtLength(s),q=(p.x-x)**2+(p.y-y)**2;if(q<bd){bd=q;b=s}}return b};
+const S0=arcNear(800,392),S_TT=arcNear(1118,365),S_END=arcNear(1142,365);
+const spreadW=t=>t<1.82?0:t<2.2?lerp(0,S_TT-S0-40,sm((t-1.82)/.38)):t<2.72?lerp(S_TT-S0-40,S_END-S0,sm((t-2.2)/.52)):S_END-S0;
+const mFront=t=>{const p=mp.getPointAtLength(Math.min(ML,S0+spreadW(t)));return[p.x,p.y]};
+
+/* -- part 5: DHPR → RyR → Ca²⁺ release from the sarcoplasmic reticulum -- */
+const TRY=[470,520,570,620];
+const dhpr=(r,t)=>sm((t-2.74-r*.02)/.06)*(1-sm((t-3.9)/.1));
+const ryr=(r,t)=>sm((t-2.88-r*.02)/.06)*(1-sm((t-3.82)/.1));
+function triad(t){let s='';
+ TRY.forEach((y,r)=>{const a=dhpr(r,t),o=ryr(r,t);
+  for(const sd of[-1,1]){const x=sd<0?1118:1142;
+   // DHPR: voltage sensor in the T-tubule wall; changes shape (tilts, turns purple) when the action potential arrives
+   s+=`<ellipse cx="${x}" cy="${y}" rx="${(6+2*a).toFixed(2)}" ry="${(6-1.8*a).toFixed(2)}" transform="rotate(${(sd*40*a).toFixed(1)} ${x} ${y})" fill="${a>.05?'#c9b2f2':'#fff'}" stroke="#6a3fb5" stroke-width="3"/>`;
+   // RyR: Ca²⁺ release channel spanning to the SR; a solid foot when closed, a hollow tube when open
+   const x0=sd<0?1112:1148,x1=sd<0?1098:1162,xc=sd<0?1097:1163,g=2.8*o;
+   if(o<.15)s+=`<path d="M${x0},${y}H${x1}" stroke="#d9253a" stroke-width="4"/><path d="M${xc},${y-6}V${y+6}" stroke="#d9253a" stroke-width="3"/>`;
+   else s+=`<path d="M${x0},${(y-g).toFixed(2)}H${x1}M${x0},${(y+g).toFixed(2)}H${x1}" stroke="#d9253a" stroke-width="2.4"/><path d="M${xc},${y-7}V${(y-g).toFixed(2)}M${xc},${(y+g).toFixed(2)}V${y+7}" stroke="#d9253a" stroke-width="3"/>`}});
+ return s}
+// Ca²⁺ stored in the SR (SRCA from the drawing); the ones nearest the RyRs are released
+const SR_L=SRCA.filter(p=>p[0]<1120).sort((a,b)=>b[0]-a[0]),SR_R=SRCA.filter(p=>p[0]>1120).sort((a,b)=>a[0]-b[0]);
+const REL=[];
+[[SR_L,-1],[SR_R,1]].forEach(([arr,sd])=>arr.slice(0,10).forEach((p,i)=>{
+ const ry=TRY.reduce((b,y)=>Math.abs(y-p[1])<Math.abs(b-p[1])?y:b,TRY[0]);
+ const cap=sd<0?1093:1167,gap=sd<0?1105:1153;
+ const fin=sd<0?[1090-i*20,718+(i%3)*15]:[1172+i*13,718+(i%3)*15];
+ REL.push({p0:p,pts:[p,[cap,ry],[gap,ry+(i%2?9:-9)],[gap,712],fin],t0:3.05+i*.035+(sd>0?.015:0),dur:.32})}));
+const isRel=new Set(REL.map(r=>r.p0));
+
+/* -- part 6: Ca²⁺ → troponin → tropomyosin → cross-bridge cycling → shortening; then relaxation -- */
+const SEGS=[[200,340],[380,520],[520,660],[700,840]];
+// sarcomere shortening (how far the outer Z-discs move in). In the close-up, each power stroke steps the actin;
+// after that the shortening continues smoothly (many heads cycling out of step), and reverses during relaxation
+const STEP=10,strokeAt=n=>5.3+n*.72+.108;
+const CMAX=64;   // exaggerated: real sarcomeres shorten ~10-30%; here 320 → 256 units (80%), thin filaments meet and overlap at the M-line
+const contr=t=>{const up=t<6.74?[0,1].reduce((s,n)=>s+STEP*sm((t-strokeAt(n))/.216),0):2*STEP+(CMAX-2*STEP)*sm((t-6.74)/1.6);return up*(1-sm((t-10.05)/1.4))};
+// make the sliding obvious: ghost Z-discs at rest, yellow beads on the actin tips, sliding arrows, live band brackets
+const gVis=t=>win(t,4.3,11.75,.12);
+const bands=t=>{const c=contr(t);return[{ZL:200+c,ZR:520,As:265+c/2,Ae:455+c/2,Hs:340+c,He:380},{ZL:520,ZR:840-c,As:585-c/2,Ae:775-c/2,Hs:660,He:700-c}]};
+function sarcGuides(t){const a=gVis(t);if(a<=0)return'';let o='';const c=contr(t),v=(contr(t+.04)-contr(t-.04))/.08;
+ // dashed ghost lines: where the outer Z-discs sit at rest
+ if(c>.5)for(const x of[200,840])o+=`<path d="M${x},575V890" stroke="#777" stroke-width="2" stroke-dasharray="6 6" opacity="${(.85*a).toFixed(2)}"/>`;
+ // yellow beads on the free (M-line) end of the thin filaments + chevrons showing which way actin slides relative to myosin
+ const sp=Math.min(1,Math.abs(v)/6);
+ SEGS.forEach(([sa,sb])=>{const toM=(sa===200||sa===520)?1:-1,tip=(toM>0?sb-16:sa+16)+segShift(sa,t);
+  [610,690,770,850].forEach(y=>{const sh=segShift(sa,t);if(Math.abs(sh)>.5){const g0=tip-sh,dd=Math.sign(sh);o+=`<circle cx="${g0.toFixed(1)}" cy="${y}" r="5.5" fill="none" stroke="#9a8a00" stroke-width="1.5" stroke-dasharray="2 2" opacity="${a.toFixed(2)}"/>`;if(Math.abs(sh)>9)o+=`<path d="M${(g0+dd*6).toFixed(1)},${y-9}H${(tip-dd*4).toFixed(1)}m${-dd*5},-4l${dd*5},4l${-dd*5},4" fill="none" stroke="#2e7d32" stroke-width="2" opacity="${a.toFixed(2)}"/>`}
+   if(sp>.05){const d=v>0?toM:-toM;let ar='';for(let k=1;k<=3;k++){const x=tip-d*(6+k*9);ar+=`M${(x-d*4).toFixed(1)},${y-5}L${x.toFixed(1)},${y}L${(x-d*4).toFixed(1)},${y+5}`}
+    o+=`<path d="${ar}" fill="none" stroke="#ff6a00" stroke-width="2.6" stroke-linecap="round" opacity="${(a*sp).toFixed(2)}"/>`}
+   o+=`<circle cx="${tip.toFixed(1)}" cy="${y}" r="5.5" fill="#ffe600" stroke="#6b5d00" stroke-width="1.6" opacity="${a.toFixed(2)}"/>`})});
+ // band brackets under each sarcomere: I band (blue), H zone (orange), A band (red), whole sarcomere (black)
+ const br=(x0,x1,y,col)=>x1-x0>1?`<path d="M${x0.toFixed(1)},${y-6}V${y}H${x1.toFixed(1)}V${y-6}" fill="none" stroke="${col}" stroke-width="2.2" opacity="${a.toFixed(2)}"/>`:'';
+ bands(t).forEach(b=>o+=br(b.ZL,b.As,906,'#2a5fd0')+br(b.Ae,b.ZR,906,'#2a5fd0')+br(b.Hs,b.He,906,'#e07b00')+br(b.As,b.Ae,930,'#d9253a')+br(b.ZL,b.ZR,954,'#333'));
+ return o}
+function bandLabels(t){const a=gVis(t);if(a<=0)return'';let o='';const c=contr(t);
+ const lab=(x,y,s,col)=>{const[sx,sy]=toScreen([x,y]);o+=`<text x="${sx.toFixed(1)}" y="${(sy+13).toFixed(1)}" text-anchor="middle" class="hb" style="fill:${col}" opacity="${a.toFixed(2)}">${s}</text>`};
+ bands(t).forEach(b=>{lab((b.ZL+b.As)/2,906,'I','#2a5fd0');lab((b.Ae+b.ZR)/2,906,'I','#2a5fd0');if(b.He-b.Hs>5)lab((b.Hs+b.He)/2,906,'H','#e07b00');
+  lab((b.As+b.Ae)/2,930,'A band (same length)','#d9253a');lab((b.ZL+b.ZR)/2,954,`sarcomere ${Math.round((320-c)/320*100)}%`,'#222')});
+ return o}
+const segShift=(a,t)=>a===200?contr(t):a===700?-contr(t):0;          // thin filaments move with their Z-disc
+const thickShift=(q,t)=>(q?-1:1)*contr(t)/2;                          // thick filaments stay centred between the Z-discs
+const act=t=>sm((t-4.95)/.3)*(1-sm((t-9.65)/.35));                   // tropomyosin pulled off the myosin-binding sites
+const TMS=[];SEGS.forEach(([a,b])=>rowsT.forEach((y,i)=>tmSides(i).forEach(sd=>TMS.push({a,b,y,sd}))));
+const TN=[];TMS.forEach(m=>{for(let x=m.a+24;x<m.b-10;x+=48)TN.push({x,m})});
+const tmY=(m,t)=>m.y+m.sd*lerp(12,3,act(t));                         // strand rolls from the gap onto the actin
+const tnPos=(n,t)=>[n.x+segShift(n.m.a,t),tmY(n.m,t)];
+// the 20 released Ca²⁺ go to the troponins nearest the triad; other troponins get Ca²⁺ from neighbouring triads
+const tnOrder=TN.map((n,i)=>i).sort((i,j)=>Math.hypot(TN[i].x-900,TN[i].m.y-740)-Math.hypot(TN[j].x-900,TN[j].m.y-740));
+REL.forEach((r,i)=>{r.i=i;r.tn=tnOrder[i]});
+const tnHasIon=new Set(REL.map(r=>r.tn));
+const SERCA=[240,400,560,720,880].map(x=>[x,566+12*Math.sin(x/24)]);
+// full journey of a released Ca²⁺: SR → cytoplasm → troponin → SERCA pump → back inside the SR
+function relPos(r,t){const fin=r.pts[r.pts.length-1],tb=4.0+r.i*.03;
+ if(t<tb){const p=sm((t-r.t0)/r.dur);return{p:poly(r.pts,p),sc:lerp(.4,.72,sm(p/.25))}}
+ const tn=TN[r.tn],site=u=>{const q=tnPos(tn,u);return[q[0]+8,q[1]]},ta=tb+.55;
+ if(t<ta){const s=site(t),pts=fin[0]>1150?[fin,[1130,782],s]:[fin,s];return{p:poly(pts,sm((t-tb)/.55)),sc:.72}}
+ const tu=9.0+r.i*.02;if(t<tu)return{p:site(t),sc:.62};
+ const sv=SERCA.reduce((b,c)=>Math.abs(c[0]-tn.x)<Math.abs(b[0]-tn.x)?c:b,SERCA[0]),p=sm((t-tu)/.5);
+ return{p:poly([site(tu),[sv[0],sv[1]+14],[sv[0],547]],p),sc:lerp(.62,.4,sm((p-.7)/.3))}}
+// myosin heads: cocked at rest; when actin is exposed they cycle attach → power stroke → detach (ATP) → re-cock
+const P=.72,CB0=5.3,CBEND=9.45,HEADS=[];
+for(let q=0;q<2;q++){const o=320*q;rowsK.forEach((y,ri)=>[[272+o,1],[388+o,-1]].forEach(([x0,sg])=>{for(let i=0;i<6;i++)for(const dy of[-1,1])
+ HEADS.push({q,y,sg,x:x0+i*13,dy,ph:((i+(dy>0?1:0)+ri)%2)*.5})}))}
+const FEAT=HEADS.find(h=>h.q===1&&h.y===650&&h.sg===-1&&h.x===734&&h.dy===-1);
+function cyc(h,t){const st=CB0+h.ph*P;if(t<st)return null;const u=(t-st)/P,n=Math.floor(u);if(st+n*P>CBEND)return null;return{n,f:u-n}}
+function headPose(h,t){const bx=h.x+thickShift(h.q,t),c=cyc(h,t);let r=0,w=0;
+ if(c){const f=c.f;if(f<.15)r=sm(f/.15);else if(f<.45){r=1;w=sm((f-.15)/.3)}else if(f<.6){r=1-sm((f-.45)/.15);w=1}else w=1-sm((f-.6)/.4)}
+ return{bx,ex:bx+h.sg*lerp(-10,6,w),ey:h.y+h.dy*lerp(15,29,r),r,w}}
+const FT=t=>{const p=headPose(FEAT,t);return[p.ex,p.ey]};
+function sarcomereParts(t){let s='';
+ // titin: elastic spring from each Z-disc to the thick filament
+ for(let q=0;q<2;q++){const o=320*q,ts=thickShift(q,t),zL=q?520:200+contr(t),zR=q?840-contr(t):520;
+  rowsK.forEach(y=>[[zL,265+o+ts],[455+o+ts,zR]].forEach(([a,b])=>{let p=`M${a.toFixed(1)},${y}`;for(let k=1;k<=26;k++){const x=lerp(a,b,k/26);p+=`L${x.toFixed(1)},${(y+3*Math.sin(k/26*16.3)).toFixed(2)}`}s+=`<path d="${p}" stroke="#2a5fd0" stroke-width="1.8"/>`}))}
+ // tropomyosin strands and troponin complexes ride on the thin filaments
+ let tn='';TMS.forEach(m=>{const sh=segShift(m.a,t),yy=tmY(m,t);let p='';for(let x=m.a;x<=m.b;x+=3)p+=(p?'L':'M')+(x+sh).toFixed(1)+','+(yy+1.2*Math.sin((x-m.a)/6)).toFixed(2);
+  s+=`<path d="${p}" stroke="#8a4300" stroke-width="5.5"/><path d="${p}" stroke="#e07b00" stroke-width="3.5"/>`});
+ TN.forEach(n=>{const[x,y]=tnPos(n,t);tn+=`<circle cx="${(x-4).toFixed(1)}" cy="${y.toFixed(1)}" r="2.4" fill="#2fae6b" stroke="none"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="#2fae6b" stroke="#14653f" stroke-width="1.2"/><circle cx="${(x+4).toFixed(1)}" cy="${y.toFixed(1)}" r="2.4" fill="#2fae6b" stroke="none"/>`});
+ // myosin heads (filled red while attached to actin = cross-bridge)
+ let hp='',tp='',ha='';HEADS.forEach(h=>{const p=headPose(h,t);hp+=`M${p.bx.toFixed(1)},${h.y+h.dy*5}L${p.ex.toFixed(1)},${p.ey.toFixed(1)}`;
+  const c=`M${(p.ex-3).toFixed(1)},${p.ey.toFixed(1)}a3,3 0 1,0 6,0a3,3 0 1,0 -6,0`;if(p.r>.5)ha+=c;else tp+=c});
+ return s+tn+`<path d="${hp}" stroke="#d9253a" stroke-width="2"/><path d="${tp}" stroke="#d9253a" stroke-width="2" fill="#fff"/><path d="${ha}" stroke="#8d1020" stroke-width="2" fill="#d9253a"/>`}
+// ADP / Pi / ATP on one featured head, to show what drives the cycle
+function featIcons(t){if(t<5.0||t>CB0+2*P+.08)return'';const T=FT(t),A=sm((t-5.0)/.1),c=cyc(FEAT,t);
+ const at=(dx,dy)=>[T[0]+dx,T[1]+dy];let o=`<circle cx="${T[0].toFixed(1)}" cy="${T[1].toFixed(1)}" r="10" fill="none" stroke="#ff9500" stroke-width="1.6" opacity="${(.9*A).toFixed(2)}"/>`;
+ if(!c)return o+ion('adp',at(-12,7),A)+ion('pi',at(11,9),A);
+ const f=c.f;
+ if(f<.15)o+=ion('adp',at(-12,7),1)+ion('pi',at(11,9),1);
+ else if(f<.45){const pr=sm((f-.15)/.12),pa=sm((f-.36)/.09);o+=ion('pi',at(11+22*pr,9+16*pr),1-pr)+ion('adp',at(-12-22*pa,7+16*pa),1-pa)}
+ else if(f<.6){const pa=sm((f-.43)/.09);o+=ion('atp',[lerp(T[0]-42,T[0]-12,pa),lerp(T[1]+34,T[1]+7,pa)],pa)}
+ else if(f<.72)o+=ion('atp',at(-12,7),1);
+ else{const pp=sm((f-.72)/.08);o+=ion('adp',at(-12,7),1)+ion('pi',at(lerp(-12,11,pp),lerp(7,9,pp)),pp)}
+ return o}
+const SG={L0:$('sgL0'),R1:$('sgR1'),K0:$('sgK0'),K1:$('sgK1')};let lastC=-1;
+function slide(t){const c=+contr(t).toFixed(2);if(c===lastC)return;lastC=c;
+ SG.L0.setAttribute('transform',`translate(${c} 0)`);SG.R1.setAttribute('transform',`translate(${-c} 0)`);
+ SG.K0.setAttribute('transform',`translate(${c/2} 0)`);SG.K1.setAttribute('transform',`translate(${-c/2} 0)`)}
+
+function drawStory(t){let o='';
+ // depolarisation glow inside the neuron, travelling with the action potential
+ const ga=sm((t-.05)/.03)*(1-sm((t-.6)/.15));
+ if(ga>0){const f=front(t),x0=f<=300?f-240:lerp(42,280,sm((f-300)/740));
+  o+=`<g clip-path="url(#neuronIn)" opacity="${ga.toFixed(3)}"><rect x="${x0}" y="40" width="${Math.max(1,f-x0)}" height="270" fill="url(#dep)"/></g>`}
+ // end-plate potential: depolarisation spreading in the muscle under the end plate
+ const ge=clamp01((Vm(t)-RMP)/(THR-RMP))*(1-sm((t-1.85)/.12));
+ if(ge>0)o+=`<g clip-path="url(#muscleIn)" opacity="${ge.toFixed(3)}"><rect x="140" y="355" width="1000" height="300" fill="url(#epp)"/></g>`;
+ // muscle action potential travelling along the sarcolemma and down the T-tubule (glow on the membrane)
+ const w=spreadW(t),gm=sm((t-1.82)/.04)*(1-sm((t-3.55)/.35));
+ if(w>0&&gm>0){const a=Math.max(0,S0-w),b=S0+w;
+  o+=`<path d="${d}" fill="none" stroke="#ffbf00" stroke-opacity="${(.6*gm).toFixed(3)}" stroke-width="15" stroke-linecap="round" stroke-dasharray="0 ${a.toFixed(1)} ${(b-a).toFixed(1)} ${ML.toFixed(0)}"/>`}
+ // membrane charge signs along the axon
+ const aS=win(t,.06,.34,.02);
+ if(aS>0){let s='';SIGNS.forEach(x=>{const fl=apHere(x,t),pin=fl?'+':'−',pout=fl?'−':'+',ci=fl?'#d9253a':'#2a5fd0',co=fl?'#2a5fd0':'#d9253a';
+   for(const[yi,yo]of[[56,24],[86,117]])s+=`<text x="${x}" y="${yi+4}" text-anchor="middle" style="font:700 13px 'Segoe UI',sans-serif;fill:${ci}">${pin}</text><text x="${x}" y="${yo+4}" text-anchor="middle" style="font:700 13px 'Segoe UI',sans-serif;fill:${co}">${pout}</text>`});
+  o+=`<g opacity="${(aS*.85).toFixed(3)}">${s}</g>`}
+ // channels and other moving parts (drawn with the whiteboard wobble)
+ let ch='';
+ NODES.forEach(n=>{const oo=sm((t-n.open[0])/.02)*(1-sm((t-n.open[1])/.03));for(const y of[45,95])ch+=chan(n.x,y,oo,3.6,9,'#8fe0b0','#1b8a5a',3.1,3.8)});
+ const oc=sm((t-.38)/.04)*(1-sm((t-.92)/.08));
+ CAX.forEach(x=>ch+=chan(x,300,oc,4.6,14,'#111','#111',3.6,4.6));
+ RX.forEach((x,k)=>ch+=receptor(k,recOpen(k,t)));
+ MNA.forEach((c,i)=>ch+=`<g transform="rotate(${c.rot} ${c.x} 392)">${chan(c.x,392,mnaOpen(i,t),3.4,11,'#8fe0b0','#1b8a5a',2.8,3.4)}</g>`);
+ ch+=triad(t);ch+=sarcomereParts(t);
+ VES.forEach((v,i)=>{const r=vesicle(v,t);ch+=r.d;
+  if(r.f<.35)DOTS.slice(0,v.n).forEach(q=>ch+=`<circle cx="${(v.x+q[0]*v.r/24).toFixed(1)}" cy="${(r.cy+q[1]*v.r/24).toFixed(1)}" r="1.8" fill="#111" stroke="none"/>`);
+  if(i===0){const sa=1-sm((r.f-.25)/.2);if(sa>0)for(const dd of[-9,0,9])ch+=`<g opacity="${sa.toFixed(2)}"><path d="M${690+dd},293q4,3 0,6" stroke="#d9253a" stroke-width="2.2"/><path d="M${696+dd},300q-4,-3 0,-6" stroke="#d63a9a" stroke-width="2.2"/></g>`}});
+ o+=`<g filter="url(#w)">${ch}</g>`;
+ // Ca²⁺ in the SR stores: small dots; released ones grow into icons as they leave through RyR
+ SRCA.forEach(p=>{if(isRel.has(p)&&t>=REL.find(r=>r.p0===p).t0)return;o+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.8" fill="#ffc21a" stroke="#a66a00" stroke-width="1.3"/>`});
+ // Na⁺ ions around the axon: pool outside, then influx through the opening channels at each node
+ const aA=win(t,.07,.34,.02);
+ NA_POOL.forEach(p=>o+=ion('na',p,aA));
+ NODES.forEach(n=>naIons(n.x).forEach((r,i)=>o+=ion('na',via(r[0],r[1],r[2],sm((t-n.t0-(i%3)*.007)/.04)),aA)));
+ // Ca²⁺: waits in the cleft, gathers at the channel mouth, then flows in through the open channels
+ const aC=win(t,.31,.80,.02),pc=sm((t-.40)/.05);
+ CA_POOL.forEach(p=>o+=ion('ca',p,aC));
+ CAX.forEach((x,j)=>{const m=[x,300];
+  [[lerp(x-10,x-4,pc),lerp(330,320,pc)],[lerp(x+11,x+6,pc),lerp(342,333,pc)]].forEach((st,q)=>{
+   const pe=sm((t-.46-(j*2+q)*.011)/.05);o+=ion('ca',pe>0?via(st,m,CA_IN[j][q],pe):st,aC)})});
+ // ACh: inside the vesicles until fusion, then out through the pore, across the cleft, to receptors or AChE
+ ACH.forEach(([vi,di,tg,binds],i)=>{const v=VES[vi],tr=v.t0+.055+(di%4)*.006;if(t<tr)return;
+  const st=[v.x+DOTS[di][0]*v.r/24,300-v.r+DOTS[di][1]*v.r/24],ex=[v.x+DOTS[di][0]*.9,312];
+  const p1=sm((t-tr)/.04),p2=clamp01((t-tr-.04)/(.92-tr-.04+(i%5)*.012));
+  let pos=p2<=0?[lerp(st[0],ex[0],p1),lerp(st[1],ex[1],p1)]:qb(ex,[(ex[0]+tg[0])/2,326+(i%3)*4],tg,sm(p2));
+  if(p2>0&&p2<1)pos=[pos[0]+2.5*Math.sin(p2*19+i),pos[1]+2*Math.cos(p2*23+i*2)];
+  const a=binds?1-sm((t-1.84)/.06):1-sm((t-.95)/.07);          // AChE hydrolyses its ACh; bound ACh stays on the receptor
+  o+=ion('ach',pos,a)});
+ // Na⁺ in and K⁺ out through the open nicotinic receptors
+ const aN=win(t,.86,1.86,.03);
+ NA_NM.forEach(n=>{const p=sm((t-n.t0)/n.dur);let q=via(n.s,n.m,n.e,p);if(p>=1)q=[n.e[0],n.e[1]+Math.min(14,(t-n.t0-n.dur)*30)];o+=ion('na',q,aN)});
+ K_NM.forEach(n=>o+=ion('k',via(n.s,n.m,n.e,sm((t-n.t0)/n.dur)),aN*win(t,.98,1.8,.03)));
+ // Na⁺ rushing into the muscle through the voltage-gated channels in the folds (the muscle action potential)
+ const aM=win(t,1.74,2.5,.04);
+ MNA_IONS.forEach(n=>{const p=sm((t-n.t0)/.12);o+=ion('na',via(n.s,n.m,n.e,p),aM)});
+ // Ca²⁺ on the troponins not fed by the 20 tracked ions (Ca²⁺ arriving from other triads); removed again by SERCA
+ TN.forEach((n,i)=>{if(tnHasIon.has(i))return;const a=sm((t-4.6-(i%17)*.02)/.12)*(1-sm((t-9.1-(i%13)*.03)/.25));if(a>0){const p=tnPos(n,t);o+=ion('ca',[p[0]+8,p[1]],a,.62)}});
+ REL.forEach(r=>{if(t<r.t0)return;const q=relPos(r,t);o+=ion('ca',q.p,1,q.sc)});
+ o+=sarcGuides(t);o+=featIcons(t);
+ story.innerHTML=o}
+
+/* ---------- labels (screen space, appear as each part of the diagram is reached) ---------- */
+// p: anchor in diagram units (or a function of t for moving things); o: text offset in screen px (null = text sits on the anchor)
+// k:'trig' marks a cause → effect callout (dark pill), plain labels name the parts
+const relIon=i=>t=>{const r=REL[i];return poly(r.pts,sm((t-r.t0)/r.dur))};
+const LBL=[
+ {a:.06,b:.34,t:'ACTION POTENTIAL (inside turns +)',p:t=>[Math.max(10,front(t)-45),70],o:[-40,-150]},
+ {a:.06,b:.19,t:'Resting membrane: inside −, outside +',p:[260,86],o:[40,150]},
+ {a:.08,b:.33,t:'Motor neuron axon (inside)',p:[62,74],o:null},
+ {a:.09,b:.33,t:'Myelin sheath',p:[232,34],o:[70,-70]},
+ {a:.09,b:.12,t:'Na⁺ outside the axon (high concentration)',p:[86,124],o:[-30,150]},
+ {a:.11,b:.21,t:'Node of Ranvier',p:[140,30],o:[90,-110]},
+ {a:.12,b:.21,t:'Voltage-gated Na⁺ channel',p:[144,100],o:[120,80]},
+ {a:.125,b:.205,k:'trig',t:'Action potential opens the Na⁺ gates → Na⁺ rushes in',p:[136,100],o:[-60,150]},
+ {a:.24,b:.33,k:'trig',t:'Action potential opens the next Na⁺ gates',p:[284,100],o:[40,110]},
+ {a:.33,b:.46,t:'Action potential invades the axon terminal',p:[640,240],o:[-30,-120]},
+ {a:.34,b:.46,t:'Presynaptic membrane',p:[610,301],o:[-90,-40]},
+ {a:.37,b:.58,t:'Voltage-gated Ca²⁺ channel',p:[740,288],o:[60,-150]},
+ {a:.385,b:.47,k:'trig',t:'Depolarisation opens the Ca²⁺ gates',p:[640,312],o:[-40,110]},
+ {a:.38,b:.47,t:'Ca²⁺ in the synaptic cleft (high concentration)',p:[796,333],o:[90,170]},
+ {a:.47,b:.60,t:'Ca²⁺ flows into the terminal',p:t=>{const pe=sm((t-.46-3*.011)/.05),st=[796,333];return via(st,[790,300],CA_IN[2][1],pe)},o:[110,110]},
+ {a:.46,b:.53,t:'Docked vesicle full of ACh',p:[690,250],o:[-120,-90]},
+ {a:.53,b:.66,k:'trig',t:'Ca²⁺ triggers ACh release',p:[676,282],o:[-130,-100]},
+ {a:.58,b:.68,t:'SNARE proteins pull the vesicle in',p:[693,297],o:[-150,70]},
+ {a:.62,b:.76,t:'Exocytosis: vesicle fuses, ACh released',p:[840,288],o:[80,-120]},
+ {a:.72,b:.95,t:'Acetylcholine (ACh)',p:t=>{const v=VES[0],tr=v.t0+.055,p2=clamp01((t-tr-.04)/(.92-tr-.04)),ex=[v.x,312],tg=ACH[2][2];return t<tr+.04?[v.x,300]:qb(ex,[(ex[0]+tg[0])/2,326],tg,sm(p2))},o:[60,-110]},
+ {a:.78,b:.95,t:'Synaptic cleft (~50 nm)',p:[900,328],o:[40,90]},
+ {a:.84,b:1.0,t:'AChE breaks down some ACh',p:[703,347],o:[90,110]},
+ {a:.86,b:1.74,t:'Nicotinic ACh receptor (2 ACh open it)',p:[445,342],o:[-40,-130]},
+ {a:.965,b:1.12,k:'trig',t:'ACh opens the muscle’s Na⁺ gates',p:[535,343],o:[150,-110]},
+ {a:1.0,b:1.74,t:'Motor end plate (muscle membrane)',p:[400,361],o:[-70,120]},
+ {a:1.02,b:1.74,t:'Na⁺ flows into the muscle',p:t=>{const n=NA_NM[1];const p=sm((t-n.t0)/n.dur);return p>=1?[n.e[0],n.e[1]+Math.min(14,(t-n.t0-n.dur)*30)]:via(n.s,n.m,n.e,p)},o:[120,90]},
+ {a:1.2,b:1.74,t:'A little K⁺ flows out',p:t=>via(K_NM[2].s,K_NM[2].m,K_NM[2].e,sm((t-K_NM[2].t0)/K_NM[2].dur)),o:[110,-90]},
+ {a:1.15,b:1.78,k:'trig',t:'Na⁺ entry depolarises the end plate (end-plate potential)',p:[500,440],o:[120,40]},
+ {a:1.8,b:2.2,k:'trig',t:'Threshold reached → voltage-gated Na⁺ gates open',p:[747,392],o:[-120,-120]},
+ {a:1.82,b:2.2,t:'Voltage-gated Na⁺ channel (sarcolemma)',p:[863,392],o:[120,130]},
+ {a:1.9,b:2.25,t:'Na⁺ rushes in: muscle action potential',p:t=>{const n=MNA_IONS[9];return via(n.s,n.m,n.e,sm((t-n.t0)/.12))},o:[-150,120]},
+ {a:2.2,b:2.55,t:'Action potential spreads along the sarcolemma',p:mFront,o:[-120,-100]},
+ {a:2.45,b:2.78,k:'trig',t:'T-tubule carries the action potential deep into the fibre',p:mFront,o:[-170,60]},
+ {a:2.6,b:3.8,t:'T-tubule',p:[1130,705],o:[70,110]},
+ {a:2.62,b:3.8,t:'Sarcoplasmic reticulum (Ca²⁺ store)',p:[1030,455],o:[-90,-90]},
+ {a:2.7,b:3.3,t:'DHPR (voltage sensor)',p:[1142,520],o:[130,-60]},
+ {a:2.8,b:3.4,t:'Ryanodine receptor (RyR)',p:[1157,570],o:[120,40]},
+ {a:2.8,b:3.12,k:'trig',t:'DHPR changes shape → pulls RyR open',p:[1118,470],o:[-160,-80]},
+ {a:3.1,b:3.9,k:'trig',t:'Ca²⁺ released from the SR into the cytoplasm',p:relIon(2),o:[-140,80]},
+ {a:3.95,b:4.6,t:'Ca²⁺ diffuses toward the thin filaments',p:t=>relPos(REL[0],t).p,o:[-140,-110]},
+ {a:4.35,b:5.25,t:'Thin filament: actin + tropomyosin + troponin',p:[610,690],o:[-150,-150]},
+ {a:4.35,b:5.25,t:'Thick filament: myosin',p:[600,730],o:[-170,140]},
+ {a:4.55,b:5.0,k:'trig',t:'Ca²⁺ binds troponin',p:t=>relPos(REL[0],t).p,o:[90,-120]},
+ {a:4.62,b:5.25,t:'Ca²⁺ also arrives from neighbouring triads',p:t=>{const q=tnPos(TN[tnOrder[45]],t);return[q[0]+8,q[1]]},o:[-60,-140]},
+ {a:4.95,b:5.3,k:'trig',t:'Troponin drags tropomyosin off the binding sites',p:t=>tnPos(TN[REL[3].tn],t),o:[80,150]},
+ {a:5.05,b:5.31,k:'trig',t:'Cocked myosin head (holding ADP + Pi)',p:FT,o:[40,110]},
+ {a:5.31,b:5.41,k:'trig',t:'Head binds actin: a cross-bridge',p:FT,o:[40,110]},
+ {a:5.41,b:5.63,k:'trig',t:'Pi leaves → power stroke pulls actin toward the M-line',p:FT,o:[40,110]},
+ {a:5.63,b:5.74,k:'trig',t:'ATP binds → head lets go of actin',p:FT,o:[40,110]},
+ {a:5.74,b:6.02,k:'trig',t:'ATP split to ADP + Pi → head re-cocks',p:FT,o:[40,110]},
+ {a:6.02,b:6.72,k:'trig',t:'…and the cycle repeats further along the actin',p:FT,o:[40,110]},
+ {a:5.2,b:5.42,t:'Actin (thin filament)',p:[790,610],o:[40,-80]},
+ {a:5.42,b:6.72,t:'Actin slides toward the M-line (dashed ring = start)',p:t=>[716-contr(t),610],o:[90,-90]},
+ {a:5.2,b:6.72,t:'Myosin (thick filament)',p:[790,650],o:[60,170]},
+ {a:5.2,b:6.72,t:'M-line (sarcomere centre)',p:t=>[680-contr(t)/2,604],o:[20,-110]},
+ {a:7.0,b:9.0,k:'trig',t:'Actin slides toward the M-line: I band & H zone shrink',p:[610,954],o:[0,70]},
+ {a:7.0,b:9.6,t:'Yellow beads mark the ends of the actin filaments',p:t=>[700-contr(t)+16,770],o:[250,50]},
+ {a:7.0,b:9.6,t:'Z-disc pulled in',p:t=>[200+contr(t),600],o:[-30,-60]},
+ {a:7.0,b:9.6,t:'Z-disc pulled in',p:t=>[840-contr(t),600],o:[40,-60]},
+ {a:9.0,b:9.7,k:'trig',t:'SERCA pumps Ca²⁺ back into the SR (uses ATP)',p:SERCA[2],o:[-40,-120]},
+ {a:9.62,b:10.1,k:'trig',t:'Ca²⁺ gone → tropomyosin blocks actin again',p:t=>tnPos(TN[REL[5].tn],t),o:[-100,160]},
+ {a:10.05,b:11.6,k:'trig',t:'Heads stay off; titin springs the sarcomere back: relaxation',p:t=>[840-contr(t),720],o:[-120,160]}];
+const hud=$('hud');
+// cause → effect chain chips, laid out to fit the caption width
+// cause → effect chain chips: a two-row window that follows the current step
+const chips=(cw,st=0)=>{const out=[];let x=0,row=0;for(let i=st;i<CHAIN.length;i++){const lab=CHAIN[i][1],w=lab.length*6.3+18;if(x>0&&x+w>cw-32){x=0;row++}if(row>1)break;out.push({i,x,row,w,lab});x+=w+16}return{out,rows:2}};
+function captionHeight(){return 96+2*26}
+function drawHud(t){let o='';
+ LBL.forEach(l=>{const a=win(t,l.a,l.b,.012);if(a<=0)return;
+  const [sx,sy]=toScreen(typeof l.p=='function'?l.p(t):l.p),trig=l.k==='trig';const w=l.t.length*(trig?7.6:7.4)+(trig?22:0);
+  if(!l.o){o+=`<text x="${sx}" y="${sy}" text-anchor="middle" class="hl" opacity="${a.toFixed(3)}">${l.t}</text>`;return}
+  const ty=Math.min(FR.y1-14,Math.max(HB+18,sy+l.o[1])),xr=(ty<PB+12?SW-PWd-30:SW)-w/2-10;let tx=Math.min(xr,Math.max(w/2+10,sx+l.o[0]));
+  if(trig){const ly=ty<sy?ty+8:ty-22;
+   o+=`<g opacity="${a.toFixed(3)}"><path d="M${tx},${ly}L${sx},${sy}" stroke="#ff9500" stroke-width="2.4"/><circle cx="${sx}" cy="${sy}" r="5" fill="#ff9500" stroke="#fff" stroke-width="1.5"/>`+
+    `<rect x="${tx-w/2}" y="${ty-18}" width="${w}" height="26" rx="13" fill="#262626"/><text x="${tx}" y="${ty}" text-anchor="middle" class="ht">${l.t}</text></g>`;return}
+  const ly=ty<sy?ty+8:ty-19;
+  o+=`<g opacity="${a.toFixed(3)}"><path d="M${tx},${ly}L${sx},${sy}" stroke="#333" stroke-width="1.4"/><circle cx="${sx}" cy="${sy}" r="4" fill="#333" stroke="#fff" stroke-width="1.5"/>`+
+   `<text x="${tx}" y="${ty}" text-anchor="middle" class="hl">${l.t}</text></g>`});
+ o+=bandLabels(t);
+ // caption, bottom-left: cause → effect chain, then what is happening now
+ const ph=phase(t),cw=Math.min(SW-24,860),Y=SH-CAPH+6;let cur=-1;CHAIN.forEach((c,i)=>{if(t>=c[0])cur=i});
+ const st0=Math.max(0,cur-3),ch=chips(cw,st0);
+ o+=`<rect x="12" y="${Y}" width="${cw}" height="${CAPH-16}" rx="10" fill="#fff" fill-opacity=".96" stroke="#bbb"/>`;
+ if(cur>=0)o+=`<text x="${cw-2}" y="${Y+12+2*26+18}" text-anchor="end" class="ca" style="font-size:12px">step ${cur+1} of ${CHAIN.length}</text>`;
+ ch.out.forEach((c,j)=>{const i=c.i,x=28+c.x,y=Y+12+c.row*26,st=i<cur?'done':i===cur?'now':'next';
+  o+=`<rect x="${x}" y="${y}" width="${c.w}" height="20" rx="10" class="c-${st}"/><text x="${x+c.w/2}" y="${y+14}" text-anchor="middle" class="ct-${st}">${i<cur?'✓ ':''}${c.lab}</text>`;
+  if(j<ch.out.length-1&&ch.out[j+1].row===c.row)o+=`<text x="${x+c.w+8}" y="${y+14}" text-anchor="middle" class="ca">›</text>`});
+ const ty=Y+12+ch.rows*26+18,ln=wrap(ph[1],Math.max(40,Math.floor((cw-40)/7.6)));
+ o+=`<text x="28" y="${ty}" class="hc1">${ph[0]}</text>`+ln.slice(0,2).map((s,i)=>`<text x="28" y="${ty+22+i*19}" class="hc2">${s}</text>`).join('');
+ hud.innerHTML=o}
+
+/* ---------- play / pause: steps through the whole process automatically ---------- */
+const pfo=document.createElementNS(NS,'foreignObject');
+pfo.setAttribute('x',PX+PW-222);pfo.setAttribute('y',PY+10);pfo.setAttribute('width',212);pfo.setAttribute('height',34);
+pfo.innerHTML=`<div xmlns="http://www.w3.org/1999/xhtml" style="display:flex;gap:6px;justify-content:flex-end;font:600 14px 'Segoe UI',system-ui,sans-serif">
+<button id="playBtn" style="font:inherit;padding:4px 14px;border-radius:16px;border:1.5px solid #d9253a;background:#d9253a;color:#fff;cursor:pointer">▶ Play</button>
+<select id="speedSel" aria-label="playback speed" style="font:inherit;border-radius:16px;border:1.5px solid #bbb;padding:3px 6px;background:#fff"><option value=".5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></div>`;
+grp.appendChild(pfo);
+const RATE=50;   // slider units per second at 1× (the slider warp already slows down where the action is)
+let playing=false,lastT=0;
+const btn=$('playBtn'),spd=$('speedSel');
+function setPlay(on){playing=on;btn.textContent=on?'❚❚ Pause':'▶ Play';if(on){if(+sl.value>=SMAX){sl.value=0}lastT=performance.now();requestAnimationFrame(tick)}}
+function tick(now){if(!playing)return;const dt=Math.min(.1,(now-lastT)/1000);lastT=now;
+ let v=+sl.value+RATE*(+spd.value)*dt;if(v>=SMAX){v=SMAX;setPlay(false)}sl.value=v;render();if(playing)requestAnimationFrame(tick)}
+btn.addEventListener('click',()=>setPlay(!playing));
+sl.addEventListener('pointerdown',()=>setPlay(false));
+addEventListener('keydown',e=>{if(e.code==='Space'&&e.target.tagName!=='SELECT'){e.preventDefault();setPlay(!playing)}});
+
+/* ---------- main ---------- */
+function render(){const t=s2t(+sl.value);camera(t);slide(t);drawStory(t);drawHud(t);drawGraph(t);drawTension(t)}
+sl.addEventListener('input',render);
+addEventListener('resize',()=>{layout();render()});
+layout();render();
+})();
+</script></body></html>

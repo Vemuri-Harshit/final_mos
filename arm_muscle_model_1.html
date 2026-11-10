@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arm and Muscle Force Model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* project palette (same as the landing page): crimson / red / rose / blush / cream, bone for the skeleton */
+  :root{--crimson:#9e1b32;--red:#c8344a;--rose:#e8a5ad;--muscle:#d9546a;
+        --bg:#fff3f1;--fg:#3b1a20;--mut:#7a5a60;--card:#fffafa;--bd:#efd2d6;
+        --blue:#7b2a5e;      /* load arrow (plum)       */
+        --green:#1f8a70;     /* joint reaction arrow    */
+        --bone:#f1e4cb;--bone2:#b39a6d;
+        --font:'Nunito','Segoe UI',system-ui,-apple-system,Roboto,sans-serif;color-scheme:light}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:#fff8f6;color:var(--fg);font:15px/1.4 var(--font);overflow:hidden}
+  .bg{position:fixed;inset:0;z-index:0;overflow:hidden;background:repeating-linear-gradient(100deg,rgba(158,27,50,.035) 0 2px,transparent 2px 15px),#fff8f6}
+  .bg i{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55}
+  .bg i:nth-child(1){width:42vw;height:42vw;left:-10vw;top:-12vw;background:#e8a5ad}
+  .bg i:nth-child(2){width:36vw;height:36vw;right:-8vw;top:20vh;background:#d9546a}
+  .bg i:nth-child(3){width:40vw;height:30vw;left:30vw;bottom:-14vw;background:#f3c1b8}
+  /* The whole app is exactly one viewport tall, so nothing needs scrolling. */
+  main{position:relative;z-index:1;height:100vh;display:flex;flex-direction:column;gap:10px;padding:12px 16px}
+  h1{font-size:20px;margin:0;font-weight:800;color:var(--crimson);letter-spacing:-.01em}
+  .card{background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.85);border-radius:16px;padding:10px 12px;
+        backdrop-filter:blur(12px) saturate(140%);-webkit-backdrop-filter:blur(12px) saturate(140%);
+        box-shadow:0 10px 30px rgba(158,27,50,.14),inset 0 1px 0 rgba(255,255,255,.9)}
+  .mut{color:var(--mut);font-size:13px;font-weight:600}
+  .layout{flex:1;min-height:0;display:grid;grid-template-columns:minmax(340px,36%) minmax(0,1fr) minmax(210px,19%);grid-template-rows:minmax(0,1fr);gap:16px}
+  .left{display:flex;flex-direction:column;gap:12px;min-height:0}
+  .controls{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:10px 14px}
+  .controls label{display:flex;flex-direction:column;font-size:13px;color:var(--mut)}
+  .controls output{color:var(--fg);font-weight:600}
+  input[type=range]{width:100%;accent-color:var(--crimson);margin:2px 0 0}
+  .diag{flex:1;min-height:0;position:relative}
+  .diag svg,.g svg{position:absolute;inset:4px;width:calc(100% - 8px);height:calc(100% - 8px)}
+  .side{min-height:0;overflow:hidden;padding:14px 16px}
+  .side h2{font-size:16px;margin:0 0 8px;color:var(--crimson);font-weight:800}
+  .side p{margin:0 0 12px;font-size:13px;line-height:1.5;color:var(--mut)}
+  .kv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .kv div{background:rgba(255,243,241,.8);border:1px solid var(--bd);border-radius:8px;padding:5px 10px;font-size:12px;color:var(--mut)}
+  .kv b{display:block;color:var(--crimson);font-size:15px;font-weight:800}
+  .note{font-size:11px;margin-top:5px}
+  .graphs{height:100%;min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:minmax(0,1fr) minmax(0,1fr) auto;gap:16px}
+  .g{position:relative;min-height:0;padding:0}
+  .eq{grid-column:1/-1;max-height:42vh;overflow:auto;font-size:13px}
+  .eq p{margin:4px 0}
+  summary{cursor:pointer;font-weight:800;color:var(--crimson)}
+  code{background:#fbe3e1;padding:1px 5px;border-radius:4px;font-size:12.5px}
+  .ax{stroke:var(--mut)}.gr{stroke:var(--bd)}
+  text{fill:var(--fg);font-size:11px}.t2{fill:var(--mut)}
+  /* diagram markings */
+  .dm{stroke:var(--mut);stroke-width:1.2;fill:none}
+  .mk{fill:var(--mut)}
+  .lab{paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+  .dl{font-size:11px;font-weight:600}
+  @media(max-width:900px){
+    body{overflow:auto} main{height:auto}
+    .layout{grid-template-columns:1fr;grid-template-rows:none}
+    .controls{grid-template-columns:1fr}
+    .diag{height:460px;flex:none}
+    .graphs{grid-template-columns:1fr;grid-template-rows:none;grid-auto-rows:250px} .eq{grid-column:auto;max-height:none}
+  }
+</style>
+</head>
+<body>
+<div class="bg"><i></i><i></i><i></i></div>
+<main>
+  <h1>Arm and muscle force model <span class="mut">&nbsp;Move the sliders: the diagram and all four graphs update live.</span></h1>
+
+  <div class="layout">
+    <div class="left">
+      <section class="card controls">
+        <label>Elbow angle θ: <output id="o_theta"></output>
+          <input type="range" id="theta" min="10" max="170" step="1" value="90"></label>
+        <label>Load mass in the hand: <output id="o_mass"></output>
+          <input type="range" id="mass" min="0" max="30" step="0.5" value="5"></label>
+      </section>
+      <section class="card diag"><svg id="diagram" viewBox="16 0 322 346"></svg></section>
+      <section class="card"><div class="kv" id="readouts"></div>
+        <div class="mut note">Each force arrow is scaled to its own maximum: compare the numbers, not the arrow lengths.</div></section>
+    </div>
+
+    <section class="graphs">
+      <div class="card g"><svg id="g1"></svg></div>
+      <div class="card g"><svg id="g2"></svg></div>
+      <div class="card g"><svg id="g3"></svg></div>
+      <div class="card g"><svg id="g4"></svg></div>
+      <div class="card eq">
+        <details>
+          <summary>Model and equations (click to open)</summary>
+          <p class="mut">Static, planar, rigid rods, upper arm fixed and vertical, muscle is a straight line from the shoulder to the forearm. Elbow is the origin O, the shoulder is at height <code>Lu</code>, the muscle attaches at distance <code>a</code> along the forearm, the load acts at distance <code>Lf</code>.</p>
+          <p><code>L = √(Lu² + a² − 2·Lu·a·cosθ)</code> muscle length (law of cosines)</p>
+          <p><code>d = Lu·a·sinθ / L</code> moment arm of the muscle about the elbow</p>
+          <p><code>τ = (W·Lf + Wf·Lf/2)·sinθ</code> torque of the load about the elbow (Wf is the optional forearm weight)</p>
+          <p><code>F = τ / d = (W·Lf + Wf·Lf/2)·L / (Lu·a)</code> sinθ cancels, so F is proportional to the muscle length</p>
+          <p><code>β</code> is the angle between the muscle line and the forearm; the force acts along the muscle, from the insertion toward the shoulder.</p>
+          <p><code>R = −F·(unit vector along muscle) − (0, −(W + Wf))</code> joint reaction, from force balance on the forearm</p>
+          <p class="mut">Edit the constants in <code>CFG</code> at the top of the script to change the arm. Illustrative values, not a medical or training tool.</p>
+        </details>
+      </div>
+    </section>
+
+    <aside class="card side">
+      <h2>Notes</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.</p>
+      <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat.</p>
+    </aside>
+  </div>
+</main>
+
+<script>
+// ================= CONFIGURATION: edit these to change the arm =================
+const CFG = {
+  Lu: 0.30,            // upper arm length, shoulder to elbow (m)
+  a: 0.04,             // distance from elbow to muscle insertion along the forearm (m)
+  Lf: 0.30,            // forearm length, elbow to hand (m)
+  forearmWeight: 0,    // weight of the forearm itself (N). 0 matches the simple picture.
+  g: 9.81,             // gravity (m/s^2)
+  thetaMin: 10, thetaMax: 170,
+  massMax: 30
+};
+const state = { theta: 90, mass: 5 };   // theta in degrees, mass in kg
+const $ = id => document.getElementById(id);
+const RAD = Math.PI / 180;
+
+// ================= PHYSICS =================
+// Coordinates: x to the right, y up, elbow O at (0,0), upper arm along +y.
+// theta = angle between the upper arm (toward the shoulder) and the forearm.
+function model(thetaDeg, massKg, a = CFG.a) {
+  const { Lu, Lf, g, forearmWeight: Wf } = CFG;
+  const th = thetaDeg * RAD, W = massKg * g;
+  const L = Math.sqrt(Lu * Lu + a * a - 2 * Lu * a * Math.cos(th));  // muscle length
+  const d = Lu * a * Math.sin(th) / L;                                // moment arm
+  const moment = W * Lf + Wf * Lf / 2;                                // load moment per sin(theta)
+  const F = moment * L / (Lu * a);                                    // muscle force = torque / d
+  const u = [Math.sin(th), Math.cos(th)];                             // forearm direction
+  const S = [0, Lu], B = [a * u[0], a * u[1]], H = [Lf * u[0], Lf * u[1]];
+  const e = [(S[0] - B[0]) / L, (S[1] - B[1]) / L];                   // unit vector along muscle, B -> S
+  const Fv = [F * e[0], F * e[1]];                                    // muscle force on forearm
+  const Rv = [-Fv[0], -Fv[1] + (W + Wf)];                             // joint reaction on forearm
+  const beta = Math.acos(Math.max(-1, Math.min(1, -(u[0] * e[0] + u[1] * e[1])))) / RAD;
+  return { th, W, L, d, F, S, B, H, e, Fv, Rv, R: Math.hypot(Rv[0], Rv[1]), beta };
+}
+
+// Each arrow is drawn at ARROW_MAX pixels for its largest possible value, shorter in proportion below that.
+const ARROW_MAX = 55;
+const REF = (() => {
+  let F = 1e-9, R = 1e-9;
+  for (let t = CFG.thetaMin; t <= CFG.thetaMax; t++) {
+    const q = model(t, CFG.massMax);
+    F = Math.max(F, q.F); R = Math.max(R, q.R);
+  }
+  return { F, R, W: Math.max(CFG.massMax * CFG.g + CFG.forearmWeight, 1e-9) };
+})();
+
+// ================= DIAGRAM =================
+function arrow(x1, y1, x2, y2, col) {
+  const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy);
+  if (len < 3) return '';
+  const ux = dx / len, uy = dy / len, hx = x2 - ux * 9, hy = y2 - uy * 9;
+  return `<line x1="${x1}" y1="${y1}" x2="${hx}" y2="${hy}" stroke="${col}" stroke-width="3"/>` +
+         `<polygon points="${x2},${y2} ${hx - uy * 5},${hy + ux * 5} ${hx + uy * 5},${hy - ux * 5}" fill="${col}"/>`;
+}
+// Dimension marking: a double-headed arrow parallel to the segment p-q, pushed out by `off` px along the
+// unit normal n (screen coords), with end ticks and a label running along the line.
+function dim(p, q, n, off, txt) {
+  const A = [p[0] + n[0] * off, p[1] + n[1] * off], Bp = [q[0] + n[0] * off, q[1] + n[1] * off];
+  const dx = Bp[0] - A[0], dy = Bp[1] - A[1];
+  let ang = Math.atan2(dy, dx) / RAD; if (ang > 90 || ang <= -90) ang += 180;   // keep text upright
+  const mx = (A[0] + Bp[0]) / 2 + n[0] * 11, my = (A[1] + Bp[1]) / 2 + n[1] * 11;
+  const tick = c => `<line class="dm" x1="${c[0] - n[0] * 5}" y1="${c[1] - n[1] * 5}" x2="${c[0] + n[0] * 5}" y2="${c[1] + n[1] * 5}"/>`;
+  return `<line class="dm" x1="${A[0]}" y1="${A[1]}" x2="${Bp[0]}" y2="${Bp[1]}" marker-start="url(#ah)" marker-end="url(#ah)"/>` +
+         tick(A) + tick(Bp) +
+         `<text class="lab dl" transform="translate(${mx} ${my}) rotate(${ang})" text-anchor="middle" dominant-baseline="central">${txt}</text>`;
+}
+const cm = v => parseFloat((v * 100).toFixed(1)) + ' cm';
+
+function drawDiagram(m) {
+  const s = 400, O = [150, 158];                       // pixels per metre, elbow position in the viewBox
+  const P = p => [O[0] + p[0] * s, O[1] - p[1] * s];   // model coords -> screen coords
+  const pS = P(m.S), pB = P(m.B), pH = P(m.H);
+  let h = `<defs><marker id="ah" markerUnits="userSpaceOnUse" markerWidth="7" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><path class="mk" d="M0,0 L7,3 L0,6 z"/></marker></defs>`;
+  h += `<line x1="${pS[0] - 70}" y1="${pS[1] - 20}" x2="${pS[0] + 40}" y2="${pS[1] - 20}" stroke="var(--fg)" stroke-width="3"/>`;
+  for (let x = pS[0] - 66; x < pS[0] + 40; x += 12) h += `<line x1="${x}" y1="${pS[1] - 20}" x2="${x - 8}" y2="${pS[1] - 30}" stroke="var(--fg)"/>`;
+  // rods
+  const rod = (p, q) => `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" stroke="var(--bone2)" stroke-width="20" stroke-linecap="round"/>` +
+                        `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" stroke="var(--bone)" stroke-width="14" stroke-linecap="round"/>`;
+  h += rod(O, pS) + rod(O, pH);
+  // muscle: a spindle shape from shoulder to insertion
+  const dx = pB[0] - pS[0], dy = pB[1] - pS[1], len = Math.hypot(dx, dy), nx = -dy / len, ny = dx / len, N = 20, up = [], dn = [];
+  for (let i = 0; i <= N; i++) {
+    const t = i / N, w = 13 * Math.pow(Math.sin(Math.PI * t), 0.8), x = pS[0] + dx * t, y = pS[1] + dy * t;
+    up.push(`${x + nx * w},${y + ny * w}`); dn.push(`${x - nx * w},${y - ny * w}`);
+  }
+  h += `<polygon points="${up.join(' ')} ${dn.reverse().join(' ')}" fill="var(--muscle)" opacity=".9" stroke="var(--crimson)" stroke-width="2"/>`;
+
+  // ---- dimension markings, kept well away from the force arrows ----
+  const out = [Math.cos(m.th), Math.sin(m.th)];          // normal on the outer (lower) side of the forearm
+  const west = [-dy / len, dx / len];                     // normal on the elbow side of the muscle (x < 0)
+  h += dim(O, pS, [-1, 0], 92, 'Lu = ' + cm(CFG.Lu));              // upper arm, far left
+  h += dim(pS, pB, west, 36, 'L = ' + cm(m.L));                    // muscle length, between muscle and Lu
+  h += dim(O, pB, out, 80, 'a = ' + cm(CFG.a));                    // insertion distance
+  h += dim(O, pH, out, 115, 'Lf = ' + cm(CFG.Lf));                 // forearm length, outermost
+  // theta arc with an arrowhead, label outside the arc on the bisector
+  h += `<path class="dm" d="M${O[0]} ${O[1] - 34} A34 34 0 0 1 ${O[0] + 34 * Math.sin(m.th)} ${O[1] - 34 * Math.cos(m.th)}" marker-end="url(#ah)"/>`;
+  h += `<text class="lab dl" x="${O[0] + 54 * Math.sin(m.th / 2)}" y="${O[1] - 54 * Math.cos(m.th / 2)}" text-anchor="middle" dominant-baseline="central">θ = ${state.theta}°</text>`;
+
+  // joints
+  h += `<circle cx="${pS[0]}" cy="${pS[1]}" r="8" style="fill:var(--fg)"/><circle cx="${O[0]}" cy="${O[1]}" r="10" fill="var(--card)" stroke="var(--fg)" stroke-width="3"/><circle cx="${O[0]}" cy="${O[1]}" r="3" style="fill:var(--fg)"/>`;
+  // force arrows (drawn last so they sit on top)
+  const kF = ARROW_MAX / REF.F, kW = ARROW_MAX / REF.W, kR = ARROW_MAX / REF.R;
+  h += arrow(pB[0], pB[1], pB[0] + m.Fv[0] * kF, pB[1] - m.Fv[1] * kF, 'var(--crimson)');
+  h += arrow(pH[0], pH[1], pH[0], pH[1] + m.W * kW, 'var(--blue)');
+  h += arrow(O[0], O[1], O[0] + m.Rv[0] * kR, O[1] - m.Rv[1] * kR, 'var(--green)');
+  const T = (x, y, txt, col) => `<text class="lab" x="${x}" y="${y}" style="font-size:11.5px;${col ? 'fill:' + col : ''}">${txt}</text>`;
+  h += T(pS[0] + 14, pS[1] + 4, 'shoulder (fixed)');
+  h += T(pB[0] + m.Fv[0] * kF + 8, pB[1] - m.Fv[1] * kF - 6, 'F muscle ' + m.F.toFixed(0) + ' N', 'var(--crimson)');
+  h += T(pH[0] + 10, pH[1] + m.W * kW + 4, 'W ' + m.W.toFixed(0) + ' N', 'var(--blue)');
+  h += T(O[0] + m.Rv[0] * kR + 8, O[1] - m.Rv[1] * kR + 14, 'R joint ' + m.R.toFixed(0) + ' N', 'var(--green)');
+  $('diagram').innerHTML = h;
+}
+
+// ================= GRAPHS =================
+// One-series line plot with a marker at the current slider position. Sized from the real pixel size of its box.
+function plot(id, title, xs, ys, mark, xl, yl, y0) {
+  const el = $(id), W = el.clientWidth || 360, H = el.clientHeight || 190, l = 52, r = 20, t = 34, b = 42;
+  el.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const lo = y0 ?? Math.min(...ys), hi = Math.max(...ys) * 1.08 || 1;
+  const X = x => l + (x - xs[0]) / (xs[xs.length - 1] - xs[0]) * (W - l - r);
+  const Y = y => H - b - (y - lo) / (hi - lo) * (H - b - t);
+  let h = `<text x="${l}" y="16" style="font-size:12.5px;font-weight:600">${title}</text>`;
+  for (let i = 0; i <= 4; i++) {
+    const v = lo + i * (hi - lo) / 4, xv = xs[0] + i * (xs[xs.length - 1] - xs[0]) / 4;
+    h += `<line class="gr" x1="${l}" x2="${W - r}" y1="${Y(v)}" y2="${Y(v)}"/><text class="t2" x="${l - 5}" y="${Y(v) + 4}" text-anchor="end">${parseFloat(v.toPrecision(3))}</text>`;
+    h += `<text class="t2" x="${X(xv)}" y="${H - b + 14}" text-anchor="middle">${parseFloat(xv.toPrecision(3))}</text>`;
+  }
+  h += `<text class="t2" x="${(l + W - r) / 2}" y="${H - 6}" text-anchor="middle">${xl}</text><text class="t2" x="${W - r}" y="29" text-anchor="end">${yl}</text>`;
+  h += `<polyline fill="none" stroke="var(--red)" stroke-width="2.2" points="${xs.map((x, i) => X(x) + ',' + Y(ys[i])).join(' ')}"/>`;
+  h += `<line x1="${X(mark[0])}" x2="${X(mark[0])}" y1="${t}" y2="${H - b}" stroke="var(--mut)" stroke-dasharray="4 3"/><circle cx="${X(mark[0])}" cy="${Y(mark[1])}" r="5.5" fill="var(--blue)" stroke="#fff" stroke-width="1.5"/>`;
+  el.innerHTML = h;
+}
+const range = (a, b, n) => Array.from({ length: n + 1 }, (_, i) => a + (b - a) * i / n);
+
+function drawGraphs(m) {
+  const th = range(CFG.thetaMin, CFG.thetaMax, 160), ms = range(0, CFG.massMax, 60), as = range(0.01, 0.10, 90);
+  const T = th.map(t => model(t, state.mass)), M = ms.map(w => model(state.theta, w)), A = as.map(a => model(state.theta, state.mass, a));
+  plot('g1', '1. Muscle force vs angle', th, T.map(q => q.F), [state.theta, m.F], 'θ (°)', 'F (N)', 0);
+  plot('g2', '2. Muscle force vs load', ms, M.map(q => q.F), [state.mass, m.F], 'load mass (kg)', 'F (N)', 0);
+  plot('g3', '3. Muscle length vs angle', th, T.map(q => q.L * 100), [state.theta, m.L * 100], 'θ (°)', 'L (cm)');
+  plot('g4', '4. Force vs insertion distance a', as.map(a => a * 100), A.map(q => q.F), [CFG.a * 100, m.F], 'a (cm)', 'F (N)', 0);
+}
+
+// ================= READOUTS AND UPDATE LOOP =================
+function update() {
+  const m = model(state.theta, state.mass);
+  $('o_theta').textContent = state.theta + '°';
+  $('o_mass').textContent = state.mass.toFixed(1) + ' kg  (W = ' + m.W.toFixed(1) + ' N)';
+  const items = [['Muscle force F', m.F.toFixed(0) + ' N'], ['F ÷ load W', (m.F / Math.max(m.W, 1e-9)).toFixed(1) + '×'],
+    ['Muscle length L', (m.L * 100).toFixed(1) + ' cm'], ['Moment arm d', (m.d * 100).toFixed(2) + ' cm'],
+    ['Muscle–forearm angle β', m.beta.toFixed(1) + '°'], ['Joint reaction |R|', m.R.toFixed(0) + ' N']];
+  $('readouts').innerHTML = items.map(([l, v]) => `<div>${l}<b>${v}</b></div>`).join('');
+  drawDiagram(m);
+  drawGraphs(m);
+}
+$('theta').addEventListener('input', e => { state.theta = +e.target.value; update(); });
+$('mass').addEventListener('input', e => { state.mass = +e.target.value; update(); });
+window.addEventListener('resize', update);
+$('theta').min = CFG.thetaMin; $('theta').max = CFG.thetaMax; $('mass').max = CFG.massMax;
+update();
+</script>
+</body>
+</html>

@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Traction on a plane through a muscle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--cream:#fbf1ea;--bg:rgba(255,255,255,.6);--fg:#3b1a21;--mut:#7d5a62;--card:rgba(255,255,255,.74);--bd:rgba(158,27,50,.2);--ac:#9e1b32;color-scheme:light}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--cream);color:var(--fg);font:15px/1.45 'Nunito',system-ui,sans-serif}
+  .bg{position:fixed;inset:0;z-index:0;overflow:hidden;
+      background:repeating-linear-gradient(100deg,rgba(158,27,50,.035) 0 2px,transparent 2px 15px),var(--cream)}
+  .bg i{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55}
+  .bg i:nth-child(1){width:42vw;height:42vw;left:-10vw;top:-12vw;background:#e8a5ad}
+  .bg i:nth-child(2){width:36vw;height:36vw;right:-8vw;top:20vh;background:#d9546a}
+  .bg i:nth-child(3){width:40vw;height:30vw;left:30vw;bottom:-14vw;background:#f3c1b8}
+  main{position:relative;z-index:1;max-width:1500px;margin:0 auto;padding:10px 12px}
+  h1{font-size:23px;font-weight:800;color:var(--ac);margin:0 0 2px}h2{font-size:16px;font-weight:700;margin:0 0 6px}
+  .mut{color:var(--mut);font-size:13px}
+  .card{background:var(--card);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 4px 18px rgba(158,27,50,.08);border:1px solid var(--bd);border-radius:12px;padding:10px 12px}
+  .layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:12px;margin-top:8px;align-items:start}
+  @media(max-width:950px){.layout{grid-template-columns:1fr}}
+  #wrap{position:relative;padding:0;overflow:hidden}
+  canvas{display:block;width:100%;height:auto;aspect-ratio:1.18;touch-action:none;cursor:grab}
+  #mohr{aspect-ratio:1.25;cursor:default;touch-action:auto}
+  .hint{position:absolute;right:10px;bottom:8px;max-width:300px;font-size:12px;color:var(--mut);text-align:right;pointer-events:none}
+  @media(max-width:560px){.hint{display:none}}
+  .legend{position:absolute;right:10px;top:8px;font-size:12px;background:rgba(255,250,246,.88);border:1px solid var(--bd);border-radius:8px;padding:6px 8px}
+  .legend i{display:inline-block;width:18px;height:3px;margin-right:6px;vertical-align:middle;border-radius:2px}
+  .side{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:12px;align-items:start}
+  .sl{display:grid;gap:8px}
+  .sl label{display:flex;flex-direction:column;font-size:13px;color:var(--mut)}
+  .sl output{color:var(--fg);font-weight:600}
+  input[type=range]{width:100%;accent-color:var(--ac);margin:2px 0 0}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px;font-size:13px}
+  .btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  button{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:5px 10px;font:inherit;font-size:13px;cursor:pointer}
+  button:hover{border-color:var(--ac);color:var(--ac)}
+  button.primary:hover{color:#fff;filter:brightness(1.1)}
+  button.primary{background:var(--ac);border-color:var(--ac);color:#fff}
+  .radios{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:13px}
+  .radios label{display:flex;align-items:center;gap:5px;cursor:pointer}
+  .kv{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .kv div{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:4px 8px;font-size:12px;color:var(--mut)}
+  .kv b{display:block;color:var(--fg);font-size:15px;font-weight:600}
+  .kv .wide{grid-column:1/-1}
+  .tens{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px;margin:4px 0 6px;color:var(--fg)}
+  .tens table.m{display:inline-table;margin:0}
+  .tens table.m.sym td{font-weight:600}
+  table.m{border-collapse:collapse;margin:4px 0 2px;font-variant-numeric:tabular-nums;font-size:15px;font-weight:600}
+  table.m td{padding:2px 10px;text-align:right}
+  table.m{border-left:2px solid var(--fg);border-right:2px solid var(--fg);border-radius:6px}
+  code{font-family:inherit;font-weight:600;background:rgba(158,27,50,.08);padding:1px 5px;border-radius:4px;font-size:13px}
+  p{margin:4px 0}
+  .mlegend i{display:inline-block;width:18px;height:3px;margin:0 5px 2px 10px;vertical-align:middle;border-radius:2px}
+  .sw{display:inline-block;width:11px;height:11px;border-radius:3px;margin:0 4px -1px 0}
+</style>
+</head>
+<body>
+<div class="bg"><i></i><i></i><i></i></div>
+<main>
+  <h1>Traction on a plane through a muscle</h1>
+  <div class="mut">A muscle under axial stress, with a radius that varies along its length as r = c·x(l − x), cut by a plane whose point slides along the muscle axis. The traction vector <code>t = σ·n</code> and the Mohr circle update live. Hold Ctrl to show the handles at the plane's point and drag them to move or rotate the plane; drag empty space to orbit, scroll to zoom.</div>
+
+  <div class="layout">
+      <section class="card" id="wrap">
+        <canvas id="cv"></canvas>
+        <div class="legend">
+          <div><i style="background:#e8590c"></i>traction t = σ·n</div>
+          <div><i style="background:#d9606e"></i>fascicles (cut ends)</div>
+          <div id="legc"><i style="background:#1b9e77"></i>shear part τ &nbsp;<i style="background:#c026d3"></i>normal part σₙ</div>
+        </div>
+        <div class="hint">Hold <b>Ctrl</b>: show the plane handles at P₀<br>Drag empty space: orbit · scroll: zoom · double-click: isometric</div>
+      </section>
+
+      <section class="card">
+        <h2>Mohr's circle for this plane</h2>
+        <canvas id="mohr"></canvas>
+        <div class="mut mlegend"><i style="background:#c026d3"></i>σₙ<i style="background:#1b9e77"></i>τ<i style="background:#e8590c"></i>|t| (distance from the origin)</div>
+        <p class="mut">The principal stresses are σ₁ = σ and σ₂ = σ₃ = 0, so the circle runs from 0 to σ (the other two Mohr circles shrink to the origin). The point P = (σₙ, τ) of the chosen plane lies on it at the angle 2θ from the σ-axis, where θ is the angle between the plane normal and the muscle axis. The scale adjusts to σ so the circle always fills the panel.</p>
+      </section>
+  </div>
+
+    <div class="side">
+      <section class="card">
+        <h2>Plane handles</h2>
+        <div class="mut">
+          <p><span class="sw" style="background:#0b7285"></span><b>u</b> and <span class="sw" style="background:#a16207"></span><b>v</b> lie in the plane, <span class="sw" style="background:#7b3fe4"></span><b>n</b> is its normal.</p>
+          <p>The handles are hidden until you hold <b>Ctrl</b> (or tick the box below), so they never clutter the traction vector. <b>Arrows</b> and <b>small squares</b>: drag to slide the plane; its point P₀ only moves <b>along the muscle axis x</b> (no sideways movement in y or z). <b>Rings</b>: drag to rotate the plane about that axis, freely. P₀ stays within 75% of the way from the centre to either end.</p>
+        </div>
+        <div class="row"><label><input type="checkbox" id="hsh"> keep handles visible (for touch screens, or without holding Ctrl)</label></div>
+        <div class="btns">
+          <button id="b_nx">Normal ∥ x</button>
+          <button id="b_ny">Normal ∥ y</button>
+          <button id="b_nz">Normal ∥ z</button>
+          <button id="b_flip">Flip normal</button>
+          <button id="b_center">Move to centre</button>
+          <button id="b_rplane">Reset plane</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Cross-section view</h2>
+        <div class="mut">The view turns to look straight down the plane's normal, and the part of the muscle the normal points towards (the side nearest you) is cut away so the cut face and the vectors are in the clear.</div>
+        <div class="btns">
+          <button id="b_xsec" class="primary">Cross-section view</button>
+          <button id="b_norm">Look along normal</button>
+          <button id="b_iso">Isometric view</button>
+        </div>
+        <div class="radios" role="radiogroup" aria-label="Section cut">
+          <label><input type="radio" name="sec" value="off"> Whole muscle</label>
+          <label><input type="radio" name="sec" value="remove" checked> Remove that side</label>
+          <label><input type="radio" name="sec" value="dim"> Dim that side</label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Stress in the muscle</h2>
+        <div class="sl">
+          <label>Muscle force F: <output id="o_F"></output><input type="range" id="F" min="0" max="1000" step="10" value="300"></label>
+          <label>Rest length l: <output id="o_l"></output><input type="range" id="lr" min="15" max="45" step="0.5" value="30"></label>
+          <label>Maximum radius r<sub>max</sub> (at x = l/2): <output id="o_rmax"></output><input type="range" id="rmax" min="1" max="5" step="0.1" value="3"></label>
+          <label>Muscle strain ε: <output id="o_eps"></output><input type="range" id="eps" min="-0.3" max="0.4" step="0.01" value="0.05"></label>
+          <label>Recruited fraction f (activated fibres): <output id="o_frec"></output><input type="range" id="frec" min="0.05" max="1" step="0.01" value="0.7"></label>
+        </div>
+        <div class="mut" style="margin-top:4px">Radius profile r(x) = c·x(l − x), with c = 4·r<sub>max</sub>/l² so that r = r<sub>max</sub> at mid-length. The plane's point P₀ sets x.</div>
+        <div class="row"><label><input type="checkbox" id="comp" checked> show normal and shear parts of t</label></div>
+      </section>
+
+      <section class="card">
+        <h2>Values</h2>
+        <div class="kv" id="kv"></div>
+        <div class="mut" style="margin-top:8px">Stress tensor at the plane's cross-section (axial stress only):</div>
+        <div class="tens">σ = <table class="m sym"><tr><td>σₓₓ</td><td>0</td><td>0</td></tr><tr><td>0</td><td>0</td><td>0</td></tr><tr><td>0</td><td>0</td><td>0</td></tr></table>,&nbsp;&nbsp; σₓₓ = F(1 + ε) / (π r²),&nbsp;&nbsp; r = c·x(l − x)</div>
+        <div class="tens" id="tval"></div>
+        <table class="m" id="mat" style="display:none"></table>
+      </section>
+
+      <section class="card">
+        <h2>Activated vs unactivated fibres at P₀</h2>
+        <div class="mut">Using the Motor Unit Recruitment model: σₓₓ above is the <b>average</b> stress over the cross-section, σ<sub>avg</sub> = f·σ<sub>active</sub> + (1 − f)·σ<sub>inactive</sub>. Unactivated fibres sit on the passive curve; activated fibres carry the rest.</div>
+        <div class="kv" id="fib"></div>
+      </section>
+    </div>
+
+  <section class="card" style="margin-top:12px">
+    <h2>Assumptions and how to read this</h2>
+    <p class="mut">The muscle is loaded along its axis x, so the stress tensor has one non-zero entry, <code>σₓₓ = F(1 + ε)/(π r²)</code>, and all other entries are zero. The radius varies along the rest length l as <code>r = c·x(l − x)</code>, with x measured from one end and <code>c = 4·r_max/l²</code> (the constant that makes r a length and gives r = r_max at mid-length). The factor (1 + ε) is the constant-volume correction: a muscle stretched by strain ε gets thinner, so the same force acts on a smaller area. The same force F passes through every cross-section, so σₓₓ is largest where the muscle is thinnest. It is evaluated at the cross-section through the plane's point P₀, which slides only along the axis. Within that cross-section σₓₓ is the average over all fibres; the panel above splits it into activated and unactivated fibres. The fascicles are only a drawing.</p>
+    <p class="mut">Because σ has only the xx entry, <code>t = σ·n = (σ·nₓ, 0, 0)</code>: the traction always points along the muscle axis, and its size is σ·|nₓ|. A plane parallel to the axis (nₓ = 0) carries no traction. The normal part is <code>σₙ = σ·nₓ²</code>, and the shear part is <code>τ = σ·|nₓ|·√(1 − nₓ²)</code>. These satisfy <code>|t|² = σₙ² + τ²</code>, which is the statement that the point (σₙ, τ) lies on the Mohr circle.</p>
+    <p class="mut">Fascicles run along the muscle and converge towards the tendons. Where the plane cuts them they show as ellipses (stretched when the plane is oblique to the axis); a plane close to parallel to the axis shows them as strands lying in the plane. Arrow length is proportional to |t|: a traction arrow one tick long (measured along x) means 0.5 MPa. The axis triad in the lower left follows the view.</p>
+  </section>
+</main>
+
+<script>
+// ================= CONFIGURATION =================
+const MUSCLE = { L: 1.6, XB: 1.36, RB: 0.62, RT: 0.17 };   // half length, where the tendon starts, belly radius, tendon radius (drawing units)
+const MAX_FRAC = 0.75;     // plane point may travel at most 75% of the way from the origin to either muscle end
+const MPA_PER_UNIT = 0.5;   // arrow length scale: 0.5 MPa = 1 drawing unit
+const TUBE_R = 0.072;       // fascicle radius at the widest part of the belly
+const ARM = 0.8, RR = 0.5, SQ0 = 0.18, SQ1 = 0.45;   // handle sizes: arrow length, ring radius, square corners
+const HCOL = ['#0b7285', '#a16207', '#7b3fe4'];     // u, v, n
+const HOT = '#f08c00';
+const PAIRS = [[0, 1], [1, 2], [2, 0]];
+const KEYS = ['e1', 'e2', 'n'];
+const $ = id => document.getElementById(id);
+const view = { az: Math.PI / 4, el: Math.asin(1 / Math.sqrt(3)), roll: 0, zoom: 1 };   // isometric: camera along (1,1,1)
+const ISO = { ...view };
+
+// ================= VECTOR HELPERS =================
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const norm = a => Math.hypot(a[0], a[1], a[2]);
+const unit = a => { const n = norm(a) || 1; return [a[0] / n, a[1] / n, a[2] / n]; };
+const add = (a, b, s = 1) => [a[0] + s * b[0], a[1] + s * b[1], a[2] + s * b[2]];
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+// ================= MUSCLE GEOMETRY =================
+// radius of the muscle at axial position x: the parabola r = c·X(l − X), with X = x + L measured from the left end,
+// l = 2L the rest length and c = RB/L² so that r = RB at mid-length. A thin tendon (RT) is kept only near the ends,
+// beyond the reach of the plane, so wherever the plane can go the radius follows the parabola exactly.
+function radius(x) {
+  const { L, RB, RT } = MUSCLE, X = x + L, l = 2 * L;
+  return Math.max(RT, (RB / (L * L)) * X * (l - X));
+}
+// keep the plane's point on the muscle axis: it may only slide along x (no y or z movement)
+function clampInside(p) {
+  return [clamp(p[0], -MUSCLE.L * MAX_FRAC, MUSCLE.L * MAX_FRAC), 0, 0];
+}
+
+// static surface mesh, fibres and end caps (built once)
+const MESH = [], FIBS = [], CAPS = {};
+(function () {
+  const { L, XB } = MUSCLE, NX = 64, NV = 36, light = unit([0.4, -0.3, 0.9]);
+  const ring = i => { const x = -L + 2 * L * i / NX, r = radius(x); return Array.from({ length: NV }, (_, j) => { const f = 2 * Math.PI * j / NV; return [x, r * Math.cos(f), r * Math.sin(f)]; }); };
+  let prev = ring(0);
+  for (let i = 1; i <= NX; i++) {
+    const cur = ring(i), xm = -L + 2 * L * (i - 0.5) / NX;
+    for (let j = 0; j < NV; j++) {
+      const j2 = (j + 1) % NV, q = [prev[j], prev[j2], cur[j2], cur[j]];
+      const nrm = unit(cross(sub(q[1], q[0]), sub(q[3], q[0]))), shade = 0.55 + 0.45 * Math.abs(dot(nrm, light));
+      const c = [(q[0][0] + q[2][0]) / 2, (q[0][1] + q[2][1]) / 2, (q[0][2] + q[2][2]) / 2];
+      MESH.push({ q, c, shade, tendon: Math.abs(xm) > XB });
+    }
+    prev = cur;
+  }
+  for (let j = 0; j < 14; j++) {
+    const f = 2 * Math.PI * j / 14, line = [];
+    for (let i = 0; i <= 40; i++) { const x = -XB + 2 * XB * i / 40, r = radius(x); line.push([x, r * Math.cos(f), r * Math.sin(f)]); }
+    FIBS.push(line);
+  }
+  for (const s of [-1, 1]) CAPS[s] = Array.from({ length: NV }, (_, j) => { const f = 2 * Math.PI * j / NV, r = radius(s * L); return [s * L, r * Math.cos(f), r * Math.sin(f)]; });
+})();
+
+// polygon clipped to one side of the plane through P0 (keepSide +1 keeps n·(p-P0) >= 0, -1 keeps <= 0)
+function clipPoly(q, n, P0, keepSide) {
+  const v = q.map(p => -keepSide * (n[0] * (p[0] - P0[0]) + n[1] * (p[1] - P0[1]) + n[2] * (p[2] - P0[2])));
+  if (v.every(x => x <= 0)) return q;
+  if (v.every(x => x > 0)) return null;
+  const out = [], m = q.length;
+  for (let i = 0; i < m; i++) {
+    const a = q[i], b = q[(i + 1) % m], va = v[i], vb = v[(i + 1) % m];
+    const cut = () => { const t = va / (va - vb); return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; };
+    if (va <= 0) { out.push(a); if (vb > 0) out.push(cut()); } else if (vb <= 0) out.push(cut());
+  }
+  return out.length >= 3 ? out : null;
+}
+
+// exact outline(s) where the plane through P0 (normal n) cuts the muscle surface: one closed loop per piece
+function sectionLoops(n, P0) {
+  const { L, XB } = MUSCLE, rho = Math.hypot(n[1], n[2]);
+  if (rho < 1e-4) {                                   // plane perpendicular to the axis: a circle
+    const x = P0[0], r = radius(x);
+    return [Array.from({ length: 120 }, (_, k) => { const f = 2 * Math.PI * k / 120; return [x, r * Math.cos(f), r * Math.sin(f)]; })];
+  }
+  const uy = n[1] / rho, uz = n[2] / rho, hy = -uz, hz = uy, nP = dot(n, P0);
+  const kOf = x => (nP - n[0] * x) / rho;            // distance of the cut line from the axis in the x = const slice
+  const G = x => radius(x) - Math.abs(kOf(x));
+  const xs = []; for (let i = 0; i <= 240; i++) xs.push(-L + 2 * L * i / 240);
+  xs.push(XB, -XB); xs.sort((a, b) => a - b);
+  const loops = []; let i = 0;
+  while (i < xs.length) {
+    if (G(xs[i]) < 0) { i++; continue; }
+    let j = i; while (j + 1 < xs.length && G(xs[j + 1]) >= 0) j++;
+    const list = xs.slice(i, j + 1);
+    if (i > 0) { let lo = xs[i - 1], hi = xs[i]; for (let it = 0; it < 24; it++) { const m = (lo + hi) / 2; if (G(m) >= 0) hi = m; else lo = m; } list.unshift(hi); }
+    if (j < xs.length - 1) { let lo = xs[j], hi = xs[j + 1]; for (let it = 0; it < 24; it++) { const m = (lo + hi) / 2; if (G(m) >= 0) lo = m; else hi = m; } list.push(lo); }
+    const A = [], Bc = [];
+    for (const x of list) {
+      const k = kOf(x), r = radius(x), s = Math.sqrt(Math.max(0, r * r - k * k)), fy = k * uy, fz = k * uz;
+      A.push([x, fy + s * hy, fz + s * hz]); Bc.push([x, fy - s * hy, fz - s * hz]);
+    }
+    loops.push(A.concat(Bc.reverse()));
+    i = j + 1;
+  }
+  return loops;
+}
+
+// ================= FASCICLES (fixed in the muscle) =================
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const FASC = [];
+(function () {
+  const rnd = mulberry(7);
+  [[1, 0], [6, 0.38], [12, 0.68], [18, 0.92]].forEach(([cnt, rho], ri) => {
+    for (let k = 0; k < cnt; k++) FASC.push({ rho: cnt === 1 ? 0 : rho + (rnd() - 0.5) * 0.05, phi: 2 * Math.PI * k / cnt + ri * 0.5 + (rnd() - 0.5) * 0.15 });
+  });
+})();
+const DOTS = [[0, 0], [0.5, 0], [-0.5, 0], [0.25, 0.43], [-0.25, 0.43], [0.25, -0.43], [-0.25, -0.43]];
+
+// where each fascicle axis pierces the plane; returns the ellipses cut by the plane
+function fascicleCuts(n, P0, e1) {
+  const out = [], XL = MUSCLE.XB * 0.98, NS = 48;
+  for (const fs of FASC) {
+    const cs = Math.cos(fs.phi), sn = Math.sin(fs.phi);
+    const g = x => { const r = radius(x) * fs.rho; return n[0] * (x - P0[0]) + n[1] * r * cs + n[2] * r * sn - (n[1] * P0[1] + n[2] * P0[2]); };
+    let xp = -XL, gp = g(xp);
+    for (let i = 1; i <= NS; i++) {
+      const x = -XL + 2 * XL * i / NS, gc = g(x);
+      if (gp * gc < 0) {
+        let lo = xp, hi = x, glo = gp;
+        for (let j = 0; j < 26; j++) { const mid = (lo + hi) / 2, gm = g(mid); if (glo * gm <= 0) hi = mid; else { lo = mid; glo = gm; } }
+        const xr = (lo + hi) / 2, r = radius(xr), h = 1e-3, dr = (radius(xr + h) - radius(xr - h)) / (2 * h);
+        const c = [xr, fs.rho * r * cs, fs.rho * r * sn];
+        const T = unit([1, fs.rho * dr * cs, fs.rho * dr * sn]), tn = dot(T, n);
+        if (Math.abs(tn) > 1e-3) {
+          const Tp = add(T, n, -tn), em = norm(Tp) < 1e-6 ? e1 : unit(Tp), en = cross(n, em);
+          const rf = TUBE_R * r / MUSCLE.RB;
+          out.push({ c, em, en, a: rf * Math.min(1 / Math.abs(tn), 4), b: rf });
+        }
+      }
+      xp = x; gp = gc;
+    }
+  }
+  return out;
+}
+
+// ================= THE CUTTING PLANE: point P0 and an orthonormal frame (u = e1, v = e2, n) =================
+let FR = {}, P0 = [0.4, 0, 0];
+function planeBasis(n) {                     // u along the muscle axis projected onto the plane (when it exists)
+  let Tp = [1 - n[0] * n[0], -n[0] * n[1], -n[0] * n[2]];
+  if (norm(Tp) < 0.05) Tp = [-n[1] * n[0], 1 - n[1] * n[1], -n[1] * n[2]];
+  const e1 = unit(Tp);
+  return { e1, e2: cross(n, e1) };
+}
+function setN(n) { n = unit(n); const { e1 } = planeBasis(n); FR = { e1, e2: cross(n, e1), n }; }
+function fixFrame() { const e1 = unit(FR.e1), n = unit(add(FR.n, e1, -dot(FR.n, e1))); FR = { e1, e2: cross(n, e1), n }; }
+function rot(v, a, th) { const c = Math.cos(th), s = Math.sin(th), k = dot(a, v) * (1 - c), x = cross(a, v); return [v[0] * c + x[0] * s + a[0] * k, v[1] * c + x[1] * s + a[1] * k, v[2] * c + x[2] * s + a[2] * k]; }
+function rotateFrame(k, th) {
+  const a = FR[KEYS[k]].slice();
+  FR = { e1: rot(FR.e1, a, th), e2: rot(FR.e2, a, th), n: rot(FR.n, a, th) };
+  fixFrame();
+}
+const ringBasis = k => { const f = [FR.e1, FR.e2, FR.n]; return [f[(k + 1) % 3], f[(k + 2) % 3]]; };   // b1 x b2 = axis k
+function resetPlane() { setN([1 / 2, 1 / 3, 1 / 4]); P0 = [0.4, 0, 0]; }
+resetPlane();
+
+// ================= PHYSICS =================
+// Real (physical) muscle: rest length l, radius r(x) = c·x(l − x) with c = 4·r_max / l², x measured from one end.
+// Axial stress at the plane's cross-section (true stress, constant volume): σxx = F(1 + ε) / (π r²).
+function compute() {
+  const n = FR.n, { L } = MUSCLE;
+  const F = +$('F').value, l = +$('lr').value, rmax = +$('rmax').value, eps = +$('eps').value, frec = +$('frec').value;   // N, cm, cm, –, –
+  const x = (P0[0] + L) / (2 * L) * l;                        // position of the plane's point along the rest length (cm)
+  const c = 4 * rmax / (l * l), r = c * x * (l - x);          // cm⁻¹, cm
+  const area = Math.PI * r * r;                               // cm²
+  const sigma = F * (1 + eps) / (area * 100);                 // MPa (N/mm²)
+  const t = [sigma * n[0], 0, 0];                             // t = sigma . n with sigma = diag(sigma, 0, 0)
+  const sn = dot(t, n);                                       // normal component (signed)
+  const tn = n.map(v => v * sn), ts = [t[0] - tn[0], t[1] - tn[1], t[2] - tn[2]];
+  return { n, sigma, t, sn, tn, ts, tau: norm(ts), F, l, rmax, eps, frec, x, c, r, area, P0, C: n.map(v => v * dot(n, P0)) };
+}
+// Fibre stresses, using the two stress–strain curves of the Motor Unit Recruitment page (kPa).
+// The σxx above is the AVERAGE over the cross-section: σavg = f·σactive + (1 − f)·σinactive.
+const SMAX = 225, W0 = 0.35, KP = 3.1, E0 = 0.12;
+const sIso = e => SMAX * Math.exp(-((e / W0) ** 2)), sPas = e => e > 0 ? KP * (Math.exp(e / E0) - 1) : 0;
+function fibreStresses(S) {
+  const avg = S.sigma * 1000, sp = sPas(S.eps), si = sIso(S.eps), cap = sp + si;      // kPa
+  const act = (avg - (1 - S.frec) * sp) / S.frec;                                     // stress each activated fibre must carry
+  const fNeed = si > 0 ? (avg - sp) / si : Infinity;                                  // smallest recruited fraction that could do it
+  return { avg, sp, si, cap, act, fNeed };
+}
+
+// ================= PROJECTION (orthographic, camera on the az/el direction, with roll) =================
+let W = 600, H = 500, SC = 100;
+const Z = () => SC * view.zoom;
+function basisFor(az, el, roll) {
+  const cam = [Math.cos(el) * Math.cos(az), Math.cos(el) * Math.sin(az), Math.sin(el)];
+  const r0 = [-Math.sin(az), Math.cos(az), 0], u0 = cross(cam, r0), c = Math.cos(roll), s = Math.sin(roll);
+  const right = [r0[0] * c + u0[0] * s, r0[1] * c + u0[1] * s, r0[2] * c + u0[2] * s];
+  return { cam, right, up: cross(cam, right) };
+}
+const basis = () => basisFor(view.az, view.el, view.roll);
+let B = basis();
+const proj = p => [W / 2 + Z() * dot(p, B.right), H * 0.52 - Z() * dot(p, B.up)];
+const depth = p => dot(p, B.cam);
+
+// ================= DRAWING PRIMITIVES =================
+let ctx;
+function arrow(p0, p1, col, lw, label, labelDx = 8, labelDy = -8, pj = proj) {
+  const a = pj(p0), b = pj(p1), dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy);
+  if (len < 2) return;
+  const ux = dx / len, uy = dy / len, hs = Math.min(14, 6 + lw * 2);
+  ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = lw; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0] - ux * hs * .8, b[1] - uy * hs * .8); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(b[0], b[1]); ctx.lineTo(b[0] - ux * hs - uy * hs * .45, b[1] - uy * hs + ux * hs * .45);
+  ctx.lineTo(b[0] - ux * hs + uy * hs * .45, b[1] - uy * hs - ux * hs * .45); ctx.closePath(); ctx.fill();
+  if (label) { ctx.font = '600 14px Nunito,system-ui,sans-serif'; ctx.fillStyle = col; ctx.fillText(label, b[0] + labelDx, b[1] + labelDy); }
+}
+function line3(p0, p1, col, lw, dash) {
+  const a = proj(p0), b = proj(p1);
+  ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.setLineDash(dash || []);
+  ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); ctx.setLineDash([]);
+}
+function poly(pts, fill, stroke, lw, pj = proj) {
+  ctx.beginPath(); pts.forEach((p, i) => { const q = pj(p); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1; ctx.stroke(); }
+}
+
+// the muscle: which = 'all' | 'kept' (n·(p-P0) <= 0) | 'removed' (> 0, drawn faint in dim mode)
+function drawBody(which, S) {
+  const n = S.n, dim = which === 'removed', al = dim ? 0.2 : 1, list = [];
+  for (const m of MESH) {
+    const q = which === 'all' ? m.q : clipPoly(m.q, n, P0, which === 'kept' ? -1 : 1);
+    if (q) list.push({ q, d: depth(m.c), k: m.shade, tendon: m.tendon });
+  }
+  list.sort((a, b) => a.d - b.d);                         // far to near
+  for (const o of list) {
+    const k = o.k, col = o.tendon ? `rgba(${Math.round(240 * k)},${Math.round(184 * k)},${Math.round(74 * k)},${0.8 * al})` : `rgba(${Math.round(236 * k)},${Math.round(92 * k)},${Math.round(108 * k)},${0.55 * al})`;
+    poly(o.q, col, col, 0.6);
+  }
+  ctx.lineWidth = 1; ctx.strokeStyle = dim ? 'rgba(120,30,45,0.07)' : 'rgba(120,30,45,0.28)';
+  for (const line of FIBS) {                              // muscle fibres on the surface
+    ctx.beginPath(); let pen = false;
+    for (const p of line) {
+      const ok = which === 'all' || (which === 'kept' ? dot(n, sub(p, P0)) <= 0 : dot(n, sub(p, P0)) > 0);
+      if (ok) { const q = proj(p); pen ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); pen = true; } else pen = false;
+    }
+    ctx.stroke();
+  }
+  for (const s of [-1, 1]) {                              // end caps of the tendons
+    const c = which === 'all' ? CAPS[s] : clipPoly(CAPS[s], n, P0, which === 'kept' ? -1 : 1);
+    if (c) poly(c, `rgba(214,150,40,${0.95 * al})`, `rgba(120,80,10,${0.8 * al})`, 1);
+  }
+}
+
+function drawAxes() {
+  const len = 2.0, cols = ['#d33a3a', '#2a9d3f', '#2f6fd0'], names = ['x', 'y', 'z'];
+  for (let k = 0; k < 3; k++) {
+    const e = [0, 0, 0]; e[k] = 1;
+    line3(add([0, 0, 0], e, -len), add([0, 0, 0], e, len), cols[k], 1.4);
+    const tip = proj(add([0, 0, 0], e, len + 0.12)); ctx.fillStyle = cols[k]; ctx.font = '700 15px Nunito,system-ui,sans-serif'; ctx.fillText(names[k], tip[0] + 4, tip[1] + 5);
+  }
+  ctx.font = '11px Nunito,system-ui,sans-serif'; ctx.fillStyle = '#d33a3a';   // scale ticks on the x-axis (1 unit = 0.5 MPa)
+  for (const v of [1, 2]) { const p = proj([v, 0, 0]); ctx.beginPath(); ctx.arc(p[0], p[1], 2.5, 0, 7); ctx.fill(); ctx.fillText((v * MPA_PER_UNIT).toFixed(1) + ' MPa', p[0] + 5, p[1] + 14); }
+}
+
+// orientation triad in the lower left; follows the view
+function drawTriad() {
+  const bw = 88, bh = 88, bx = 10, by = H - bh - 10, cx = bx + bw / 2 - 2, cy = by + bh / 2 + 2, L = 28;
+  const cols = ['#d33a3a', '#2a9d3f', '#2f6fd0'], names = ['x', 'y', 'z'];
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.88)'; ctx.strokeStyle = 'rgba(158,27,50,0.25)'; ctx.lineWidth = 1;
+  ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 10); else ctx.rect(bx, by, bw, bh); ctx.fill(); ctx.stroke();
+  const ax = [0, 1, 2].map(k => { const e = [0, 0, 0]; e[k] = 1; return { k, dx: dot(e, B.right) * L, dy: -dot(e, B.up) * L, d: dot(e, B.cam) }; }).sort((a, b) => a.d - b.d);
+  for (const o of ax) {
+    const len = Math.hypot(o.dx, o.dy), tx = cx + o.dx, ty = cy + o.dy;
+    ctx.strokeStyle = cols[o.k]; ctx.fillStyle = cols[o.k]; ctx.lineWidth = 2.2; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(tx, ty); ctx.stroke();
+    if (len > 5) {
+      const ux = o.dx / len, uy = o.dy / len;
+      ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx - ux * 7 - uy * 3.2, ty - uy * 7 + ux * 3.2); ctx.lineTo(tx - ux * 7 + uy * 3.2, ty - uy * 7 - ux * 3.2); ctx.closePath(); ctx.fill();
+    }
+    ctx.font = '700 13px Nunito,system-ui,sans-serif';
+    ctx.fillText(names[o.k], tx + (len > 1 ? o.dx / L * 8 : 4) - 4, ty + (len > 1 ? o.dy / L * 8 : 4) + 4);
+  }
+  ctx.fillStyle = '#3b1a21'; ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, 7); ctx.fill();
+  ctx.restore();
+}
+
+// fascicle cross-sections inside the clipped cut; returns a short text for the readout
+function drawFascicles(S) {
+  const n = S.n;
+  if (Math.abs(n[0]) < 0.3) {
+    // plane nearly parallel to the muscle: fascicles lie in the plane as strands along the projected axis
+    const g1 = unit([1 - n[0] * n[0], -n[0] * n[1], -n[0] * n[2]]), g2 = cross(n, g1), w = 0.15 * Z();
+    ctx.lineCap = 'butt';
+    for (let k = -4; k <= 4; k++) {
+      const base = add(S.C, g2, k * 0.17), a = proj(add(base, g1, -2.3)), b = proj(add(base, g1, 2.3));
+      ctx.strokeStyle = 'rgba(130,30,50,0.85)'; ctx.lineWidth = w + 2.5; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+      ctx.strokeStyle = 'rgba(226,110,120,0.85)'; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+    }
+    return 'run along the plane';
+  }
+  const cuts = fascicleCuts(n, P0, FR.e1);
+  for (const q of cuts) {
+    const pts = Array.from({ length: 28 }, (_, i) => { const p = 2 * Math.PI * i / 28; return add(add(q.c, q.em, q.a * Math.cos(p)), q.en, q.b * Math.sin(p)); });
+    poly(pts, 'rgba(217,96,110,0.62)', 'rgba(130,30,50,0.85)', 1.2);
+    ctx.fillStyle = 'rgba(110,20,40,0.65)';
+    for (const [ox, oy] of DOTS) { const p = proj(add(add(q.c, q.em, q.a * ox * 0.7), q.en, q.b * oy * 0.7)); ctx.beginPath(); ctx.arc(p[0], p[1], 1.1, 0, 7); ctx.fill(); }
+  }
+  return cuts.length + ' of ' + FASC.length;
+}
+
+// the plane: a large rectangle sized to cover the cut, the cut face and its fascicles
+function drawPlaneGroup(S, loops) {
+  const e1 = FR.e1, e2 = FR.e2;
+  let u0 = 0, u1 = 0, v0 = 0, v1 = 0;
+  for (const lp of loops) for (const p of lp) { const d = sub(p, P0), u = dot(d, e1), v = dot(d, e2); u0 = Math.min(u0, u); u1 = Math.max(u1, u); v0 = Math.min(v0, v); v1 = Math.max(v1, v); }
+  const M = 0.4; u0 -= M; u1 += M; v0 -= M; v1 += M;
+  const corner = (u, v) => add(add(P0, e1, u), e2, v);
+  poly([corner(u0, v0), corner(u1, v0), corner(u1, v1), corner(u0, v1)], 'rgba(158,27,50,0.10)', 'rgba(158,27,50,0.85)', 1.8);
+  for (let k = 1; k < 5; k++) {
+    const u = u0 + (u1 - u0) * k / 5, v = v0 + (v1 - v0) * k / 5;
+    line3(corner(u, v0), corner(u, v1), 'rgba(158,27,50,0.16)', 1);
+    line3(corner(u0, v), corner(u1, v), 'rgba(158,27,50,0.16)', 1);
+  }
+  for (const lp of loops) poly(lp, 'rgba(255,248,242,0.95)', null);
+  ctx.save();
+  ctx.beginPath();
+  for (const lp of loops) { lp.forEach((p, i) => { const q = proj(p); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.closePath(); }
+  ctx.clip();
+  S.nf = drawFascicles(S);
+  ctx.restore();
+  for (const lp of loops) poly(lp, null, 'rgba(110,16,36,0.95)', 2.2);
+}
+
+// ================= HANDLES (move / rotate triad on the plane) =================
+let hot = null;
+const isHot = (type, k) => hot && hot.type === type && hot.k === k;
+const O3 = [0, 0, 0];
+const gp = v => proj(add(P0, v));   // handles are drawn at the plane's point P0
+let ctrlDown = false;
+const handlesOn = () => ctrlDown || $('hsh').checked || (typeof drag !== 'undefined' && drag && drag.kind === 'handle');
+function drawHandles() {
+  const ax = [FR.e1, FR.e2, FR.n], names = ['u', 'v', 'n'];
+  if (!handlesOn()) return;
+  PAIRS.forEach(([i, j], pi) => {
+    const c = [[SQ0, SQ0], [SQ1, SQ0], [SQ1, SQ1], [SQ0, SQ1]].map(([s, t]) => add(add(O3, ax[i], s), ax[j], t)), h = isHot('plane', pi);
+    poly(c, h ? 'rgba(240,140,0,0.5)' : 'rgba(110,110,130,0.26)', h ? HOT : 'rgba(80,80,100,0.75)', h ? 2.2 : 1.2, gp);
+  });
+  for (let k = 0; k < 3; k++) {
+    const [b1, b2] = ringBasis(k), h = isHot('ring', k);
+    ctx.save(); ctx.globalAlpha = h ? 1 : 0.8; ctx.strokeStyle = h ? HOT : HCOL[k]; ctx.lineWidth = h ? 4 : 2.2; ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (let i = 0; i <= 72; i++) { const f = 2 * Math.PI * i / 72, q = gp(add(add(O3, b1, RR * Math.cos(f)), b2, RR * Math.sin(f))); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }
+    ctx.stroke(); ctx.restore();
+  }
+  for (let k = 0; k < 3; k++) { const h = isHot('axis', k); arrow(O3, add(O3, ax[k], ARM), h ? HOT : HCOL[k], h ? 4.5 : 2.6, names[k], 7, -7, gp); }
+}
+const px = (a) => [dot(a, B.right) * Z(), -dot(a, B.up) * Z()];     // screen pixels per world unit along a
+function distSeg(p, a, b) {
+  const dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy;
+  const t = l2 < 1e-9 ? 0 : clamp(((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2, 0, 1);
+  return [Math.hypot(p[0] - a[0] - dx * t, p[1] - a[1] - dy * t), t];
+}
+function inPoly(p, q) {
+  let c = false;
+  for (let i = 0, j = q.length - 1; i < q.length; j = i++) if ((q[i][1] > p[1]) !== (q[j][1] > p[1]) && p[0] < (q[j][0] - q[i][0]) * (p[1] - q[i][1]) / (q[j][1] - q[i][1]) + q[i][0]) c = !c;
+  return c;
+}
+function hitTest(mx, my) {
+  if (!handlesOn()) return null;
+  const ax = [FR.e1, FR.e2, FR.n], o = gp(O3), m = [mx, my];
+  let best = null, bd = 9;
+  for (let k = 0; k < 3; k++) { const [d] = distSeg(m, o, gp(add(O3, ax[k], ARM))); if (d < bd) { bd = d; best = { type: 'axis', k }; } }
+  if (best) return best;
+  for (let pi = 0; pi < 3; pi++) {
+    const [i, j] = PAIRS[pi], q = [[SQ0, SQ0], [SQ1, SQ0], [SQ1, SQ1], [SQ0, SQ1]].map(([s, t]) => gp(add(add(O3, ax[i], s), ax[j], t)));
+    if (inPoly(m, q)) return { type: 'plane', k: pi };
+  }
+  bd = 7;
+  for (let k = 0; k < 3; k++) {
+    const [b1, b2] = ringBasis(k);
+    let prev = gp(add(O3, b1, RR));
+    for (let i = 1; i <= 72; i++) {
+      const f = 2 * Math.PI * i / 72, cur = gp(add(add(O3, b1, RR * Math.cos(f)), b2, RR * Math.sin(f))), [d, t] = distSeg(m, prev, cur);
+      if (d < bd) { bd = d; best = { type: 'ring', k, phi: 2 * Math.PI * (i - 1 + t) / 72 }; }
+      prev = cur;
+    }
+  }
+  return best;
+}
+
+// ================= DIMENSIONS: l, x and r drawn on the muscle =================
+function label3(p, txt, col, dx = 0, dy = 0, align = 'center') {
+  const q = proj(p); ctx.font = '700 12.5px Nunito,system-ui,sans-serif'; ctx.textAlign = align;
+  ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,0.92)'; ctx.strokeText(txt, q[0] + dx, q[1] + dy);
+  ctx.fillStyle = col; ctx.fillText(txt, q[0] + dx, q[1] + dy); ctx.textAlign = 'left';
+}
+function dimLine(a, b, col, txt, tick, dy) {
+  line3(a, b, col, 1.6);
+  for (const p of [a, b]) line3(add(p, tick, -1), add(p, tick, 1), col, 1.6);
+  label3([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2], txt, col, 0, dy);
+}
+function drawDims(S) {
+  const { L, RB } = MUSCLE, x0 = P0[0], zl = -(RB + 0.42), zx = -(RB + 0.2), tk = [0, 0, 0.06];
+  // rest length l along the whole muscle, and x from the left end (x = 0) to the plane's point
+  dimLine([-L, 0, zl], [L, 0, zl], '#334155', `l = ${S.l.toFixed(1)} cm (rest length)`, tk, 20);
+  dimLine([-L, 0, zx], [x0, 0, zx], '#1f5fa8', `x = ${S.x.toFixed(1)} cm`, tk, -7);
+  line3([-L, 0, 0], [-L, 0, zl], '#94a3b8', 1, [3, 3]);
+  line3([x0, 0, 0], [x0, 0, zx], '#1f5fa8', 1.2, [4, 3]);
+  label3([-L, 0, zl], 'x = 0', '#334155', 0, 30);
+  // radius r at the plane's point: from the axis up to the surface
+  const rs = radius(x0);
+  line3([x0, 0, 0], [x0, 0, rs], '#15803d', 2.6);
+  line3([x0 - 0.05, 0, rs], [x0 + 0.05, 0, rs], '#15803d', 2.6);
+  label3([x0, 0, rs], `r = ${S.r.toFixed(2)} cm`, '#15803d', 10, -8, 'left');
+}
+
+// ================= RENDER =================
+let curMode = 'remove';
+function render() {
+  const S = compute(), n = S.n;
+  ctx.clearRect(0, 0, W, H);
+  B = basis();
+  const mode = curMode, loops = sectionLoops(n, P0), camPos = dot(B.cam, n) >= 0;   // camera on the side the normal points to
+  const planeG = () => drawPlaneGroup(S, loops);
+  if (mode === 'off') { drawBody('all', S); planeG(); }
+  else if (mode === 'remove') { if (camPos) { drawBody('kept', S); planeG(); } else { planeG(); drawBody('kept', S); } }
+  else { if (camPos) { drawBody('kept', S); planeG(); drawBody('removed', S); } else { drawBody('removed', S); planeG(); drawBody('kept', S); } }
+  drawAxes();
+  drawDims(S);
+  drawHandles();
+  // vectors, all starting at P0
+  if ($('comp').checked && S.sigma * Math.abs(n[0]) > 1e-6) {
+    arrow(P0, add(P0, S.tn, 1 / MPA_PER_UNIT), '#c026d3', 2, '', 0, 0);
+    arrow(P0, add(P0, S.ts, 1 / MPA_PER_UNIT), '#1b9e77', 2, '', 0, 0);
+  }
+  arrow(P0, add(P0, S.t, 1 / MPA_PER_UNIT), '#e8590c', 4.5, 't', 8, -8);
+  const o = proj(P0); ctx.fillStyle = '#3b1a21'; ctx.beginPath(); ctx.arc(o[0], o[1], 4, 0, 7); ctx.fill();
+  ctx.font = '600 12px Nunito,system-ui,sans-serif'; ctx.fillText('P₀', o[0] - 18, o[1] + 16);
+  drawTriad();
+  $('legc').style.display = $('comp').checked ? 'block' : 'none';
+  readouts(S);
+  drawMohr(S);
+}
+
+// ================= MOHR'S CIRCLE =================
+let mctx, MW = 500, MH = 260;
+function drawMohr(S) {
+  const g = mctx; if (!g) return;
+  g.clearRect(0, 0, MW, MH);
+  const sg = S.sigma, ok = sg > 1e-9;
+  const s0 = ok ? Math.min((MW - 110) / (1.6 * sg), (MH - 70) / (1.3 * sg)) : 1;
+  const ox = ok ? (MW - 1.6 * sg * s0) / 2 + 0.3 * sg * s0 : 50, oy = MH * 0.52;
+  g.font = '12px Nunito,system-ui,sans-serif'; g.lineCap = 'round';
+  g.strokeStyle = '#a98d93'; g.fillStyle = '#7d5a62'; g.lineWidth = 1.2;
+  g.beginPath(); g.moveTo(10, oy); g.lineTo(MW - 10, oy); g.moveTo(ox, 8); g.lineTo(ox, MH - 8); g.stroke();
+  g.textAlign = 'right'; g.fillText('σ (MPa)', MW - 12, oy - 6);
+  g.textAlign = 'left'; g.fillText('τ (MPa)', ox + 6, 18);
+  if (!ok) { g.textAlign = 'left'; g.fillText('σ = 0: the circle collapses to a point at the origin.', 60, oy - 30); return; }
+  const R = 0.5 * sg * s0, cx = ox + R;
+  g.beginPath(); g.arc(cx, oy, R, 0, 2 * Math.PI); g.fillStyle = 'rgba(158,27,50,0.07)'; g.fill();
+  g.strokeStyle = 'rgba(158,27,50,0.4)'; g.lineWidth = 1.4; g.stroke();
+  g.beginPath(); g.arc(cx, oy, R, Math.PI, 2 * Math.PI); g.strokeStyle = 'rgba(158,27,50,0.95)'; g.lineWidth = 2.6; g.stroke();
+  const th = Math.acos(Math.min(1, Math.abs(S.n[0]))), P = [cx + R * Math.cos(2 * th), oy - R * Math.sin(2 * th)];
+  g.setLineDash([4, 4]); g.strokeStyle = '#a98d93'; g.lineWidth = 1.2;
+  g.beginPath(); g.moveTo(cx, oy); g.lineTo(P[0], P[1]); g.stroke(); g.setLineDash([]);
+  g.lineWidth = 3.2; g.strokeStyle = '#c026d3'; g.beginPath(); g.moveTo(ox, oy); g.lineTo(P[0], oy); g.stroke();
+  g.strokeStyle = '#1b9e77'; g.beginPath(); g.moveTo(P[0], oy); g.lineTo(P[0], P[1]); g.stroke();
+  g.lineWidth = 2.4; g.strokeStyle = '#e8590c'; g.beginPath(); g.moveTo(ox, oy); g.lineTo(P[0], P[1]); g.stroke();
+  if (th > 0.02) {
+    g.strokeStyle = '#7d5a62'; g.lineWidth = 1.2; g.beginPath(); g.arc(cx, oy, R * 0.28, 0, -2 * th, true); g.stroke();
+    g.fillStyle = '#3b1a21'; g.textAlign = 'center'; g.fillText('2θ', cx + R * 0.46 * Math.cos(th), oy - R * 0.46 * Math.sin(th) + 4);
+  }
+  g.fillStyle = '#3b1a21';
+  for (const x of [ox, cx, ox + 2 * R]) { g.beginPath(); g.arc(x, oy, 3, 0, 7); g.fill(); }
+  g.textAlign = 'right'; g.fillText('σ₂ = σ₃ = 0', ox - 5, oy + 16);
+  g.textAlign = 'left'; g.fillText('σ₁ = σ = ' + f(sg, 3), ox + 2 * R + 5, oy + 16);
+  g.textAlign = 'center'; g.fillText('C', cx, oy + 16);
+  g.fillStyle = '#e8590c'; g.beginPath(); g.arc(P[0], P[1], 5.5, 0, 7); g.fill();
+  g.strokeStyle = '#fff'; g.lineWidth = 1.5; g.stroke();
+  g.fillStyle = '#3b1a21'; g.font = '600 12px Nunito,system-ui,sans-serif'; g.textAlign = P[0] > cx ? 'left' : 'right';
+  g.fillText('P (σₙ, τ) = (' + f(S.sn, 3) + ', ' + f(S.tau, 3) + ')', P[0] + (P[0] > cx ? 9 : -9), P[1] - 8);
+}
+
+// ================= READOUTS =================
+const f = (v, d = 3) => (Math.abs(v) < 5e-4 ? 0 : v).toFixed(d);
+function readouts(S) {
+  $('o_F').textContent = S.F.toFixed(0) + ' N'; $('o_l').textContent = S.l.toFixed(1) + ' cm'; $('o_rmax').textContent = S.rmax.toFixed(1) + ' cm';
+  $('o_eps').textContent = (S.eps >= 0 ? '+' : '') + S.eps.toFixed(2); $('o_frec').textContent = S.frec.toFixed(2);
+  const nx = S.n[0], ang = Math.acos(Math.min(1, Math.abs(nx))) * 180 / Math.PI;
+  const items = [
+    ['Position x of P₀ (from the left end)', f(S.x, 2) + ' cm'],
+    ['Radius r = c·x(l − x)', f(S.r, 3) + ' cm'],
+    ['c = 4·r_max / l²', f(S.c, 5) + ' cm⁻¹'],
+    ['Area π r²', f(S.area, 2) + ' cm²'],
+    ['Unit normal n', `(${f(S.n[0])}, ${f(S.n[1])}, ${f(S.n[2])})`, 1],
+    ['Stress σₓₓ = F(1+ε)/(π r²)', f(S.sigma, 4) + ' MPa'],
+    ['Angle θ between n and the muscle axis', f(ang, 1) + '°'],
+    ['Traction t = σ·n', `(${f(S.t[0])}, ${f(S.t[1])}, ${f(S.t[2])}) MPa`, 1],
+    ['|t|', f(norm(S.t)) + ' MPa'],
+    ['Normal part σₙ = t·n', f(S.sn) + ' MPa'],
+    ['Shear part τ', f(S.tau) + ' MPa'],
+    ['Check |t|² = σₙ² + τ²', `${f(dot(S.t, S.t), 4)} = ${f(S.sn * S.sn + S.tau * S.tau, 4)}`],
+    ['Fascicles cut by the plane', S.nf || '', 1],
+  ];
+  $('kv').innerHTML = items.map(([l, v, w]) => `<div class="${w ? 'wide' : ''}">${l}<b>${v}</b></div>`).join('') +
+    (Math.abs(nx) < 1e-9 ? '<div class="wide">The plane is parallel to the muscle axis, so no traction acts across it (t = 0).</div>' : '');
+  $('mat').innerHTML = `<tr><td>${f(S.sigma)}</td><td>0</td><td>0</td></tr><tr><td>0</td><td>0</td><td>0</td></tr><tr><td>0</td><td>0</td><td>0</td></tr>`;
+  $('tval').innerHTML = `σ = <table class="m sym"><tr><td><b>${f(S.sigma, 4)}</b></td><td>0</td><td>0</td></tr><tr><td>0</td><td>0</td><td>0</td></tr><tr><td>0</td><td>0</td><td>0</td></tr></table> MPa,&nbsp; with σₓₓ = ${S.F.toFixed(0)} × (1 + ${S.eps.toFixed(2)}) / (π × ${f(S.r, 3)}²) N/cm²`;
+  // activated vs unactivated fibres (values only, at the plane's point)
+  const B2 = fibreStresses(S), ok = B2.act <= B2.cap + 1e-9;
+  const fib = [
+    ['Average stress σ_avg (= σₓₓ)', B2.avg.toFixed(1) + ' kPa'],
+    ['Strain ε', (S.eps >= 0 ? '+' : '') + S.eps.toFixed(2)],
+    ['Unactivated fibre: σ_inactive = σp(ε)', B2.sp.toFixed(1) + ' kPa'],
+    ['Activated fibre: σ_active = (σ_avg − (1 − f)σp) / f', B2.act.toFixed(1) + ' kPa'],
+    ['Most an activated fibre can give at this ε: σa(ε) = σp + σiso', B2.cap.toFixed(1) + ' kPa', 1],
+    ['Activated fibres are working at', ok ? (100 * B2.act / B2.cap).toFixed(0) + '% of their capacity' : '<span style="color:#b91c1c">' + (100 * B2.act / B2.cap).toFixed(0) + '%: more than they can give</span>', 1],
+    ['Smallest recruited fraction that could carry σ_avg', B2.fNeed <= 0 ? 'none needed (passive tissue alone is enough)' : B2.fNeed > 1 ? 'more than 1: beyond the whole muscle at this strain' : B2.fNeed.toFixed(2), 1]];
+  $('fib').innerHTML = fib.map(([l, v, w]) => `<div class="${w ? 'wide' : ''}">${l}<b>${v}</b></div>`).join('');
+}
+
+// ================= CAMERA ANIMATION =================
+let anim = null;
+function cancelAnim() { if (anim) { cancelAnimationFrame(anim.id); anim = null; } }
+function animateView(t, ms = 550) {
+  cancelAnim();
+  const s = { az: view.az, el: view.el, roll: view.roll, zoom: view.zoom }, wrap = d => Math.atan2(Math.sin(d), Math.cos(d));
+  const daz = wrap(t.az - s.az), dr = wrap(t.roll - s.roll), del = t.el - s.el, dz = (t.zoom === undefined ? s.zoom : t.zoom) - s.zoom, t0 = performance.now();
+  const step = now => {
+    const u = Math.min(1, (now - t0) / ms), k = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+    view.az = s.az + daz * k; view.el = s.el + del * k; view.roll = s.roll + dr * k; view.zoom = s.zoom + dz * k;
+    render();
+    anim = u < 1 ? { id: requestAnimationFrame(step) } : null;
+  };
+  anim = { id: requestAnimationFrame(step) };
+}
+// camera on the normal's side, looking down it, with the muscle axis (projected on the plane) horizontal
+function normalViewTarget() {
+  const n = FR.n, el = Math.asin(clamp(n[2], -1, 1)), az = Math.hypot(n[0], n[1]) > 1e-6 ? Math.atan2(n[1], n[0]) : view.az;
+  const r0 = [-Math.sin(az), Math.cos(az), 0], u0 = cross(n, r0);
+  let w = [1 - n[0] * n[0], -n[0] * n[1], -n[0] * n[2]]; if (norm(w) < 0.2) w = FR.e1;
+  let r = Math.atan2(dot(w, u0), dot(w, r0)); if (r > Math.PI / 2) r -= Math.PI; if (r < -Math.PI / 2) r += Math.PI;
+  return { az, el, roll: r, zoom: view.zoom };
+}
+
+// ================= SETUP AND EVENTS =================
+function resize() {
+  const dpr = window.devicePixelRatio || 1;
+  const cv = $('cv'), r = cv.getBoundingClientRect();
+  W = r.width; H = r.height; SC = Math.min(W / 4.6, H / 4.1);
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const mv = $('mohr'), mr = mv.getBoundingClientRect();
+  MW = mr.width; MH = mr.height;
+  mv.width = Math.round(MW * dpr); mv.height = Math.round(MH * dpr);
+  mctx = mv.getContext('2d'); mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  render();
+}
+const readMode = () => { const r = document.querySelector('input[name=sec]:checked'); curMode = r ? r.value : 'remove'; };
+['F', 'lr', 'rmax', 'eps', 'frec', 'comp'].forEach(id => $(id).addEventListener('input', render));
+document.querySelectorAll('input[name=sec]').forEach(r => r.addEventListener('change', () => { readMode(); render(); }));
+const setMode = m => { document.querySelectorAll('input[name=sec]').forEach(r => { r.checked = r.value === m; }); readMode(); };
+$('b_nx').addEventListener('click', () => { setN([1, 0, 0]); render(); });
+$('b_ny').addEventListener('click', () => { setN([0, 1, 0]); render(); });
+$('b_nz').addEventListener('click', () => { setN([0, 0, 1]); render(); });
+$('b_flip').addEventListener('click', () => { FR = { e1: FR.e1, e2: FR.e2.map(v => -v), n: FR.n.map(v => -v) }; render(); });
+$('b_center').addEventListener('click', () => { P0 = [0, 0, 0]; render(); });
+$('b_rplane').addEventListener('click', () => { resetPlane(); render(); });
+$('b_xsec').addEventListener('click', () => { if (curMode === 'off') setMode('remove'); render(); animateView(normalViewTarget()); });
+$('b_norm').addEventListener('click', () => animateView(normalViewTarget()));
+$('b_iso').addEventListener('click', () => animateView(ISO));
+
+const cv = $('cv');
+const mouse = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+let drag = null;
+cv.addEventListener('dblclick', () => animateView(ISO));
+cv.addEventListener('wheel', e => { e.preventDefault(); cancelAnim(); view.zoom = clamp(view.zoom * Math.exp(-e.deltaY * 0.0012), 0.6, 1.8); render(); }, { passive: false });
+cv.addEventListener('pointerdown', e => {
+  cancelAnim(); if (e.ctrlKey && !ctrlDown) { ctrlDown = true; }
+  const [mx, my] = mouse(e), h = hitTest(mx, my);
+  if (h) { drag = { kind: 'handle', h, last: [mx, my] }; hot = h; cv.style.cursor = 'pointer'; }
+  else { drag = { kind: 'orbit', last: [e.clientX, e.clientY] }; cv.style.cursor = 'grabbing'; }
+  cv.setPointerCapture(e.pointerId); render();
+});
+cv.addEventListener('pointermove', e => {
+  if (e.ctrlKey !== ctrlDown && !drag) setCtrl(e.ctrlKey);
+  if (!drag) {
+    const [mx, my] = mouse(e), h = hitTest(mx, my), same = (!h && !hot) || (h && hot && h.type === hot.type && h.k === hot.k);
+    cv.style.cursor = h ? 'pointer' : 'grab';
+    if (!same) { hot = h; render(); }
+    return;
+  }
+  if (drag.kind === 'orbit') {
+    view.az -= (e.clientX - drag.last[0]) * 0.008; view.el = clamp(view.el + (e.clientY - drag.last[1]) * 0.008, -1.5, 1.5);
+    view.roll *= 0.85; drag.last = [e.clientX, e.clientY]; render(); return;
+  }
+  const [mx, my] = mouse(e), dx = mx - drag.last[0], dy = my - drag.last[1], { type, k } = drag.h, ax = [FR.e1, FR.e2, FR.n];
+  drag.last = [mx, my];
+  if (type === 'axis') {
+    const d = px(ax[k]), l2 = d[0] * d[0] + d[1] * d[1];
+    if (l2 > 64) P0 = clampInside(add(P0, ax[k], (dx * d[0] + dy * d[1]) / l2));
+  } else if (type === 'plane') {
+    const [i, j] = PAIRS[k], d1 = px(ax[i]), d2 = px(ax[j]), det = d1[0] * d2[1] - d1[1] * d2[0];
+    if (Math.abs(det) > 400) {
+      const da = (dx * d2[1] - dy * d2[0]) / det, db = (d1[0] * dy - d1[1] * dx) / det;
+      P0 = clampInside(add(add(P0, ax[i], da), ax[j], db));
+    }
+  } else {
+    const [b1, b2] = ringBasis(k), c = Math.cos(drag.h.phi), s = Math.sin(drag.h.phi), T = add([-s * b1[0], -s * b1[1], -s * b1[2]], b2, c);
+    const ts = [dot(T, B.right) * Z() * RR, -dot(T, B.up) * Z() * RR], l2 = ts[0] * ts[0] + ts[1] * ts[1];
+    if (l2 > 16) rotateFrame(k, (dx * ts[0] + dy * ts[1]) / l2);
+  }
+  render();
+});
+['pointerup', 'pointercancel'].forEach(ev => cv.addEventListener(ev, e => {
+  if (!drag) return;
+  drag = null; const [mx, my] = mouse(e); hot = hitTest(mx, my); cv.style.cursor = hot ? 'pointer' : 'grab'; render();
+}));
+window.addEventListener('resize', resize);
+const setCtrl = on => { if (on !== ctrlDown) { ctrlDown = on; if (!on && !drag) hot = null; render(); } };
+window.addEventListener('keydown', e => { if (e.key === 'Control') setCtrl(true); });
+window.addEventListener('keyup', e => { if (e.key === 'Control') setCtrl(false); });
+window.addEventListener('blur', () => setCtrl(false));
+$('hsh').addEventListener('input', () => { if (!$('hsh').checked) hot = null; render(); });
+cv.addEventListener('contextmenu', e => { if (e.ctrlKey) e.preventDefault(); });
+readMode();
+resize();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);
+</script>
+</body>
+</html>
