@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Neuromuscular junction: whiteboard illustration</title>
+<style>
+:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{height:100%;margin:0;background:#e6e5df}
+#s{display:block;width:100%;height:100%;background:#fbfbf7}
+text{font-family:"Segoe Print","Bradley Hand","Marker Felt","Chalkboard SE","Comic Sans MS",cursive;font-size:16px;fill:#222}
+.b{fill:#2a5fd0}.r{fill:#d9253a}.g{fill:#1b8a5a}.p{fill:#6a3fb5}.t{fill:#0e8f80}.k{fill:#222}.pk{fill:#c02b8a}
+.ld{stroke:#888;stroke-width:1.3;fill:none}
+</style></head><body>
+<svg id="s" viewBox="0 0 1440 990" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Whiteboard-style diagram of a neuromuscular junction, T-tubule, sarcoplasmic reticulum and sarcomeres">
+<defs>
+<filter id="w" x="-2%" y="-2%" width="104%" height="104%"><feTurbulence type="fractalNoise" baseFrequency=".018" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="4"/></filter>
+<marker id="aB" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10Z" fill="#2a5fd0"/></marker>
+<marker id="aR" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10Z" fill="#d9253a"/></marker>
+</defs>
+<g id="art" fill="none" stroke="#222" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#w)"></g>
+<g id="labels"></g>
+<script>
+const T='#19b3a0',R='#d9253a',B='#2a5fd0',LB='#3b8de0',P='#6a3fb5',G='#2fae6b',PK='#d63a9a',RD='#d61f1f';
+let h='';const A=s=>h+=`<g id="${s[0]}">${s[1]}</g>`;
+const dots=[[-8,-6],[0,-11],[9,-5],[-5,3],[6,6],[0,11],[-11,8],[12,3]];
+const ves=(x,y,r=22)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="${T}" stroke-width="3"/>`+dots.map(d=>`<circle cx="${x+d[0]*r/24}" cy="${y+d[1]*r/24}" r="1.8" fill="#111" stroke="none"/>`).join('');
+const mito=(x,y)=>`<ellipse cx="${x}" cy="${y}" rx="38" ry="20" fill="#fff" stroke="#333" stroke-width="2.5"/>`+[-22,-9,4,17].map((d,i)=>`<path d="M${x+d},${y-(i%2?-18:18)}V${y+(i%2?2:-2)}" stroke="#333" stroke-width="2"/>`).join('');
+
+/* NEURON */
+let n=`<path d="M0,45H400M0,95H300"/><path d="M300,95C300,60 340,45 400,45H880C990,45 1030,120 1030,190C1030,280 990,300 930,300H390C330,300 300,240 300,95" stroke="${T}" stroke-width="5"/>`;
+n+=`<path d="M0,45H400M0,95H300" stroke="${T}" stroke-width="5"/>`;
+n+=[20,150].map(x=>`<rect x="${x}" y="32" width="110" height="13" rx="6" fill="#111"/><rect x="${x}" y="95" width="110" height="13" rx="6" fill="#111"/>`).join('');
+n+=mito(405,125)+mito(495,92);
+const pool=[[470,215],[545,150],[605,222],[700,165],[780,215],[640,108],[860,135],[940,205],[780,120]];
+n+=`<path d="M470,215L545,150L640,108L700,165L780,120L860,135M700,165L690,242M605,222L668,262M780,215L825,248" stroke="#e08a2b" stroke-width="2" stroke-dasharray="2 5"/>`;
+n+=pool.map(p=>ves(p[0],p[1])).join('');
+n+=ves(690,268,26);
+for(const d of[-9,0,9])n+=`<path d="M${690+d},293q4,3 0,6" stroke="${R}" stroke-width="2.2"/><path d="M${696+d},300q-4,-3 0,-6" stroke="${PK}" stroke-width="2.2"/>`;
+n+=`<rect x="822" y="296" width="38" height="9" fill="#fbfbf7" stroke="none"/><path d="M820,300C804,300 806,248 840,246C874,248 876,300 860,300" fill="#fff" stroke="${T}" stroke-width="3"/>`;
+n+=dots.slice(0,6).map(d=>`<circle cx="${840+d[0]*1.2}" cy="${272+d[1]}" r="1.8" fill="#111" stroke="none"/>`).join('');
+for(const x of[640,740,790,890])n+=`<ellipse cx="${x}" cy="300" rx="8" ry="14" fill="#111" stroke="none"/>`;
+for(const x of[470,498])n+=`<rect x="${x-6}" y="287" width="12" height="26" rx="5" fill="#fff" stroke="${B}"/>`;
+n+=`<rect x="400" y="286" width="20" height="28" rx="3" fill="#fff" stroke="${PK}"/><path d="M404,296L416,290M404,306L416,300" stroke="${PK}" stroke-width="2"/>`;
+A(['neuron',n]);
+
+/* CLEFT */
+let c='';
+[[836,322],[852,334],[824,338],[846,352],[780,330],[745,342],[905,338],[700,332]].forEach(p=>c+=`<circle cx="${p[0]}" cy="${p[1]}" r="3.4" fill="#111" stroke="none"/>`);
+for(let x=330;x<=950;x+=62)c+=`<path d="M${x-6},352a7,7 0 1,1 7,5l-1,-5z" fill="#fde7c8" stroke="#e76f51" stroke-width="2"/>`;
+A(['cleft',c]);
+
+/* END PLATE */
+let d='M140,985V380Q140,360 180,360H330';
+for(let k=0;k<7;k++){const x=330+90*k;d+=`H${x+50}C${x+60},360 ${x+58},415 ${x+70},415C${x+82},415 ${x+80},360 ${x+90},360`}
+d+='H1118V740Q1130,758 1142,740V360H1330V985';
+let e=`<path d="${d}" stroke="${R}" stroke-width="5"/>`;
+for(let k=0;k<4;k++){const cx=355+90*k;e+=`<g transform="rotate(${k%2?-7:6} ${cx} 360)"><rect x="${cx-12}" y="346" width="24" height="28" rx="3" fill="#fff" stroke="${P}"/><ellipse cx="${cx}" cy="346" rx="12" ry="4" fill="#fff" stroke="${P}"/><circle cx="${cx-4}" cy="362" r="1.6" fill="${P}"/><circle cx="${cx+4}" cy="362" r="1.6" fill="${P}"/></g>`}
+for(let k=3;k<7;k++){const x=330+90*k;for(const[dx,rot]of[[57,12],[83,-12]])e+=`<ellipse cx="${x+dx}" cy="392" rx="6" ry="11" fill="#8fe0b0" stroke="#1b8a5a" stroke-width="2.5" transform="rotate(${rot} ${x+dx} 392)"/>`}
+e+=`<path d="M440,322V398" stroke="${B}" marker-end="url(#aB)"/><path d="M452,400V326" stroke="${R}" marker-end="url(#aR)"/><path d="M530,322V398" stroke="${B}" marker-end="url(#aB)"/>`;
+A(['endplate',e]);
+
+/* T-TUBULE + SR */
+let sr='';
+const wav=(x0,a,ph,xe)=>{let p=`M${xe},430`;for(let y=430;y<=700;y+=5)p+=`L${x0+a*Math.sin(y/15+ph)},${y}`;return p+`L${xe},700Z`};
+sr+=`<path d="${wav(1005,18,0,1096)}" fill="#eef4ff" stroke="${LB}"/><path d="${wav(1255,18,2,1164)}" fill="#eef4ff" stroke="${LB}"/>`;
+for(let y=470;y<=620;y+=50){
+ sr+=`<circle cx="1118" cy="${y}" r="6" fill="#fff" stroke="${P}"/><circle cx="1142" cy="${y}" r="6" fill="#fff" stroke="${P}"/>`;
+ sr+=`<path d="M1112,${y}H1098M1148,${y}H1162" stroke="${R}" stroke-width="4"/><path d="M1097,${y-6}V${y+6}M1163,${y-6}V${y+6}" stroke="${R}" stroke-width="3"/>`}
+let ls='';for(const o of[0,12]){ls+=`M160,${540+o}`;for(let x=160;x<=1005;x+=8)ls+=`L${x},${540+o+12*Math.sin(x/24)}`}
+sr+=`<path d="${ls.split('M').filter(Boolean).map(s=>'M'+s).join('')}" stroke="${LB}" stroke-width="3"/>`;
+for(const x of[240,400,560,720,880])sr+=`<path d="M${x-5},${566+12*Math.sin(x/24)}h10l-5,9z" fill="#f4a261" stroke="none"/>`;
+sr+=`<path d="M1000,640Q930,640 862,652" stroke="${LB}" stroke-dasharray="7 6" marker-end="url(#aB)"/>`;
+A(['sr',sr]);
+
+/* SARCOMERES */
+let s='';
+const rowsT=[610,690,770,850],rowsK=[650,730,810];
+for(const z of[200,520,840]){let p=`M${z},575`;for(let y=590;y<=890;y+=15)p+=`L${z+(((y-590)/15)%2?7:-7)},${y}`;s+=`<path d="${p}" stroke="${PK}" stroke-width="5"/>`}
+for(let q=0;q<2;q++){const o=320*q,cx=360+o;
+ rowsT.forEach((y,i)=>{for(const[a,b]of[[200+o,340+o],[380+o,520+o]]){
+  s+=`<path d="M${a},${y}H${b}" stroke="#111" stroke-width="3.5"/><path d="M${a},${y}H${b}" stroke="${B}" stroke-width="2" stroke-dasharray="2 7"/>`;
+  for(let x=a+12;x<b-8;x+=24){if(i<3)s+=`<path d="M${x},${y+2}a6,7 0 0 0 12,0" stroke="${B}" stroke-width="2.5"/>`;if(i>0)s+=`<path d="M${x},${y-2}a6,7 0 0 1 12,0" stroke="${B}" stroke-width="2.5"/>`}}});
+ rowsK.forEach(y=>{
+  s+=`<rect x="${265+o}" y="${y-7}" width="190" height="14" rx="7" fill="${RD}" stroke="none"/>`;
+  let hp='',tp='';
+  for(const[x0,sg]of[[272+o,1],[388+o,-1]])for(let i=0;i<6;i++){const x=x0+i*13;
+   for(const dy of[-1,1]){const ex=x+sg*-7,ey=y+dy*32;hp+=`M${x},${y+dy*5}L${ex},${ey}`;tp+=`M${ex-3},${ey}a3,3 0 1,0 6,0a3,3 0 1,0 -6,0`}}
+  s+=`<path d="${hp}" stroke="${R}" stroke-width="2"/><path d="${tp}" stroke="${R}" stroke-width="2" fill="#fff"/>`;
+  for(const[a,b]of[[200+o,265+o],[455+o,520+o]]){let t=`M${a},${y}`;for(let x=a;x<=b;x+=3)t+=`L${x},${y+3*Math.sin(x/4)}`;s+=`<path d="${t}" stroke="${B}" stroke-width="1.8"/>`}});
+ s+=`<path d="M${cx},592V872" stroke="#999" stroke-width="1.5" stroke-dasharray="4 5"/>`;
+ s+=`<path d="M${265+o},922v6H${455+o}v-6" stroke="#777" stroke-width="2"/>`}
+s+=`<path d="M200,962H520M200,956v12M520,956v12" stroke="#777" stroke-width="2"/>`;
+A(['sarcomere',s]);
+document.getElementById('art').innerHTML=h;
+
+/* LABELS */
+let L='';
+const lab=(t,x,y,tx,ty,cl='k',an='start')=>{L+=`<text class="${cl}" x="${x}" y="${y}" text-anchor="${an}">${t}</text>`;if(tx!=null)L+=`<path class="ld" d="M${x+(an=='end'?8:an=='middle'?0:-8)},${y-5}L${tx},${ty}"/>`};
+lab('α-motor neuron axon',20,24,null,null,'t');lab('myelin',150,150,100,110);
+lab('axon terminal (presynaptic bouton)',420,35,null,null,'t');
+lab('mitochondrion',285,140,368,128,'k','end');lab('reserve ACh vesicles',285,190,448,212,'k','end');
+lab('synapsin–actin tethers',285,235,560,170,'k','end');lab('choline transporter',285,268,402,298,'pk','end');lab('K⁺ channel',285,306,466,308,'b','end');
+lab('synaptic cleft',285,348,330,332,'t','end');
+lab('SNAREs: synaptobrevin (v) + syntaxin/SNAP-25 (t)',330,324,688,302,'r');
+lab('exocytosis',905,284,868,268,'r');lab('voltage-gated Ca²⁺ channel',960,322,896,304,'k');
+lab('AChE (acetylcholinesterase)',960,352,935,352,'k');lab('ACh released',905,330,null,null,'k');
+lab('nicotinic ACh receptor',160,400,340,368,'p');lab('(ligand-gated Na⁺ / K⁺)',160,420,null,null,'p');
+lab('Na⁺',414,320,null,null,'b');lab('K⁺',462,332,null,null,'r');
+lab('post-junctional folds',160,462,398,418);lab('voltage-gated Na⁺ channels',600,455,672,404,'g');
+lab('sarcolemma',1190,345,1240,360);lab('T-tubule',1050,790,1128,752,'r');lab('(transverse tubule)',1050,810,null,null,'r');
+lab('terminal cisterna (SR)',985,470,1008,472,'b','end');lab('DHPR',1290,510,1150,470,'p');lab('RyR (Ca²⁺ release)',1290,560,1166,570,'r');
+lab('Ca²⁺ → troponin C',880,626,null,null,'b');lab('longitudinal SR + SERCA',160,512,230,540,'b');
+lab('thick filament: myosin',870,780,775,810,'r');lab('+ heads (cross-bridges)',870,800,null,null,'r');
+lab('thin filament: actin',870,850,830,850,'b');lab('+ troponin, tropomyosin',870,870,null,null,'b');
+lab('titin',204,640,null,null,'b');lab('M-line',360,592,null,null,'k','middle');
+for(const z of[200,520,840])lab('Z-disc',z,908,null,null,'pk','middle');
+lab('I',232,943,null,null,'k','middle');lab('A band',360,948,null,null,'k','middle');lab('I',487,943,null,null,'k','middle');
+lab('sarcomere (Z-disc to Z-disc)',360,985,null,null,'k','middle');
+document.getElementById('labels').innerHTML=L;
+</script></body></html>

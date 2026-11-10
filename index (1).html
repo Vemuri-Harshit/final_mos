@@ -162,26 +162,26 @@ const ASSUME = ['Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
                 'Sed do eiusmod tempor incididunt ut labore et dolore.',
                 'Ut enim ad minim veniam, quis nostrud exercitation.'];
 const SLIDES = [
-  { title:'Objectives', href:'page1.html', preview:'',
-    desc:'What this project sets out to do: understand how a muscle produces and grades force, then use Mechanics of Solids (equilibrium, stress and strain, traction and Mohr’s circle, beam theory) to find the forces and stresses in the elbow during a curl, and finally test those results against how the real body works.',
+  { title:'Objectives', href:'page1.html', preview:'', hideAssumptions:true,   // no Assumptions section in the expanded view
+    desc:'What this project sets out to do: understand how a muscle produces and grades force, then use Mechanics of Solids (equilibrium, stress and strain, traction and Mohr’s circle, beam theory) to find the forces and stresses in the elbow during a curl.',
     assumptions:['The elbow is studied as a deformable solid system: muscle, bone and joint.',
                  'Each later page states its own simplifying assumptions.',
                  'The last page lists where those assumptions break down.'] },  // <-- link 1
   { title:'Muscle Anatomy & Twitch',href:'glass_page.html', preview:'',
-    desc:'How a muscle is built and how it makes force. A zoom from the sarcomere up to the whole muscle and tendon shows the twitch at every scale, and an interactive timeline follows a single twitch from the nerve impulse, through Na⁺ and Ca²⁺ movement and ACh release, to cross-bridge cycling and relaxation.',
+    desc:'We will build the structure of the muscle bottom up from the simplest protein structures. Force generation within a muscle will be shown up from the sarcomere level.',
     assumptions:['Structures, counts and sizes are schematic, not to scale.',
                  'Timing is illustrative: mechanical events are compressed to fit one timeline.',
                  'Sarcomere shortening is exaggerated so it is visible at every scale.'] },  // <-- link 2
   { title:'Temporal Summation and Motor Unit Recruitment', href:'summation_recruitment.html', preview:'',
-    desc:'How the nervous system grades force. Firing a motor unit faster makes twitches add up, from a single twitch to unfused and fused tetanus (rate coding). Recruiting more motor units, smallest first, adds more fibres; a stress–strain model turns the recruited share of the cross-section into muscle force.',
+    desc:'These are the mechanisms used by the brain to control the amount of force generated in the muscle.',
     assumptions:['Every impulse produces the same twitch, and overlapping twitches add up to a fixed maximum.',
                  'Each motor unit is all-or-none, following one passive and one active stress–strain curve.',
                  'Fibres are uniaxial ropes in parallel at equal strain; force sums over the PCSA at constant volume.'] },  // <-- link 3
   { title:'Muscle M.O.S',     href:'muscle_traction_3d_v6.html', preview:'',
     desc:'The muscle as a deformable solid. Cut a loaded muscle with any plane in 3D and see the traction vector t = σ·n, split into its normal and shear parts, with the matching point on Mohr’s circle updating live.',
-    assumptions:['Uniaxial stress along the muscle axis: σ = F/A, all other stress components zero.',
-                 'The stress is uniform, the same at every point of the muscle.',
-                 'The spindle shape and fascicles are only a drawing; they do not enter the calculation.'] },  // <-- link 4
+    assumptions:['Uniaxial stress along the muscle axis: only σₓₓ = F(1 + ε)/(πr²) is non-zero.',
+                 'The radius varies along the length as r = c·x(l − x), and muscle volume stays constant as it stretches.',
+                 'σₓₓ is the average over each cross-section, shared between recruited and unrecruited fibres.'] },  // <-- link 4
   { title:'Elbow System',         href:'arm_muscle_model_1.html', preview:'',
     desc:'The arm in static equilibrium. From moment balance about the elbow we find the muscle force, its moment arm and the joint reaction as the elbow angle and the load change, and see why the muscle must pull many times the weight in the hand.',
     assumptions:['Static and planar, with rigid rods for the upper arm and forearm.',
@@ -199,7 +199,7 @@ const SLIDES = [
                  'Constant muscle volume: area shrinks as the muscle lengthens.'] },  // <-- link 7
   { title:'Deviation from Real Life',        href:'page8.html', preview:'',
     desc:'Our elbow was rods, a frictionless pin, one straight muscle and a weight. Here each simplification breaks away and is replaced by the real anatomy: two forearm bones, a three-part joint, several muscles with elastic tendons, hollow anisotropic bone, viscoelastic muscle, non-uniform shapes and the body’s own limits.',
-    assumptions:['Every simplification used on the earlier pages is listed and removed one by one.',
+    assumptions:['Eight of the main simplifications from the elbow, beam and curl models are broken one at a time.',
                  'Effects are described qualitatively; the corrected mathematics is not worked out.',
                  'The aim: see in which direction each assumption moves the model away from the real arm.'] },  // <-- link 8
 ];
@@ -265,8 +265,8 @@ function openSlide(i) {
       <div class="tag rise" style="--d:0">Page ${i + 1} of ${N}</div>
       <h2 class="rise" style="--d:1">${s.title}</h2>
       <p class="rise" style="--d:2">${s.desc}</p>
-      <h3 class="rise" style="--d:3">Assumptions</h3>
-      <ul class="rise" style="--d:4">${s.assumptions.map(a => `<li>${a}</li>`).join('')}</ul>
+      ${s.hideAssumptions ? "" : `<h3 class="rise" style="--d:3">Assumptions</h3>
+      <ul class="rise" style="--d:4">${s.assumptions.map(a => `<li>${a}</li>`).join("")}</ul>`}
       <span class="cta rise" style="--d:5">Click anywhere to open this page →</span>
     </div>`;
   panel.classList.remove('open'); panel.style.borderRadius = '16px';
@@ -284,7 +284,11 @@ function closeSlide() {
   panel.classList.remove('open'); panel.style.borderRadius = '16px'; setRect(r); ov.classList.remove('on'); current = -1;
   setTimeout(() => { if (current < 0) panel.style.visibility = 'hidden'; }, 650);
 }
-panel.addEventListener('click', () => { if (current >= 0) window.open(SLIDES[current].href, '_blank', 'noopener'); });   // opens the linked website in a new tab
+panel.addEventListener('click', () => {            // opens the linked page in a new tab; where pop-ups are blocked, opens it here instead
+  if (current < 0) return;
+  const href = SLIDES[current].href, w = window.open(href, '_blank');
+  if (w) w.opener = null; else location.href = href;
+});
 $('close').addEventListener('click', e => { e.stopPropagation(); closeSlide(); });
 ov.addEventListener('click', closeSlide);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSlide(); });

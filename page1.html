@@ -7,136 +7,92 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  /* ===== project palette (same as index.html and glass_page.html) ===== */
+  /* project palette: muscle reds on cream */
   :root{
-    --crimson:#9e1b32; --red:#c8344a; --rose:#e8a5ad; --blush:#fbe9e7; --cream:#fff8f6;
-    --bone:#ead9b8; --ink:#3b1a20; --muted:#7a5a60;
+    --crimson:#9e1b32; --red:#c8344a; --rose:#e8a5ad; --cream:#fff8f6; --bone:#ead9b8;
+    --ink:#3b1a20; --muted:#7a5a60; --rule:rgba(158,27,50,.18);
     --font:'Nunito','Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
     color-scheme:light;
   }
   *{box-sizing:border-box}
   html,body{margin:0;min-height:100%}
-  body{font-family:var(--font);color:var(--ink);background:var(--cream)}
-  /* soft muscle blobs + faint fibre lines behind the glass */
+  body{font-family:var(--font);color:var(--ink);background:var(--cream);line-height:1.7}
+  /* soft background behind the paper */
   .bg{position:fixed;inset:0;z-index:0;overflow:hidden;
       background:repeating-linear-gradient(100deg,rgba(158,27,50,.035) 0 2px,transparent 2px 15px),var(--cream)}
-  .bg i{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55}
-  .bg i:nth-child(1){width:42vw;height:42vw;left:-10vw;top:-12vw;background:#e8a5ad}
-  .bg i:nth-child(2){width:36vw;height:36vw;right:-8vw;top:20vh;background:#d9546a}
-  .bg i:nth-child(3){width:40vw;height:30vw;left:30vw;bottom:-14vw;background:#f3c1b8}
-  .bg i:nth-child(4){width:26vw;height:26vw;left:6vw;bottom:-6vw;background:var(--bone);opacity:.7}
+  .bg i{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5}
+  .bg i:nth-child(1){width:42vw;height:42vw;left:-12vw;top:-12vw;background:#e8a5ad}
+  .bg i:nth-child(2){width:34vw;height:34vw;right:-10vw;top:28vh;background:#d9546a}
+  .bg i:nth-child(3){width:30vw;height:26vw;left:8vw;bottom:-10vw;background:var(--bone);opacity:.6}
 
-  .wrap{position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:clamp(12px,2vh,26px) clamp(16px,3vw,40px) 16px;
-        display:flex;flex-direction:column;gap:clamp(10px,1.6vh,18px)}
-  .glass{position:relative;border-radius:22px;overflow:hidden;
-         background:rgba(255,255,255,.42);border:1px solid rgba(255,255,255,.8);
-         backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);
-         box-shadow:0 16px 44px rgba(158,27,50,.18),0 3px 10px rgba(158,27,50,.08),inset 0 1px 0 rgba(255,255,255,.95)}
-  .glass::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,.55),transparent 42%)}
+  /* the study: one continuous sheet */
+  .paper{position:relative;z-index:1;max-width:860px;margin:clamp(18px,4vh,48px) auto;padding:clamp(28px,5vw,64px) clamp(22px,6vw,76px) clamp(30px,5vw,56px);
+         background:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.95);border-radius:20px;
+         backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+         box-shadow:0 22px 60px rgba(158,27,50,.18),0 3px 10px rgba(158,27,50,.08)}
+  .eyebrow{font-size:12.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);font-weight:700}
+  h1{margin:.25em 0 .1em;font-size:clamp(30px,4.4vw,46px);line-height:1.1;font-weight:800;color:var(--crimson);letter-spacing:-.015em}
+  .sub{margin:0;color:var(--muted);font-size:clamp(15px,1.4vw,17px)}
+  .line{width:64px;height:4px;border-radius:4px;margin:20px 0 26px;background:linear-gradient(90deg,var(--crimson),var(--rose))}
+  h2{font-size:clamp(17px,1.6vw,20px);color:var(--crimson);margin:30px 0 8px;font-weight:800;letter-spacing:.01em}
+  h2 .no{display:inline-block;min-width:1.6em;color:var(--red)}
+  p{margin:0 0 12px;font-size:clamp(15px,1.25vw,16.5px)}
+  .abstract{border-left:4px solid var(--rose);padding:2px 0 2px 18px;margin:0 0 6px;color:#4d2a31;font-style:italic}
 
-  /* ===== header ===== */
-  header{text-align:center}
-  .eyebrow{font-size:clamp(11px,.95vw,13px);letter-spacing:.22em;text-transform:uppercase;color:var(--red);font-weight:700}
-  h1{margin:.12em 0 0;font-size:clamp(28px,3.4vw,46px);font-weight:800;color:var(--crimson);letter-spacing:-.02em;line-height:1.05}
-  .line{width:64px;height:4px;border-radius:4px;margin:8px auto 2px;background:linear-gradient(90deg,var(--crimson),var(--rose))}
-
-  /* ===== overall aim ===== */
-  .aim{padding:clamp(12px,1.6vw,20px) clamp(18px,3vw,32px);display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;
-       animation:pop .8s .1s cubic-bezier(.2,.9,.3,1.2) both}
-  .aim .ic{width:54px;height:54px;border-radius:18px;background:var(--crimson);display:grid;place-items:center}
-  .aim h2{margin:0 0 4px;font-size:clamp(17px,1.5vw,21px);color:var(--crimson)}
-  .aim p{margin:0;font-size:clamp(14px,1.15vw,16.5px);line-height:1.55}
-
-  /* ===== objective cards ===== */
-  .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(10px,1.4vw,18px)}
-  .ob{padding:11px 14px 11px;display:flex;flex-direction:column;gap:5px;text-decoration:none;color:inherit;
-      transition:transform .3s,box-shadow .3s;animation:pop .7s calc(.2s + var(--i)*.07s) cubic-bezier(.2,.9,.3,1.2) both}
-  .ob:hover,.ob:focus-visible{transform:translateY(-4px);box-shadow:0 22px 50px rgba(158,27,50,.28),inset 0 1px 0 #fff;outline:none}
-  .ob .hd{display:flex;align-items:center;gap:10px}
-  .ob .n{flex:none;width:30px;height:30px;border-radius:50%;background:var(--crimson);color:#fff;font-weight:800;font-size:14px;display:grid;place-items:center}
-  .ob h3{margin:0;font-size:clamp(14.5px,1.2vw,16.5px);line-height:1.2;color:var(--crimson)}
-  .ob p{margin:0;font-size:clamp(12.5px,.95vw,13.5px);line-height:1.42}
-  .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:auto;padding-top:4px}
-  .tags span{font-size:11.5px;font-weight:700;color:var(--crimson);background:rgba(232,165,173,.28);border:1px solid rgba(158,27,50,.15);border-radius:999px;padding:1px 9px}
-  .go{font-size:12px;font-weight:700;color:var(--red)}
-  .ob.meta{background:rgba(158,27,50,.88);border-color:rgba(255,255,255,.35)}
-  .ob.meta h3,.ob.meta p,.ob.meta .go{color:#fff}
-  .ob.meta .n{background:#fff;color:var(--crimson)}
-  .ob.meta .tags span{color:#fff;background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.3)}
-
-  /* ===== how we work ===== */
-  .how{padding:10px clamp(16px,2.5vw,28px);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;animation:pop .8s .8s both}
-  .how div{font-size:clamp(12.5px,1vw,14px);line-height:1.5}
-  .how b{display:block;color:var(--crimson);font-size:clamp(13.5px,1.08vw,15px);margin-bottom:2px}
-  @keyframes pop{from{opacity:0;transform:scale(.94) translateY(10px)}to{opacity:1;transform:none}}
-  @media(max-width:1050px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.how{grid-template-columns:1fr 1fr}}
-  @media(max-width:620px){.grid,.how{grid-template-columns:1fr}.aim{grid-template-columns:1fr}}
-  @media(prefers-reduced-motion:reduce){.ob,.aim,.how{animation:none}}
+  /* objectives: numbered, in running text, separated only by rules */
+  ol.obj{list-style:none;counter-reset:o;padding:0;margin:6px 0 0}
+  ol.obj>li{counter-increment:o;position:relative;padding:16px 0 14px 58px;border-top:1px solid var(--rule)}
+  ol.obj>li:last-child{border-bottom:1px solid var(--rule)}
+  ol.obj>li::before{content:counter(o);position:absolute;left:0;top:12px;font-size:34px;font-weight:800;line-height:1;color:var(--crimson);opacity:.85}
+  ol.obj h3{margin:0 0 4px;font-size:clamp(16px,1.45vw,18.5px);color:var(--ink);font-weight:800;line-height:1.35}
+  ol.obj p{margin:0 0 8px}
+  .k{font-weight:700;color:var(--crimson)}
+  em{color:#4d2a31}
+  .closing{margin-top:22px;color:var(--muted)}
+  @media(max-width:560px){ol.obj>li{padding-left:42px}ol.obj>li::before{font-size:26px}}
 </style>
 </head>
 <body>
-<div class="bg"><i></i><i></i><i></i><i></i></div>
-<div class="wrap">
- <header>
-  <div class="eyebrow">Mechanics of Solids · Project · Page 1</div>
-  <h1>Objectives</h1>
-  <div class="line"></div>
- </header>
+<div class="bg"><i></i><i></i><i></i></div>
 
- <section class="glass aim">
-  <div class="ic"><svg width="38" height="38" viewBox="0 0 40 40" aria-hidden="true"><path d="M8,6 V22 Q8,26 12,26 H34" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M8,8 Q20,10 18,26" stroke="#e8a5ad" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="8" cy="26" r="3.5" fill="#fff"/><circle cx="34" cy="26" r="4" fill="#fff"/><path d="M34,30 v6" stroke="#fff" stroke-width="2.5"/></svg></div>
-  <div><h2>Overall aim</h2>
-   <p>To treat the human elbow, its muscles, bones and joint, as a <b>deformable solid system</b>. We start from how a muscle is built and how it produces force, then apply the tools of Mechanics of Solids (equilibrium, stress and strain, traction and Mohr's circle, beam theory) to find the forces and stresses in the arm during a curl. Finally we test those results against how the real body works.</p></div>
- </section>
+<article class="paper">
+ <div class="eyebrow">Mechanics of Solids · Project</div>
+ <h1>Objectives of the study</h1>
+ <p class="sub">The elbow as a deformable solid system</p>
+ <div class="line"></div>
 
- <section class="grid">
-  <a class="glass ob" style="--i:0" href="glass_page.html">
-   <div class="hd"><span class="n">1</span><h3>Understand how a muscle makes force</h3></div>
-   <p>Follow a twitch from the nerve impulse to calcium release and cross-bridge cycling, and see how it shortens every level of the muscle's structure, from the sarcomere to the tendon.</p>
-   <div class="tags"><span>anatomy</span><span>excitation–contraction</span><span>sarcomere</span></div><span class="go">→ Muscle Anatomy &amp; Twitch</span></a>
+ <p class="abstract">Skeletal muscle, bone and the elbow joint together form a load-bearing structure. Like any engineering structure it carries forces, deforms and develops internal stresses, yet the muscle behaves quite unlike the materials usually treated in Mechanics of Solids. This study examines that structure through the tools of solid mechanics, and sets out four objectives.</p>
 
-  <a class="glass ob" style="--i:1" href="Temporal Summation.html">
-   <div class="hd"><span class="n">2</span><h3>Explain how force is graded</h3></div>
-   <p>Show how the nervous system controls muscle force: firing faster sums twitches (unfused → fused tetanus), and recruiting more motor units in size order adds force.</p>
-   <div class="tags"><span>temporal summation</span><span>rate coding</span><span>size principle</span></div><span class="go">→ Temporal Summation &amp; Recruitment</span></a>
+ <h2><span class="no">1.</span>Background</h2>
+ <p>In a conventional solid, stress follows from strain through a fixed constitutive law: stretch the material and it pushes back by a predictable amount. Muscle breaks this pattern. Its stress depends on whether, and how strongly, it is being activated by the nervous system, as well as on how far it is stretched. A muscle can therefore develop large tension without changing length. It can only pull, never push. It keeps its volume as it deforms, and its fibres give it strongly direction-dependent properties. Describing such a material, and the bones and joint it acts on, with the language of stress, strain and equilibrium is the central motivation of this study.</p>
 
-  <a class="glass ob" style="--i:2" href="Motor Unit Recruitment.html">
-   <div class="hd"><span class="n">3</span><h3>Turn recruitment into a stress–strain model</h3></div>
-   <p>Derive muscle force from passive and active stress–strain curves, the recruited fraction of the cross-section (PCSA) and a volume-conserving area, so force follows from which units are active.</p>
-   <div class="tags"><span>constitutive curves</span><span>PCSA</span><span>uniaxial stress</span></div><span class="go">→ Motor Unit Recruitment</span></a>
+ <h2><span class="no">2.</span>Aim</h2>
+ <p>To understand the biceps–elbow–forearm system as a deformable solid system. The study explains how muscle departs from conventional solid behaviour, makes the governing mechanics concepts visible, and builds a simplified model that links the movement of the arm to the forces and stresses within it.</p>
 
-  <a class="glass ob" style="--i:3" href="muscle_traction_3d_v6.html">
-   <div class="hd"><span class="n">4</span><h3>Analyse stress inside the muscle</h3></div>
-   <p>Treat the muscle as a solid under uniaxial stress σ = F/A, cut it with any plane, and find the traction t = σ·n, its normal and shear parts, and the matching point on Mohr's circle.</p>
-   <div class="tags"><span>stress tensor</span><span>traction</span><span>Mohr's circle</span></div><span class="go">→ Muscle M.O.S</span></a>
+ <h2><span class="no">3.</span>Objectives</h2>
+ <ol class="obj">
+  <li>
+   <h3>Explain the unusual behaviour of muscles when considered as deformable solids.</h3>
+   <p>Muscle is an <span class="k">active</span> material. The same strain can correspond to very different stresses depending on its activation, so no single stress–strain curve describes it. The study sets out how muscle departs from the idealised linear elastic solid:</p>
+   <p>it carries <em>tension only</em>; it is <em>nearly incompressible</em>, thinning as it lengthens; it is <em>anisotropic</em>, strong along its fibres; its force depends on its <em>length</em>; and its response is <em>time-dependent</em>. Each property is explained in terms of stress, strain and constitutive behaviour.</p>
+  </li>
+  <li>
+   <h3>Visually demonstrate different mechanics concepts of the muscle and elbow system.</h3>
+   <p>The concepts are shown as interactive visualisations rather than only as equations, so that each quantity can be seen to respond as the system changes:</p>
+   <p>the <span class="k">stress tensor</span> in a loaded muscle; the <span class="k">traction</span> vector acting on any plane cut through it, and its normal and shear components; <span class="k">Mohr's circle</span> as a picture of how that traction varies with the orientation of the plane; and the <span class="k">shear force</span> and <span class="k">bending moment</span> diagrams of the forearm treated as a loaded beam.</p>
+  </li>
+  <li>
+   <h3>Create a simplified heuristic of the biceps–elbow–forearm system to qualitatively understand the relationship between its kinematics and its mechanics.</h3>
+   <p>The real arm is too complex to analyse in full, so the study builds a deliberately simple heuristic. The bones become rigid segments, the elbow a hinge, and the biceps a single line of pull between its attachments. Its purpose is <em>qualitative insight</em> rather than precise prediction:</p>
+   <p>how the <span class="k">joint angle</span> (kinematics) sets the muscle's length and its moment arm about the elbow, and how these in turn set the <span class="k">muscle force</span>, the joint reaction and the stresses in the muscle and forearm (mechanics). The assumptions behind the heuristic are stated explicitly, so that its limits are clear.</p>
+  </li>
+  <li>
+   <h3>Apply this simplified heuristic to the system in different loading conditions.</h3>
+   <p>The heuristic is then used to compare how the system responds when the loading changes: different <span class="k">loads</span> held in the hand, different <span class="k">elbow angles</span>, and different <span class="k">orientations of the arm relative to gravity</span>. In each case it identifies where in the range of motion the muscle force and stress are greatest, and how they depend on the configuration of the arm.</p>
+  </li>
+ </ol>
 
-  <a class="glass ob" style="--i:4" href="arm_muscle_model.html">
-   <div class="hd"><span class="n">5</span><h3>Solve the elbow in equilibrium</h3></div>
-   <p>Model the arm as rigid segments and a muscle. Use moment balance to find the muscle force, moment arm and joint reaction as the elbow angle and load change, and show why the muscle must pull many times the load.</p>
-   <div class="tags"><span>statics</span><span>moments</span><span>joint reaction</span></div><span class="go">→ Elbow System</span></a>
-
-  <a class="glass ob" style="--i:5" href="forearm_beam.html">
-   <div class="hd"><span class="n">6</span><h3>Treat the forearm as a beam</h3></div>
-   <p>Load the forearm with the muscle, joint and hand forces. Draw its axial force, shear force and bending moment diagrams, and find the normal and shear stresses at any section.</p>
-   <div class="tags"><span>N, V, M diagrams</span><span>bending stress</span><span>shear stress</span></div><span class="go">→ Forearm as a Beam</span></a>
-
-  <a class="glass ob" style="--i:6" href="page7.html">
-   <div class="hd"><span class="n">7</span><h3>Compare curl variations</h3></div>
-   <p>Compare the standing and preacher curl to show that each loads the biceps hardest at a different muscle stretch, and link this to training studies on muscle length and exercise variation.</p>
-   <div class="tags"><span>stress vs strain</span><span>moment arms</span><span>applied research</span></div><span class="go">→ Curl Variations</span></a>
-
-  <a class="glass ob meta" style="--i:7" href="page8.html">
-   <div class="hd"><span class="n">8</span><h3>Know the limits of the model</h3></div>
-   <p>List every simplification we made (one-beam forearm, pin joint, single muscle, rigid tendons, elastic muscle, uniform shapes, unlimited body) and show what the real arm looks like instead.</p>
-   <div class="tags"><span>assumptions</span><span>real anatomy</span><span>critique</span></div><span class="go">→ Deviation from Real Life</span></a>
- </section>
-
- <section class="glass how">
-  <div><b>Interactive, not static</b>Every model has sliders, so you can see how forces and stresses respond to the angle, load and recruitment.</div>
-  <div><b>Assumptions stated openly</b>Each page lists what it simplifies, so every result can be read for what it is.</div>
-  <div><b>Grounded in evidence</b>Where we make claims about the body, we point to published research.</div>
-  <div><b>One consistent arm</b>The same arm dimensions carry through the elbow, beam and curl pages, so their results can be compared.</div>
- </section>
-</div>
+ <p class="closing">Together, these objectives move from the material (muscle as an unusual solid), through the concepts (stress, traction, Mohr's circle and beam diagrams), to a working model of the arm and its use under varied loading.</p>
+</article>
 </body>
 </html>

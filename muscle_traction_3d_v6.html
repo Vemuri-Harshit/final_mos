@@ -26,7 +26,7 @@
   #wrap{position:relative;padding:0;overflow:hidden}
   canvas{display:block;width:100%;height:auto;aspect-ratio:1.18;touch-action:none;cursor:grab}
   #mohr{aspect-ratio:1.25;cursor:default;touch-action:auto}
-  .hint{position:absolute;right:10px;bottom:8px;max-width:300px;font-size:12px;color:var(--mut);text-align:right;pointer-events:none}
+  .hint{position:absolute;left:10px;top:8px;text-align:left !important;max-width:300px;font-size:12px;color:var(--mut);text-align:right;pointer-events:none}
   @media(max-width:560px){.hint{display:none}}
   .legend{position:absolute;right:10px;top:8px;font-size:12px;background:rgba(255,250,246,.88);border:1px solid var(--bd);border-radius:8px;padding:6px 8px}
   .legend i{display:inline-block;width:18px;height:3px;margin-right:6px;vertical-align:middle;border-radius:2px}
@@ -57,6 +57,69 @@
   p{margin:4px 0}
   .mlegend i{display:inline-block;width:18px;height:3px;margin:0 5px 2px 10px;vertical-align:middle;border-radius:2px}
   .sw{display:inline-block;width:11px;height:11px;border-radius:3px;margin:0 4px -1px 0}
+  /* smaller model + Mohr boxes */
+  #cv{aspect-ratio:1.5;max-height:60vh}
+  #mohr{aspect-ratio:1.7;max-height:42vh}
+  /* floating view pane inside the model box */
+  .fpane{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);max-width:calc(100% - 20px);z-index:2;
+         background:rgba(255,250,246,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+         border:1px solid rgba(255,255,255,.9);border-radius:14px;box-shadow:0 8px 24px rgba(158,27,50,.16);transition:box-shadow .3s}
+  .fhead{all:unset;cursor:pointer;display:block;padding:7px 16px;font-weight:700;font-size:13.5px;color:var(--ac);text-align:center;white-space:nowrap}
+  .fhead .chev{display:inline-block;margin-left:4px;transition:transform .3s}
+  .fpane.open .fhead .chev{transform:rotate(180deg)}
+  .fbody{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
+  .fpane.open .fbody{grid-template-rows:1fr}
+  .fin{overflow:hidden;padding:0 12px}
+  .fpane.open{width:calc(100% - 20px)}
+  .fpane.open .fin{padding-bottom:10px}
+  .fin .btns{justify-content:center;margin-top:4px}
+  .fin .radios{justify-content:center;margin-top:6px}
+  #wrap.fopen .hint{display:none}
+  /* stress + values side by side at equal height; assumptions + fibres beneath */
+  .side{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
+  @media(max-width:950px){.side{grid-template-columns:1fr}}
+  /* average / activated / unactivated toggle */
+  .smode{margin-top:8px}
+  .seg{display:flex;margin-top:4px;border:1px solid var(--bd);border-radius:9px;overflow:hidden;background:var(--bg)}
+  .seg label{flex:1;cursor:pointer}
+  .seg input{position:absolute;opacity:0;pointer-events:none}
+  .seg span{display:block;text-align:center;padding:5px 6px;font-size:13px;border-left:1px solid var(--bd)}
+  .seg label:first-child span{border-left:none}
+  .seg input:checked+span{background:var(--ac);color:#fff;font-weight:700}
+  .seg input:focus-visible+span{outline:2px solid var(--ac);outline-offset:-3px}
+  h2 .mut{font-weight:600;font-size:12.5px}
+  /* glass pill that opens the assumptions box */
+  .apill{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin-top:10px;padding:10px 14px;text-align:left;
+         background:rgba(255,255,255,.5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+         border:1px solid rgba(255,255,255,.95);border-radius:14px;box-shadow:0 6px 20px rgba(158,27,50,.13),inset 0 1px 0 rgba(255,255,255,.9);
+         transition:transform .25s,box-shadow .25s}
+  .apill:hover{transform:translateY(-1px);box-shadow:0 10px 26px rgba(158,27,50,.2);color:inherit}
+  .apill b{display:block;color:var(--ac);font-size:14.5px}
+  .apill small{color:var(--mut);font-size:12px}
+  .apl{font-size:18px;color:var(--ac)}
+  /* expanded box */
+  .aback{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:24px;background:rgba(59,26,33,.28);
+         backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);opacity:0;transition:opacity .25s}
+  .aback.show{opacity:1}
+  .aback[hidden]{display:none}
+  .adlg{position:relative;width:min(900px,100%);max-height:calc(100vh - 48px);overflow:auto;padding:26px 32px 28px;
+        background:rgba(255,250,247,.9);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+        border:1px solid rgba(255,255,255,.95);border-radius:20px;box-shadow:0 24px 70px rgba(59,26,33,.3);
+        transform:scale(.92);transition:transform .3s cubic-bezier(.2,.8,.3,1.1)}
+  .aback.show .adlg{transform:scale(1)}
+  .adlg h2{font-size:24px;color:var(--ac);margin:0 0 4px}
+  .adlg h3{font-size:18px;margin:20px 0 8px;color:var(--fg);border-bottom:2px solid rgba(158,27,50,.15);padding-bottom:4px}
+  .alist{margin:0;padding-left:26px;font-size:16.5px;line-height:1.6}
+  .alist li{margin:0 0 12px;padding-left:4px}
+  .alist li::marker{color:var(--ac);font-weight:800}
+  .alist b{color:var(--fg)}
+  .feq{display:block;width:max-content;max-width:100%;margin:6px 0 4px;padding:6px 14px;
+       font-family:"Cambria Math","Cambria","Times New Roman",serif;font-size:19px;color:#5c0f1d;
+       background:rgba(158,27,50,.08);border-left:4px solid var(--ac);border-radius:6px}
+  .arng{display:flex;flex-wrap:wrap;gap:8px}
+  .arng span{padding:5px 12px;border-radius:20px;background:rgba(158,27,50,.08);font-size:15px;font-weight:600}
+  .ax{position:absolute;right:14px;top:12px;width:36px;height:36px;padding:0;border-radius:50%;font-size:22px;line-height:1}
+  .side>section.fibs{grid-column:1/-1}
 </style>
 </head>
 <body>
@@ -74,10 +137,35 @@
           <div id="legc"><i style="background:#1b9e77"></i>shear part τ &nbsp;<i style="background:#c026d3"></i>normal part σₙ</div>
         </div>
         <div class="hint">Hold <b>Ctrl</b>: show the plane handles at P₀<br>Drag empty space: orbit · scroll: zoom · double-click: isometric</div>
+        <!-- floating pane: closed it shows only "Plane handles"; click to open all the view and plane buttons -->
+        <div class="fpane" id="fpane">
+          <button class="fhead" id="fhead" aria-expanded="false" aria-controls="fbody">Plane handles <span class="chev">▴</span></button>
+          <div class="fbody" id="fbody"><div class="fin">
+            <div class="btns">
+              <button id="b_nx">Normal ∥ x</button>
+              <button id="b_ny">Normal ∥ y</button>
+              <button id="b_nz">Normal ∥ z</button>
+              <button id="b_flip">Flip normal</button>
+              <button id="b_center">Move to centre</button>
+              <button id="b_rplane">Reset plane</button>
+            </div>
+            <div class="btns">
+              <button id="b_xsec" class="primary">Cross-section view</button>
+              <button id="b_norm">Look along normal</button>
+              <button id="b_iso">Isometric view</button>
+            </div>
+            <div class="radios" role="radiogroup" aria-label="Section cut">
+              <label><input type="radio" name="sec" value="off"> Whole muscle</label>
+              <label><input type="radio" name="sec" value="remove" checked> Remove that side</label>
+              <label><input type="radio" name="sec" value="dim"> Dim that side</label>
+              <label><input type="checkbox" id="hsh"> Keep handles visible</label>
+            </div>
+          </div></div>
+        </div>
       </section>
 
       <section class="card">
-        <h2>Mohr's circle for this plane</h2>
+        <h2>Mohr's circle for this plane <span class="mut" id="mshow"></span></h2>
         <canvas id="mohr"></canvas>
         <div class="mut mlegend"><i style="background:#c026d3"></i>σₙ<i style="background:#1b9e77"></i>τ<i style="background:#e8590c"></i>|t| (distance from the origin)</div>
         <p class="mut">The principal stresses are σ₁ = σ and σ₂ = σ₃ = 0, so the circle runs from 0 to σ (the other two Mohr circles shrink to the origin). The point P = (σₙ, τ) of the chosen plane lies on it at the angle 2θ from the σ-axis, where θ is the angle between the plane normal and the muscle axis. The scale adjusts to σ so the circle always fills the panel.</p>
@@ -85,38 +173,6 @@
   </div>
 
     <div class="side">
-      <section class="card">
-        <h2>Plane handles</h2>
-        <div class="mut">
-          <p><span class="sw" style="background:#0b7285"></span><b>u</b> and <span class="sw" style="background:#a16207"></span><b>v</b> lie in the plane, <span class="sw" style="background:#7b3fe4"></span><b>n</b> is its normal.</p>
-          <p>The handles are hidden until you hold <b>Ctrl</b> (or tick the box below), so they never clutter the traction vector. <b>Arrows</b> and <b>small squares</b>: drag to slide the plane; its point P₀ only moves <b>along the muscle axis x</b> (no sideways movement in y or z). <b>Rings</b>: drag to rotate the plane about that axis, freely. P₀ stays within 75% of the way from the centre to either end.</p>
-        </div>
-        <div class="row"><label><input type="checkbox" id="hsh"> keep handles visible (for touch screens, or without holding Ctrl)</label></div>
-        <div class="btns">
-          <button id="b_nx">Normal ∥ x</button>
-          <button id="b_ny">Normal ∥ y</button>
-          <button id="b_nz">Normal ∥ z</button>
-          <button id="b_flip">Flip normal</button>
-          <button id="b_center">Move to centre</button>
-          <button id="b_rplane">Reset plane</button>
-        </div>
-      </section>
-
-      <section class="card">
-        <h2>Cross-section view</h2>
-        <div class="mut">The view turns to look straight down the plane's normal, and the part of the muscle the normal points towards (the side nearest you) is cut away so the cut face and the vectors are in the clear.</div>
-        <div class="btns">
-          <button id="b_xsec" class="primary">Cross-section view</button>
-          <button id="b_norm">Look along normal</button>
-          <button id="b_iso">Isometric view</button>
-        </div>
-        <div class="radios" role="radiogroup" aria-label="Section cut">
-          <label><input type="radio" name="sec" value="off"> Whole muscle</label>
-          <label><input type="radio" name="sec" value="remove" checked> Remove that side</label>
-          <label><input type="radio" name="sec" value="dim"> Dim that side</label>
-        </div>
-      </section>
-
       <section class="card">
         <h2>Stress in the muscle</h2>
         <div class="sl">
@@ -127,32 +183,76 @@
           <label>Recruited fraction f (activated fibres): <output id="o_frec"></output><input type="range" id="frec" min="0.05" max="1" step="0.01" value="0.7"></label>
         </div>
         <div class="mut" style="margin-top:4px">Radius profile r(x) = c·x(l − x), with c = 4·r<sub>max</sub>/l² so that r = r<sub>max</sub> at mid-length. The plane's point P₀ sets x.</div>
+        <div class="smode">
+          <div class="mut">Stress and traction shown for:</div>
+          <div class="seg" role="radiogroup" aria-label="Which stress to show">
+            <label><input type="radio" name="smode" value="avg" checked><span>Average</span></label>
+            <label><input type="radio" name="smode" value="act"><span>Activated fibres</span></label>
+            <label><input type="radio" name="smode" value="pas"><span>Unactivated fibres</span></label>
+          </div>
+        </div>
+        <button class="apill" id="aopen" aria-haspopup="dialog" aria-controls="adlg"><span><b>Assumptions and how to read this</b><small>7 assumptions · formulas · slider ranges</small></span><span class="apl">⤢</span></button>
         <div class="row"><label><input type="checkbox" id="comp" checked> show normal and shear parts of t</label></div>
       </section>
 
       <section class="card">
-        <h2>Values</h2>
-        <div class="kv" id="kv"></div>
-        <div class="mut" style="margin-top:8px">Stress tensor at the plane's cross-section (axial stress only):</div>
-        <div class="tens">σ = <table class="m sym"><tr><td>σₓₓ</td><td>0</td><td>0</td></tr><tr><td>0</td><td>0</td><td>0</td></tr><tr><td>0</td><td>0</td><td>0</td></tr></table>,&nbsp;&nbsp; σₓₓ = F(1 + ε) / (π r²),&nbsp;&nbsp; r = c·x(l − x)</div>
+        <h2>Values <span class="mut" id="vshow"></span></h2>
+        <div class="mut">Stress tensor at the plane's cross-section (axial stress only):</div>
+        <div class="tens">σ = <table class="m sym"><tr><td>σₓₓ</td><td>0</td><td>0</td></tr><tr><td>0</td><td>0</td><td>0</td></tr><tr><td>0</td><td>0</td><td>0</td></tr></table>,&nbsp;&nbsp; <span id="sform">σₓₓ = F(1 + ε) / (π r²),&nbsp;&nbsp; r = c·x(l − x)</span></div>
         <div class="tens" id="tval"></div>
         <table class="m" id="mat" style="display:none"></table>
+        <div class="kv" id="kv" style="margin-top:10px"></div>
       </section>
 
-      <section class="card">
+      <section class="card fibs">
         <h2>Activated vs unactivated fibres at P₀</h2>
-        <div class="mut">Using the Motor Unit Recruitment model: σₓₓ above is the <b>average</b> stress over the cross-section, σ<sub>avg</sub> = f·σ<sub>active</sub> + (1 − f)·σ<sub>inactive</sub>. Unactivated fibres sit on the passive curve; activated fibres carry the rest.</div>
+        <div class="mut">Using the Motor Unit Recruitment model, the average stress over the cross-section is σ<sub>avg</sub> = f·σ<sub>active</sub> + (1 − f)·σ<sub>inactive</sub>. Unactivated fibres sit on the passive curve; activated fibres carry the rest.</div>
         <div class="kv" id="fib"></div>
       </section>
     </div>
-
-  <section class="card" style="margin-top:12px">
-    <h2>Assumptions and how to read this</h2>
-    <p class="mut">The muscle is loaded along its axis x, so the stress tensor has one non-zero entry, <code>σₓₓ = F(1 + ε)/(π r²)</code>, and all other entries are zero. The radius varies along the rest length l as <code>r = c·x(l − x)</code>, with x measured from one end and <code>c = 4·r_max/l²</code> (the constant that makes r a length and gives r = r_max at mid-length). The factor (1 + ε) is the constant-volume correction: a muscle stretched by strain ε gets thinner, so the same force acts on a smaller area. The same force F passes through every cross-section, so σₓₓ is largest where the muscle is thinnest. It is evaluated at the cross-section through the plane's point P₀, which slides only along the axis. Within that cross-section σₓₓ is the average over all fibres; the panel above splits it into activated and unactivated fibres. The fascicles are only a drawing.</p>
-    <p class="mut">Because σ has only the xx entry, <code>t = σ·n = (σ·nₓ, 0, 0)</code>: the traction always points along the muscle axis, and its size is σ·|nₓ|. A plane parallel to the axis (nₓ = 0) carries no traction. The normal part is <code>σₙ = σ·nₓ²</code>, and the shear part is <code>τ = σ·|nₓ|·√(1 − nₓ²)</code>. These satisfy <code>|t|² = σₙ² + τ²</code>, which is the statement that the point (σₙ, τ) lies on the Mohr circle.</p>
-    <p class="mut">Fascicles run along the muscle and converge towards the tendons. Where the plane cuts them they show as ellipses (stretched when the plane is oblique to the axis); a plane close to parallel to the axis shows them as strands lying in the plane. Arrow length is proportional to |t|: a traction arrow one tick long (measured along x) means 0.5 MPa. The axis triad in the lower left follows the view.</p>
-  </section>
 </main>
+<!-- expanded assumptions box: opened from the glass pill under the stress toggle -->
+<div class="aback" id="aback" hidden>
+ <section class="adlg" id="adlg" role="dialog" aria-modal="true" aria-labelledby="atitle">
+  <button class="ax" id="aclose" aria-label="Close">×</button>
+  <h2 id="atitle">Assumptions and how to read this</h2>
+
+  <h3>Assumptions</h3>
+  <ol class="alist">
+   <li><b>Uniaxial loading along the muscle axis x.</b> Only one stress component is non-zero:
+    <div class="feq">σ = diag(σₓₓ, 0, 0)</div></li>
+   <li><b>Spindle-shaped muscle.</b> The radius varies along the rest length l, with x measured from one end; c makes r = r<sub>max</sub> at mid-length:
+    <div class="feq">r(x) = c · x (l − x),&nbsp;&nbsp; c = 4 r<sub>max</sub> / l²</div></li>
+   <li><b>Constant volume (true stress).</b> A muscle stretched by strain ε gets thinner, so the same force acts on a smaller area:
+    <div class="feq">σₓₓ = F (1 + ε) / (π r²)</div></li>
+   <li><b>Same force through every cross-section.</b> σₓₓ is therefore largest where the muscle is thinnest. It is evaluated at the cross-section through the plane's point P₀, which moves only along x and stays within 75% of the way from the centre to either end.</li>
+   <li><b>σₓₓ is the average over the section.</b> Using the Motor Unit Recruitment model, activated and unactivated fibres share it:
+    <div class="feq">σ<sub>avg</sub> = f · σ<sub>active</sub> + (1 − f) · σ<sub>inactive</sub></div>
+    <div class="feq">σ<sub>inactive</sub> = σ<sub>p</sub>(ε) = 3.1 (e<sup>ε/0.12</sup> − 1) kPa for ε &gt; 0,&nbsp; 0 for ε ≤ 0</div>
+    <div class="feq">σ<sub>active</sub> = (σ<sub>avg</sub> − (1 − f) σ<sub>p</sub>) / f,&nbsp;&nbsp; at most σ<sub>a</sub>(ε) = σ<sub>p</sub>(ε) + 225 e<sup>−(ε/0.35)²</sup> kPa</div>
+    The toggle switches the tensor, traction and Mohr's circle between σ<sub>avg</sub>, σ<sub>active</sub> and σ<sub>inactive</sub>.</li>
+   <li><b>Fibres only pull.</b> Fibres carry tension only, so the activated-fibre stress is never taken below zero.</li>
+   <li><b>The fascicles are only a drawing.</b> They show where the plane cuts the muscle; they do not enter the calculation.</li>
+  </ol>
+
+  <h3>How to read this</h3>
+  <ol class="alist">
+   <li><b>Traction on the plane.</b> Because σ has only the xx entry, the traction always points along the muscle axis:
+    <div class="feq">t = σ · n = (σₓₓ nₓ, 0, 0),&nbsp;&nbsp; |t| = σₓₓ |nₓ|</div></li>
+   <li><b>Normal and shear parts.</b>
+    <div class="feq">σₙ = σₓₓ nₓ²,&nbsp;&nbsp; τ = σₓₓ |nₓ| √(1 − nₓ²)</div>
+    <div class="feq">|t|² = σₙ² + τ²</div>
+    The last line says the point (σₙ, τ) lies on the Mohr circle. A plane parallel to the axis (nₓ = 0) carries no traction.</li>
+   <li><b>Fascicle cuts.</b> Cut fascicles show as ellipses, stretched when the plane is oblique to the axis. A plane nearly parallel to the axis shows them as strands lying in the plane.</li>
+   <li><b>Scale.</b> Arrow length is proportional to |t|: one tick along x is 0.5 MPa. The axis triad in the lower left follows the view.</li>
+  </ol>
+
+  <h3>Slider ranges</h3>
+  <div class="arng">
+   <span>F: 0 – 1000 N</span><span>l: 15 – 45 cm</span><span>r<sub>max</sub>: 1 – 5 cm</span><span>ε: −0.30 – +0.40</span><span>f: 0.05 – 1</span>
+  </div>
+ </section>
+</div>
 
 <script>
 // ================= CONFIGURATION =================
@@ -314,30 +414,36 @@ function rotateFrame(k, th) {
   fixFrame();
 }
 const ringBasis = k => { const f = [FR.e1, FR.e2, FR.n]; return [f[(k + 1) % 3], f[(k + 2) % 3]]; };   // b1 x b2 = axis k
-function resetPlane() { setN([1 / 2, 1 / 3, 1 / 4]); P0 = [0.4, 0, 0]; }
+function resetPlane() { setN([1, 0, 0]); P0 = [0.4, 0, 0]; }   // default: cross-section with its normal along the muscle axis x
 resetPlane();
 
 // ================= PHYSICS =================
 // Real (physical) muscle: rest length l, radius r(x) = c·x(l − x) with c = 4·r_max / l², x measured from one end.
-// Axial stress at the plane's cross-section (true stress, constant volume): σxx = F(1 + ε) / (π r²).
+// Axial stress at the plane's cross-section (true stress, constant volume): σxx = F(1 + ε) / (π r²) (the AVERAGE over the section).
+// SMODE picks which stress drives the tensor, traction and Mohr's circle: the average, an activated fibre, or an unactivated fibre.
+let SMODE = 'avg';
+const SMODE_TXT = { avg: 'average stress', act: 'activated fibres', pas: 'unactivated fibres' };
 function compute() {
   const n = FR.n, { L } = MUSCLE;
   const F = +$('F').value, l = +$('lr').value, rmax = +$('rmax').value, eps = +$('eps').value, frec = +$('frec').value;   // N, cm, cm, –, –
   const x = (P0[0] + L) / (2 * L) * l;                        // position of the plane's point along the rest length (cm)
   const c = 4 * rmax / (l * l), r = c * x * (l - x);          // cm⁻¹, cm
   const area = Math.PI * r * r;                               // cm²
-  const sigma = F * (1 + eps) / (area * 100);                 // MPa (N/mm²)
+  const sigAvg = F * (1 + eps) / (area * 100);                // MPa (N/mm²)
+  const sigPas = sPas(eps) / 1000;                            // MPa: unactivated fibres sit on the passive curve
+  const sigAct = Math.max(0, (sigAvg - (1 - frec) * sigPas) / frec);   // MPa: activated fibres carry the rest (tension only)
+  const sigma = SMODE === 'act' ? sigAct : SMODE === 'pas' ? sigPas : sigAvg;
   const t = [sigma * n[0], 0, 0];                             // t = sigma . n with sigma = diag(sigma, 0, 0)
   const sn = dot(t, n);                                       // normal component (signed)
   const tn = n.map(v => v * sn), ts = [t[0] - tn[0], t[1] - tn[1], t[2] - tn[2]];
-  return { n, sigma, t, sn, tn, ts, tau: norm(ts), F, l, rmax, eps, frec, x, c, r, area, P0, C: n.map(v => v * dot(n, P0)) };
+  return { n, sigma, sigAvg, sigAct, sigPas, t, sn, tn, ts, tau: norm(ts), F, l, rmax, eps, frec, x, c, r, area, P0, C: n.map(v => v * dot(n, P0)) };
 }
 // Fibre stresses, using the two stress–strain curves of the Motor Unit Recruitment page (kPa).
 // The σxx above is the AVERAGE over the cross-section: σavg = f·σactive + (1 − f)·σinactive.
 const SMAX = 225, W0 = 0.35, KP = 3.1, E0 = 0.12;
 const sIso = e => SMAX * Math.exp(-((e / W0) ** 2)), sPas = e => e > 0 ? KP * (Math.exp(e / E0) - 1) : 0;
 function fibreStresses(S) {
-  const avg = S.sigma * 1000, sp = sPas(S.eps), si = sIso(S.eps), cap = sp + si;      // kPa
+  const avg = S.sigAvg * 1000, sp = sPas(S.eps), si = sIso(S.eps), cap = sp + si;      // kPa
   const act = (avg - (1 - S.frec) * sp) / S.frec;                                     // stress each activated fibre must carry
   const fNeed = si > 0 ? (avg - sp) / si : Infinity;                                  // smallest recruited fraction that could do it
   return { avg, sp, si, cap, act, fNeed };
@@ -613,7 +719,7 @@ function drawMohr(S) {
   g.textAlign = 'right'; g.fillText('σ (MPa)', MW - 12, oy - 6);
   g.textAlign = 'left'; g.fillText('τ (MPa)', ox + 6, 18);
   if (!ok) { g.textAlign = 'left'; g.fillText('σ = 0: the circle collapses to a point at the origin.', 60, oy - 30); return; }
-  const R = 0.5 * sg * s0, cx = ox + R;
+  const R = Math.max(0, 0.5 * sg * s0), cx = ox + R;   // never negative, even before the panel has a size
   g.beginPath(); g.arc(cx, oy, R, 0, 2 * Math.PI); g.fillStyle = 'rgba(158,27,50,0.07)'; g.fill();
   g.strokeStyle = 'rgba(158,27,50,0.4)'; g.lineWidth = 1.4; g.stroke();
   g.beginPath(); g.arc(cx, oy, R, Math.PI, 2 * Math.PI); g.strokeStyle = 'rgba(158,27,50,0.95)'; g.lineWidth = 2.6; g.stroke();
@@ -650,7 +756,7 @@ function readouts(S) {
     ['c = 4·r_max / l²', f(S.c, 5) + ' cm⁻¹'],
     ['Area π r²', f(S.area, 2) + ' cm²'],
     ['Unit normal n', `(${f(S.n[0])}, ${f(S.n[1])}, ${f(S.n[2])})`, 1],
-    ['Stress σₓₓ = F(1+ε)/(π r²)', f(S.sigma, 4) + ' MPa'],
+    [SMODE === 'act' ? 'Activated-fibre stress σₓₓ = (σ_avg − (1 − f)σp)/f' : SMODE === 'pas' ? 'Unactivated-fibre stress σₓₓ = σp(ε)' : 'Average stress σₓₓ = F(1+ε)/(π r²)', f(S.sigma, 4) + ' MPa'],
     ['Angle θ between n and the muscle axis', f(ang, 1) + '°'],
     ['Traction t = σ·n', `(${f(S.t[0])}, ${f(S.t[1])}, ${f(S.t[2])}) MPa`, 1],
     ['|t|', f(norm(S.t)) + ' MPa'],
@@ -662,11 +768,17 @@ function readouts(S) {
   $('kv').innerHTML = items.map(([l, v, w]) => `<div class="${w ? 'wide' : ''}">${l}<b>${v}</b></div>`).join('') +
     (Math.abs(nx) < 1e-9 ? '<div class="wide">The plane is parallel to the muscle axis, so no traction acts across it (t = 0).</div>' : '');
   $('mat').innerHTML = `<tr><td>${f(S.sigma)}</td><td>0</td><td>0</td></tr><tr><td>0</td><td>0</td><td>0</td></tr><tr><td>0</td><td>0</td><td>0</td></tr>`;
-  $('tval').innerHTML = `σ = <table class="m sym"><tr><td><b>${f(S.sigma, 4)}</b></td><td>0</td><td>0</td></tr><tr><td>0</td><td>0</td><td>0</td></tr><tr><td>0</td><td>0</td><td>0</td></tr></table> MPa,&nbsp; with σₓₓ = ${S.F.toFixed(0)} × (1 + ${S.eps.toFixed(2)}) / (π × ${f(S.r, 3)}²) N/cm²`;
+  const fAvg = `${S.F.toFixed(0)} × (1 + ${S.eps.toFixed(2)}) / (π × ${f(S.r, 3)}²) N/cm²`;
+  const wTxt = SMODE === 'act' ? `σₓₓ = σ_active = (${f(S.sigAvg, 4)} − (1 − ${S.frec.toFixed(2)}) × ${f(S.sigPas, 4)}) / ${S.frec.toFixed(2)} MPa, with σ_avg = ${fAvg}`
+    : SMODE === 'pas' ? `σₓₓ = σp(ε) = 3.1 × (e^(${S.eps.toFixed(2)}/0.12) − 1) kPa${S.eps <= 0 ? ' → 0 (slack: ε ≤ 0)' : ''}`
+    : `σₓₓ = ${fAvg}`;
+  $('tval').innerHTML = `σ = <table class="m sym"><tr><td><b>${f(S.sigma, 4)}</b></td><td>0</td><td>0</td></tr><tr><td>0</td><td>0</td><td>0</td></tr><tr><td>0</td><td>0</td><td>0</td></tr></table> MPa,&nbsp; with ${wTxt}`;
+  $('sform').innerHTML = SMODE === 'act' ? 'σₓₓ = σ_active = (σ_avg − (1 − f)·σp(ε)) / f' : SMODE === 'pas' ? 'σₓₓ = σ_inactive = σp(ε)' : 'σₓₓ = F(1 + ε) / (π r²),&nbsp;&nbsp; r = c·x(l − x)';
+  $('mshow').textContent = $('vshow').textContent = '· ' + SMODE_TXT[SMODE];
   // activated vs unactivated fibres (values only, at the plane's point)
   const B2 = fibreStresses(S), ok = B2.act <= B2.cap + 1e-9;
   const fib = [
-    ['Average stress σ_avg (= σₓₓ)', B2.avg.toFixed(1) + ' kPa'],
+    ['Average stress σ_avg over the section', B2.avg.toFixed(1) + ' kPa'],
     ['Strain ε', (S.eps >= 0 ? '+' : '') + S.eps.toFixed(2)],
     ['Unactivated fibre: σ_inactive = σp(ε)', B2.sp.toFixed(1) + ' kPa'],
     ['Activated fibre: σ_active = (σ_avg − (1 − f)σp) / f', B2.act.toFixed(1) + ' kPa'],
@@ -726,6 +838,8 @@ $('b_rplane').addEventListener('click', () => { resetPlane(); render(); });
 $('b_xsec').addEventListener('click', () => { if (curMode === 'off') setMode('remove'); render(); animateView(normalViewTarget()); });
 $('b_norm').addEventListener('click', () => animateView(normalViewTarget()));
 $('b_iso').addEventListener('click', () => animateView(ISO));
+document.querySelectorAll('input[name=smode]').forEach(r => r.addEventListener('change', () => { SMODE = r.value; render(); }));
+$('fhead').addEventListener('click', () => { const on = !$('fpane').classList.contains('open'); $('fpane').classList.toggle('open', on); $('wrap').classList.toggle('fopen', on); $('fhead').setAttribute('aria-expanded', on); });
 
 const cv = $('cv');
 const mouse = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
@@ -780,6 +894,13 @@ window.addEventListener('keyup', e => { if (e.key === 'Control') setCtrl(false);
 window.addEventListener('blur', () => setCtrl(false));
 $('hsh').addEventListener('input', () => { if (!$('hsh').checked) hot = null; render(); });
 cv.addEventListener('contextmenu', e => { if (e.ctrlKey) e.preventDefault(); });
+// assumptions box: open from the glass pill, close with ×, Esc or a click outside
+{ const bk = $('aback'), op = $('aopen');
+  const show = () => { bk.hidden = false; requestAnimationFrame(() => bk.classList.add('show')); $('aclose').focus(); };
+  const hide = () => { bk.classList.remove('show'); setTimeout(() => { bk.hidden = true; }, 250); op.focus(); };
+  op.addEventListener('click', show); $('aclose').addEventListener('click', hide);
+  bk.addEventListener('click', e => { if (e.target === bk) hide(); });
+  window.addEventListener('keydown', e => { if (e.key === 'Escape' && !bk.hidden) hide(); }); }
 readMode();
 resize();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);

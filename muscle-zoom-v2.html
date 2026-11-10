@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Building a muscle: sectioned zoom-out</title>
+<style>
+  body{font-family:system-ui,sans-serif;margin:0;background:#fff;color:#222}
+  .mz{max-width:1040px;margin:0 auto;padding:12px}
+  .mz .bar{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+  .mz button{font:inherit;padding:6px 14px;border:1px solid #9e2f33;background:#fff;color:#9e2f33;border-radius:4px;cursor:pointer}
+  .mz button.main{background:#9e2f33;color:#fff;font-weight:600}
+  .mz button.on{background:#9e2f33;color:#fff}
+  .mz button:disabled{opacity:.35;cursor:default}
+  .mz .sp{width:12px}
+  .mz canvas{width:100%;height:auto;display:block;border:1px solid #ddd}
+  .mz .cap{margin-top:8px;line-height:1.4}
+  .mz .cap small{color:#777;display:block;margin-top:6px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+function mountMuscleZoom(root){
+  var R=250, E=50, F=5, W=1000, H=620, K=0.92, U=[0.4,-0.26], L=270, TX=-54, TY=35;
+  var P0x=W/2+TX*K, P0y=H/2+TY*K, hyp=Math.hypot, PI=Math.PI;
+
+  root.innerHTML='<div class="mz"><div class="bar"><button class="in">\u25c2 Zoom in</button><button class="main out">Zoom out \u25b8</button>'+
+    '<button class="auto">Auto-play</button><span class="sp"></span><span class="steps"></span></div>'+
+    '<canvas width="'+W+'" height="'+H+'"></canvas>'+
+    '<div class="cap"><b></b> <span></span><div></div>'+
+    '<small>Schematic cutaway: one quarter of each block is removed to show its inside. Each step here is about x5; real size steps are roughly x10 to x100. Counts and layout are illustrative.</small></div></div>';
+  var $=function(s){return root.querySelector(s);};
+  var bIn=$('.in'),bOut=$('.out'),bAuto=$('.auto'),stepsEl=$('.steps'),cv0=$('canvas'),
+      capB=$('.cap b'),capS=$('.cap span'),capD=$('.cap div');
+  var dpr=Math.min(2,window.devicePixelRatio||1);
+  cv0.width=W*dpr; cv0.height=H*dpr;
+  var ctx=cv0.getContext('2d');
+
+  // ---------- helpers ----------
+  function rnd(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function hexPts(d){var n=Math.ceil(R/(d*.866))+2,o=[];for(var j=-n;j<=n;j++)for(var i=-n;i<=n;i++)o.push([d*(i+j/2),d*j*.8660254]);return o;}
+  function near(a,x,y,f){var b=null,bd=1e9;a.forEach(function(k){if(f&&!f(k))return;var q=hyp(k[0]-x,k[1]-y);if(q<bd){bd=q;b=k;}});return b;}
+  function wallKid(a,f){return near(a,0,-120,function(k){return Math.abs(k[0])<k[2]*.6&&k[1]<-40&&(!f||f(k));});}
+  function hull(P){P=P.slice().sort(function(a,b){return a[0]-b[0]||a[1]-b[1];});
+    function cr(o,a,b){return(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);}
+    var lo=[],up=[],i;
+    for(i=0;i<P.length;i++){while(lo.length>1&&cr(lo[lo.length-2],lo[lo.length-1],P[i])<=0)lo.pop();lo.push(P[i]);}
+    for(i=P.length-1;i>=0;i--){while(up.length>1&&cr(up[up.length-2],up[up.length-1],P[i])<=0)up.pop();up.push(P[i]);}
+    lo.pop();up.pop();return lo.concat(up);}
+  function sweep(d){var q=[[0,0]];for(var i=0;i<=12;i++){var a=1.5*PI+i/12*.5*PI;q.push([R*Math.cos(a),R*Math.sin(a)]);}
+    return hull(q.concat(q.map(function(p){return[p[0]+d*U[0],p[1]+d*U[1]];})));}
+  function circ(x,y,r,fill,stroke,lw,S){ctx.beginPath();ctx.arc(x,y,r,0,6.2832);
+    if(fill){ctx.fillStyle=fill;ctx.fill();}
+    if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw/S;ctx.stroke();}}
+  var RING=[[0,0]];for(var q=0;q<6;q++)RING.push([Math.cos(q*PI/3),Math.sin(q*PI/3)]);
+  function fd(x,y,r,col){ctx.fillStyle=col;RING.forEach(function(o){ctx.beginPath();ctx.arc(x+o[0]*r*.55,y+o[1]*r*.55,r*.13,0,6.2832);ctx.fill();});}
+
+  // ---------- level data ----------
+  var rg=rnd(11);
+  function lattice(sp,rt,rn,lim1,lim2){var o=[];
+    hexPts(sp).forEach(function(p){
+      if(hyp(p[0],p[1])<R-lim1)o.push([p[0],p[1],rt,1]);
+      [[sp*.5,sp*.2887],[sp,sp*.5774]].forEach(function(f){var x=p[0]+f[0],y=p[1]+f[1];if(hyp(x,y)<R-lim2)o.push([x,y,rn,0]);});
+    });return o;}
+  var k0=lattice(90,28,10,34,14), k1=lattice(30,10,3.5,12,6);
+  var k2=[[0,0,E,0,1]], k3=[[0,0,E,0,1]], k4=[[0,0,E,0,1]];
+  hexPts(42).forEach(function(p){var d=hyp(p[0],p[1]);if(d<R-26&&d>E+22)k2.push([p[0]+(rg()-.5)*5,p[1]+(rg()-.5)*5,17+rg()*3,0]);});
+  hexPts(64).forEach(function(p){var d=hyp(p[0],p[1]);if(d<R-36&&d>E+34)k3.push([p[0]+(rg()-.5)*5,p[1]+(rg()-.5)*5,27+rg()*4,0]);});
+  hexPts(70).forEach(function(p){var d=hyp(p[0],p[1]);if((p[0]/222)*(p[0]/222)+(p[1]/178)*(p[1]/178)<1&&d>E+36)k4.push([p[0]+(rg()-.5)*6,p[1]+(rg()-.5)*6,30+rg()*4,0]);});
+  var art=near(k4,150,120,function(k){return !k[4];}); art[3]=2;
+  var vein=near(k4,-60,150,function(k){return !k[4]&&k[3]===0;}); vein[3]=3;
+
+  function rim(deg){var a=deg*PI/180;return[R*Math.cos(a),R*Math.sin(a),0];}
+  function on(k,z){return[k[0],k[1],z];}
+  var tkThin=near(k0,150,-150,function(k){return k[3]===0&&k[0]>5&&k[1]<-5;});
+  var tkThick=near(k0,80,-80,function(k){return k[3]===1&&k[0]>5&&k[1]<-5;});
+  var wk0=wallKid(k0,function(k){return k[3]===1;});
+  var lat1=near(k1,100,-100,function(k){return k[3]===1&&k[0]>5&&k[1]<-5;});
+  var wk2=wallKid(k2), wk3=wallKid(k3), wk4=wallKid(k4);
+  var f4=near(k4,110,100,function(k){return !k[4]&&k[3]===0;});
+  var f4b=near(k4,f4[0]-1,f4[1]-1,function(k){return k!==f4&&!k[4]&&k[3]===0;});
+
+  var LV=[
+   {n:'Sarcomere (a few filaments, zoomed in)',s:'~2-3 \u00b5m long',
+    d:'The contractile unit. Thin actin filaments hang from the Z-disc; thick myosin filaments sit between them; titin springs link the thick filaments to the Z-disc.',
+    id:0,kids:k0,dp:150,h:['#f6cfca','#a64249'],wb:'#c98782',fb:'#8f5650',eb:'#c98782',rc:'#7d1f24',rw:2,
+    labels:[
+     {t:'Z-disc',s:'anchors thin filaments',p:[-170,90,0],side:'L'},
+     {t:'Titin',s:'elastic spring to Z-disc',p:[0,wk0[1],40],side:'L'},
+     {t:'Thin filament',s:'actin',p:on(tkThin,150),side:'R'},
+     {t:'Thick filament',s:'myosin',p:on(tkThick,150),side:'R'},
+     {t:'Myosin heads',s:'pull on actin to contract',p:[0,wk0[1],128],side:'R'}]},
+   {n:'Myofibril (a chain of sarcomeres)',s:'~1 \u00b5m across',
+    d:'Sarcomeres repeat end to end. The face shows the filament lattice seen end-on: each thick filament is ringed by thin ones.',
+    id:1,kids:k1,dp:180,h:['#f6cfca','#a64249'],wb:'#f0b5b0',fb:'#e8a39e',eb:'#e8a39e',rc:'#7d1f24',rw:2,
+    labels:[
+     {t:'I band',s:'thin filaments only',p:[0,-190,38],side:'L'},
+     {t:'Z-disc',s:'sarcomere boundary',p:[0,-150,135],side:'L'},
+     {t:'A band',s:'thick + thin overlap',p:[0,-110,90],side:'R'},
+     {t:'Filament lattice',s:'hexagonal, seen end-on',p:on(lat1,180),side:'R'}]},
+   {n:'Muscle fibre (one cell)',s:'~10-100 \u00b5m across',
+    d:'The cell is filled with parallel myofibrils whose striations line up; nuclei sit at the edge, just under the membrane.',
+    id:2,kids:k2,dp:120,h:['#e9928d','#962b32'],wb:'#e8a29c',fb:'#e8a29c',eb:'#e8a29c',rc:'#7d1f24',rw:3,
+    extra:function(S){[0.8,3.9].forEach(function(th){ctx.save();ctx.translate((R-13)*Math.cos(th),(R-13)*Math.sin(th));ctx.rotate(th+PI/2);
+      ctx.beginPath();ctx.ellipse(0,0,28,10,0,0,6.2832);ctx.fillStyle='#5a3f6e';ctx.fill();ctx.restore();});},
+    labels:[
+     {t:'Sarcolemma',s:'cell membrane',p:rim(150),side:'L'},
+     {t:'Myofibril',s:'bundle of filaments',p:on(near(k2,-110,60,function(k){return !k[4];}),0),side:'L'},
+     {t:'Nucleus',s:'at the cell edge',p:[(R-13)*Math.cos(.8),(R-13)*Math.sin(.8),0],side:'R'},
+     {t:'Striations',s:'sarcomere bands line up',p:[0,wk2[1],66],side:'R'}]},
+   {n:'Fascicle (bundle of fibres)',s:'~0.1-1 mm across',
+    d:'Many fibres run parallel, wrapped by connective tissue. The wrapping lets force pass between fibres and out to the tendon.',
+    id:3,kids:k3,dp:120,h:['#f8eadf','#c9a98f'],wb:'#f3e2d3',fb:'#f3e2d3',eb:'#f3e2d3',rc:'#e6cdb8',rw:6,
+    labels:[
+     {t:'Perimysium',s:'connective tissue sheath',p:rim(200),side:'L'},
+     {t:'Muscle fibre',s:'one cell, full length',p:on(near(k3,-110,70,function(k){return !k[4];}),0),side:'L'},
+     {t:'Fibres in parallel',s:'run along the axis',p:[0,wk3[1],72],side:'R'}]},
+   {n:'Whole muscle, cross-section',s:'centimetre scale',
+    d:'Fascicles packed inside an outer sheath, with blood vessels and nerves running between them.',
+    id:4,kids:k4,dp:120,h:['#f3dfd0','#b99a86'],wb:'#f3e2d3',fb:'#f3e2d3',eb:'#f3e2d3',rc:'#e6cdb8',rw:8,
+    labels:[
+     {t:'Epimysium',s:'sheath around the muscle',p:rim(215),side:'L'},
+     {t:'Fascicle',s:'a bundle of fibres',p:on(near(k4,-130,60,function(k){return !k[4]&&k[3]===0;}),0),side:'L'},
+     {t:'Fascicles run lengthwise',s:'toward the tendon',p:[0,wk4[1],72],side:'L'},
+     {t:'Perimysium',s:'wraps each fascicle',p:[(f4[0]+f4b[0])/2,(f4[1]+f4b[1])/2,0],side:'R'},
+     {t:'Artery',s:'blood supply',p:on(art,0),side:'R'}]}
+  ];
+  LV.forEach(function(lv){lv.d=lv.dp;lv.sw=sweep(lv.dp);});
+
+  // ---------- projection / strips ----------
+  var curS=1;
+  function P(w,c,z){return w?[c+z*U[0],z*U[1]]:[z*U[0],c+z*U[1]];}   // w=0: wall x=0 (c=y); w=1: wall y=0 (c=x)
+  function strip(w,c1,c2,z0,z1,col,edge){
+    var a=P(w,c1,z0),b=P(w,c1,z1),c=P(w,c2,z1),d=P(w,c2,z0);
+    ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(c[0],c[1]);ctx.lineTo(d[0],d[1]);ctx.closePath();
+    ctx.fillStyle=col;ctx.fill();
+    if(edge){ctx.strokeStyle=edge;ctx.lineWidth=.9/curS;ctx.stroke();}
+  }
+  var EDGE='rgba(50,10,15,.55)';
+  function kidStrips(lv,w){
+    var lo=w?0:-R,hi=w?R:0,d=lv.d;
+    lv.kids.forEach(function(k){
+      var cc=w?k[0]:k[1],pp=w?k[1]:k[0],r=k[2];
+      if(Math.abs(pp)>=r)return;
+      var hw=Math.sqrt(r*r-pp*pp),c1=Math.max(lo,cc-hw),c2=Math.min(hi,cc+hw);
+      if(c1>=c2)return;
+      var z0=0,col='#b5444b',z;
+      if(lv.id===0){
+        if(k[3]===1){
+          z0=.3*L;col='#7d1520';strip(w,c1,c2,z0,d,col,EDGE);
+          ctx.strokeStyle='#d4505a';ctx.lineWidth=3;ctx.beginPath();            // myosin heads
+          for(z=z0+8;z<d-4;z+=13){var a=P(w,c1,z),b=P(w,c1-9,z+6),c=P(w,c2,z),e=P(w,c2+9,z+6);
+            ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.moveTo(c[0],c[1]);ctx.lineTo(e[0],e[1]);}
+          ctx.stroke();
+          ctx.strokeStyle='#f1c453';ctx.lineWidth=3;ctx.beginPath();            // titin
+          for(var j=0;j<=14;j++){var q=P(w,cc+(j%2?4:-4),j*(.3*L)/14);if(j)ctx.lineTo(q[0],q[1]);else ctx.moveTo(q[0],q[1]);}
+          ctx.stroke();
+        }else strip(w,c1,c2,0,d,'#f4b8bd',EDGE);
+        return;
+      }
+      if(lv.id===3)col='#c0504d';
+      if(lv.id===4)col=k[3]===2?'#a01822':k[3]===3?'#3b4f8f':'#cf6a66';
+      strip(w,c1,c2,0,d,col,EDGE);
+      if(lv.id===2)for(z=7;z<d;z+=14)strip(w,c1,c2,z,Math.min(d,z+4.5),'rgba(60,10,15,.35)');
+    });
+  }
+  function bands(w,lo,hi){
+    var sl=90,d=LV[1].d;
+    for(var m=0;m<=2;m++){
+      var a0=Math.max(0,m*sl-.35*sl),a1=Math.min(d,m*sl+.35*sl);if(a1>a0)strip(w,lo,hi,a0,a1,'#a82f38');
+      var h0=Math.max(0,m*sl-.08*sl),h1=Math.min(d,m*sl+.08*sl);strip(w,lo,hi,h0,h1,'#c4565d');
+      var zc=(m+.5)*sl;if(zc<d)strip(w,lo,hi,zc-1.8,Math.min(d,zc+1.8),'#4a1f22');
+    }
+  }
+
+  // ---------- faces ----------
+  function paint(lv,k,S,end,cf){
+    var x=k[0],y=k[1],r=k[2],t=k[3];
+    ctx.save();if(k[4])ctx.globalAlpha*=cf;
+    if(lv.id===0){if(end||t===0)circ(x,y,r,t?'#7d1520':'#f4b8bd');}
+    else if(lv.id===1)circ(x,y,r,t?'#7d1520':'#f4b8bd');
+    else if(lv.id===2)circ(x,y,r,'#b5444b','#7d1f24',1,S);
+    else if(lv.id===3){circ(x,y,r,'#c0504d','#7d1f24',1,S);fd(x,y,r,'#e8a09a');}
+    else{
+      if(t===2)circ(x,y,r,'#a01822','#f3e2d3',2.5,S);
+      else if(t===3)circ(x,y,r,'#3b4f8f','#f3e2d3',2.5,S);
+      else{circ(x,y,r,'#cf6a66','#f3e2d3',3,S);fd(x,y,r*.85,'#8c2a30');}
+    }
+    ctx.restore();
+  }
+  function qpath(end){ctx.beginPath();ctx.moveTo(0,0);
+    if(end){ctx.lineTo(0,-R);ctx.arc(0,0,R,1.5*PI,2*PI);}else{ctx.lineTo(R,0);ctx.arc(0,0,R,0,1.5*PI);}ctx.closePath();}
+  function face(lv,S,cf,end){
+    ctx.save();qpath(end);ctx.fillStyle=end?lv.eb:lv.fb;ctx.fill();ctx.clip();
+    lv.kids.forEach(function(k){paint(lv,k,S,end,cf);});
+    if(!end&&lv.extra)lv.extra(S);
+    ctx.restore();
+    ctx.save();ctx.strokeStyle=lv.rc;ctx.lineWidth=lv.rw/S;ctx.beginPath();
+    if(end)ctx.arc(0,0,R,1.5*PI,2*PI);else ctx.arc(0,0,R,0,1.5*PI);ctx.stroke();
+    ctx.strokeStyle='rgba(50,10,15,.6)';ctx.lineWidth=1.5/S;ctx.beginPath();
+    if(end){ctx.moveTo(0,-R);ctx.lineTo(0,0);ctx.lineTo(R,0);}else{ctx.moveTo(R,0);ctx.lineTo(0,0);ctx.lineTo(0,-R);}
+    ctx.stroke();ctx.restore();
+  }
+
+  // ---------- block (cylinder with the upper-right quarter cut away) ----------
+  function drawHull(lv,S){
+    var vx=L*U[0],vy=L*U[1],m=hyp(vx,vy),nx=-vy/m,ny=vx/m;
+    ctx.save();
+    ctx.beginPath();ctx.rect(-3000,-3000,6000,6000);
+    lv.sw.forEach(function(p,i){if(i)ctx.lineTo(p[0],p[1]);else ctx.moveTo(p[0],p[1]);});ctx.closePath();ctx.clip('evenodd');
+    var g=ctx.createLinearGradient(-nx*R,-ny*R,nx*R,ny*R);g.addColorStop(0,lv.h[0]);g.addColorStop(1,lv.h[1]);
+    ctx.fillStyle=g;
+    ctx.beginPath();ctx.arc(vx,vy,R,0,6.2832);ctx.fill();
+    ctx.beginPath();ctx.moveTo(nx*R,ny*R);ctx.lineTo(nx*R+vx,ny*R+vy);ctx.lineTo(-nx*R+vx,-ny*R+vy);ctx.lineTo(-nx*R,-ny*R);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='rgba(90,20,25,.22)';ctx.lineWidth=1.2/S;
+    for(var s=-.85;s<=.85;s+=.17){ctx.beginPath();ctx.moveTo(nx*R*s,ny*R*s);ctx.lineTo(nx*R*s+vx,ny*R*s+vy);ctx.stroke();}
+    ctx.restore();
+  }
+  function block(lv,S,cf){
+    curS=S;var d=lv.d;
+    drawHull(lv,S);
+    [0,1].forEach(function(w){
+      var lo=w?0:-R,hi=w?R:0;
+      strip(w,lo,hi,0,d,lv.wb);
+      if(lv.id===1)bands(w,lo,hi);else kidStrips(lv,w);
+      strip(w,lo,hi,0,d,w?'rgba(255,255,255,.10)':'rgba(0,0,0,.14)');
+    });
+    ctx.save();ctx.translate(d*U[0],d*U[1]);face(lv,S,cf,true);ctx.restore();
+    face(lv,S,cf,false);
+  }
+
+  // ---------- labels (drawn when settled on a level) ----------
+  function labels(i,la){
+    if(la<=0)return;
+    var lv=LV[i],side={L:[],R:[]};
+    lv.labels.forEach(function(b){side[b.side].push({b:b,ax:P0x+K*(b.p[0]+b.p[2]*U[0]),ay:P0y+K*(b.p[1]+b.p[2]*U[1])});});
+    ctx.save();ctx.globalAlpha=la;
+    ['L','R'].forEach(function(sd){
+      var arr=side[sd].sort(function(a,b){return a.ay-b.ay;}),prev=-1e9,j;
+      arr.forEach(function(o){o.ly=Math.max(o.ay,prev+48,40);prev=o.ly;});
+      var lim=H-34;for(j=arr.length-1;j>=0;j--){if(arr[j].ly>lim)arr[j].ly=lim;lim=arr[j].ly-48;}
+      arr.forEach(function(o){
+        var left=sd==='L',tx=left?14:W-14,sx=left?200:W-200;
+        ctx.textAlign=left?'left':'right';
+        ctx.font='600 13px system-ui,sans-serif';ctx.fillStyle='#1b1b1b';ctx.fillText(o.b.t,tx,o.ly);
+        ctx.font='11px system-ui,sans-serif';ctx.fillStyle='#666';ctx.fillText(o.b.s,tx,o.ly+14);
+        ctx.lineCap='round';
+        ctx.strokeStyle='#fff';ctx.lineWidth=3.5;ctx.beginPath();ctx.moveTo(sx,o.ly+4);ctx.lineTo(o.ax,o.ay);ctx.stroke();
+        ctx.strokeStyle='#1b1b1b';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(sx,o.ly+4);ctx.lineTo(o.ax,o.ay);ctx.stroke();
+        ctx.beginPath();ctx.arc(o.ax,o.ay,3.5,0,6.2832);ctx.fillStyle='#1b1b1b';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+      });
+    });
+    ctx.restore();
+  }
+
+  // ---------- render ----------
+  var t=0,shown=-1;
+  function alpha(i){return Math.max(0,Math.min(1,(.85-Math.abs(t-i))/.6));}
+  function render(){
+    ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+    for(var i=4;i>=0;i--){
+      var a=alpha(i);if(a<=0)continue;
+      var S=K*Math.pow(F,i-t);
+      ctx.save();ctx.translate(P0x,P0y);ctx.scale(S,S);ctx.globalAlpha=a;
+      block(LV[i],S,1-alpha(i-1));ctx.restore();
+    }
+    var n=Math.round(t);
+    labels(n,Math.max(0,1-Math.abs(t-n)*8));
+    if(n!==shown){shown=n;capB.textContent=(n+1)+'/5  '+LV[n].n;capS.textContent='\u2014 '+LV[n].s;capD.textContent=LV[n].d;
+      [].forEach.call(stepsEl.children,function(b,j){b.className=j===n?'on':'';});}
+  }
+
+  // ---------- controls: each press moves one level and stops ----------
+  var cur=0,from=0,t0=0,dur=1,raf=0,playing=false,timer=0;
+  function sync(){bIn.disabled=cur<=0;bOut.disabled=cur>=4;bAuto.textContent=playing?'Stop':'Auto-play';}
+  function go(i,done){
+    cancelAnimationFrame(raf);cur=i;from=t;t0=performance.now();dur=Math.max(400,Math.abs(i-from)*1900);sync();
+    (function loop(now){
+      var u=Math.min(1,(now-t0)/dur);t=from+(i-from)*(.5-.5*Math.cos(PI*u));render();
+      if(u<1)raf=requestAnimationFrame(loop);else if(done)done();
+    })(performance.now());
+  }
+  function stop(){playing=false;clearTimeout(timer);sync();}
+  function step(){if(!playing)return;if(cur>=4){stop();return;}go(cur+1,function(){timer=setTimeout(step,3800);});}
+  bOut.onclick=function(){stop();go(Math.min(4,cur+1));};
+  bIn.onclick=function(){stop();go(Math.max(0,cur-1));};
+  bAuto.onclick=function(){
+    if(playing){stop();return;}
+    playing=true;sync();
+    if(cur>=4)go(0,function(){timer=setTimeout(step,3800);});else step();
+  };
+  LV.forEach(function(lv,i){var b=document.createElement('button');b.textContent=i+1;b.title=lv.n;b.onclick=function(){stop();go(i);};stepsEl.appendChild(b);});
+  sync();render();
+}
+mountMuscleZoom(document.getElementById('app'));
+</script>
+</body>
+</html>

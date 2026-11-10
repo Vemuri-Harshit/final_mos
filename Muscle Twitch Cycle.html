@@ -567,7 +567,7 @@ const LBL=[
  {a:4.35,b:5.25,t:'Thick filament: myosin',p:[600,730],o:[-170,140]},
  {a:4.55,b:5.0,k:'trig',t:'Ca²⁺ binds troponin',p:t=>relPos(REL[0],t).p,o:[90,-120]},
  {a:4.62,b:5.25,t:'Ca²⁺ also arrives from neighbouring triads',p:t=>{const q=tnPos(TN[tnOrder[45]],t);return[q[0]+8,q[1]]},o:[-60,-140]},
- {a:4.95,b:5.3,k:'trig',t:'Troponin drags tropomyosin off the binding sites',p:t=>tnPos(TN[REL[3].tn],t),o:[80,150]},
+ {a:4.95,b:5.3,k:'trig',t:'Troponin drags tropomyosin exposing the binding sites',p:t=>tnPos(TN[REL[3].tn],t),o:[80,150]},
  {a:5.05,b:5.31,k:'trig',t:'Cocked myosin head (holding ADP + Pi)',p:FT,o:[40,110]},
  {a:5.31,b:5.41,k:'trig',t:'Head binds actin: a cross-bridge',p:FT,o:[40,110]},
  {a:5.41,b:5.63,k:'trig',t:'Pi leaves → power stroke pulls actin toward the M-line',p:FT,o:[40,110]},

@@ -218,8 +218,8 @@ function labels(c,L,al){if(al<=0)return;c.save();c.globalAlpha=al;
  const items=LB[L].map(l=>{const pp=typeof l.p=='function'?l.p():l.p,q=pp?pr(pp):0;
   return{l,px:pp?CX+q[0]:(typeof l.x=='function'?l.x():l.x),py:pp?CY+q[1]:l.y}});
  for(const sd of['L','R']){const arr=items.filter(o=>o.l.side==sd).sort((a,b)=>a.py-b.py);let prev=-1e9;
-  arr.forEach(o=>{o.ty=Math.max(o.py+4,prev+LGAP,LTOP[sd]);prev=o.ty});
-  let lim=LBOT;for(let j=arr.length-1;j>=0;j--){if(arr[j].ty>lim)arr[j].ty=lim;lim=arr[j].ty-LGAP}}
+  arr.forEach(o=>{o.ty=Math.max(o.py+4,prev+LGAP,labTop(sd));prev=o.ty});
+  let lim=labBot(sd);for(let j=arr.length-1;j>=0;j--){if(arr[j].ty>lim)arr[j].ty=lim;lim=arr[j].ty-LGAP}}
  items.forEach(({l,px,py,ty})=>{
   c.font='600 13px system-ui';const w=Math.max(c.measureText(l.t).width,(c.font='11px system-ui',c.measureText(l.s).width)),L2=l.side=='L',tx=L2?22:W-22,sx=L2?tx+w+8:tx-w-8;
   c.strokeStyle='rgba(40,40,40,.7)';c.lineWidth=1;c.beginPath();c.moveTo(sx,ty-4);c.lineTo(px,py);c.stroke();
@@ -240,6 +240,34 @@ function stageBanner(){const c=ctx;c.setTransform(dpr,0,0,dpr,0,0);
  let x=24;crumbs.forEach((s,i)=>{c.font=(i==cur?'700 ':'')+'12px system-ui';c.fillStyle=i==cur?'#a8232b':'#888';c.fillText(s,x,76);x+=c.measureText(s).width;
   if(i<4){c.fillStyle='#bbb';c.font='12px system-ui';c.fillText(' › ',x+2,76);x+=22}});
  c.restore()}
+// ---------- info text boxes (top right; the whole muscle also has one at bottom right) ----------
+// a = shown when the level loads; b = replaces it once a twitch has been shown on that level (if there is no b, a stays)
+const INFO=[
+ [{pos:'top',a:'Sarcomere is the smallest functional unit of the muscle cell.'}],
+ [{pos:'top',a:'Sarcomeres arranged in linearly repeating pattern is myofibril, which are connected to each other with Z-line.'}],
+ [{pos:'top',a:'Muscle fibre is made up of thousands of myofibrils all collectively covered by special connective tissue called Endomysium.',
+   b:'As the Muscle fibres contract, they pull on the Endomysium.'}],
+ [{pos:'top',a:'A single fascicle consists of thousands of muscle fibres collectively covered by connective tissue called Perimysium.',
+   b:'As the fascicles contract, they pull on the Perimysium.'}],
+ [{pos:'top',a:'A muscle is made up of hundreds of these fascicles which are covered by the Perimysium.',
+   b:'When fascicles contract, they pull on the Perimysium causing the muscle to contract.'},
+  {pos:'stack',a:'The Perimysium, Epimysium and Endomysium merge into the tendon.',
+   b:'As they get pulled, they pull on the tendon, which in turn moves the bone it is connected to.'}]];
+const twSeen=[false,false,false,false,false];      // has a twitch been shown on this level since it loaded?
+const IBW=410,IBH=78;                                // box size: about the size of the stage banner
+function wrapLines(c,text,maxW){const out=[];let line='';for(const w of text.split(' ')){const t=line?line+' '+w:w;if(line&&c.measureText(t).width>maxW){out.push(line);line=w}else line=t}if(line)out.push(line);return out}
+// lay the level's boxes out top-right, stacked one under the other (8 px apart)
+function boxLayout(){const c=ctx,out=[];let y=10;c.save();c.font='13.5px system-ui';
+ INFO[st.lv].forEach(bx=>{const useB=!!(bx.b&&twSeen[st.lv]),txt=useB?bx.b:bx.a,lines=wrapLines(c,txt,IBW-28),h=Math.max(IBH,34+lines.length*18);
+  out.push({x:W-10-IBW,y,h,lines,useB});y+=h+8});c.restore();return out}
+function infoBoxes(){if(st.tr!=null)return;const c=ctx;c.setTransform(dpr,0,0,dpr,0,0);c.save();
+ boxLayout().forEach(({x,y,h,lines,useB})=>{
+  c.fillStyle='rgba(255,255,255,.94)';c.strokeStyle=useB?'#e8a64a':'#c9c9c9';c.lineWidth=useB?1.6:1.2;c.beginPath();c.roundRect(x,y,IBW,h,10);c.fill();c.stroke();
+  c.textAlign='left';c.fillStyle=useB?'#c25e00':'#a8232b';c.font='700 11px system-ui';c.fillText(useB?'DURING THE TWITCH':'AT THIS LEVEL',x+14,y+20);
+  c.fillStyle='#1b1b1b';c.font='13.5px system-ui';lines.forEach((s,i)=>c.fillText(s,x+14,y+40+i*18))});
+ c.restore()}
+// right-hand labels start below the last stacked box
+const labTop=sd=>{if(sd=='L')return LTOP.L;const L=boxLayout(),b=L[L.length-1];return b.y+b.h+22},labBot=()=>LBOT;
 // live band brackets for the flat sarcomere: I band and H zone shrink, A band (myosin length) stays the same
 function brackets(c,al){const Zl=zL0(),Zr=zR0(),sw=SWc(),pct=Math.round(kk()*100);
  c.save();c.globalAlpha=al;c.lineWidth=1.4;c.font='600 12px system-ui';c.textAlign='center';
@@ -273,7 +301,7 @@ const spr={};
 function sprite(L){if(spr[L])return spr[L];const o=document.createElement('canvas');o.width=W*dpr;o.height=H*dpr;
  const c=o.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.translate(CX,CY);block(c,L,null,0);return spr[L]=o}
 const st={lv:0,tr:null,p:0,busy:false};
-function frame(){frame0();stageBanner()}
+function frame(){frame0();stageBanner();infoBoxes()}
 function frame0(){const c=ctx;c.setTransform(dpr,0,0,dpr,0,0);c.fillStyle=BG;c.fillRect(0,0,W,H);
  if(st.tr==null){
   if(st.lv==0){c.save();c.beginPath();c.rect(150,185,700,250);c.clip();tiles(c,1);c.restore();pull0(c);brackets(c,1);labels(c,0,1)}
@@ -303,7 +331,7 @@ const conEl=document.getElementById('con'),conv=document.getElementById('conv'),
 function conUI(){const sw=SWc();
  conv.textContent=`sarcomere ${Math.round(kk()*100)}%  ·  I band ${Math.round(Math.max(0,sw-300)/(SW-300)*100)}%  ·  H zone ${Math.round(Math.max(0,sw-440)/(SW-440)*100)}%  ·  A band 100%`;
  cx.textContent=CON>.01?CXT[st.lv]:''}
-function setCon(v){CON=Math.max(0,Math.min(1,v));conEl.value=CON*100;for(const k in spr)delete spr[k];conUI();if(!st.busy)frame()}
+function setCon(v){CON=Math.max(0,Math.min(1,v));if(CON>.02&&st.tr==null)twSeen[st.lv]=true;conEl.value=CON*100;for(const k in spr)delete spr[k];conUI();if(!st.busy)frame()}
 let twRaf=0,twDone=null;
 function stopTw(){cancelAnimationFrame(twRaf);twRaf=0;tw.textContent='▶ Twitch';const d=twDone;twDone=null;return d}
 // twitch: contract, hold briefly, relax; calls done() when finished
@@ -320,12 +348,13 @@ function ui(){const m=META[st.lv];ct.textContent=m[0];cs.textContent=' · '+m[1]
  [...stepsEl.children].forEach((b,i)=>{b.classList.toggle('on',i==st.lv);b.disabled=st.busy});
  lvn.innerHTML=NAMES.map((n,i)=>'<i class="'+(i==st.lv?'on':'')+'" title="'+n+'"></i>').join('')+' '+(st.lv+1)+' / 5';
  conUI()}
-function go(dir,done){if(st.busy)return;const L=st.lv;if(dir>0&&L>=4||dir<0&&L<=0){if(done)done();return}
- st.busy=true;st.tr=dir>0?L:L-1;ui();const t0=performance.now(),dur=st.tr==0?3600:3000;
+function go(dir,done,fast){if(st.busy)return;const L=st.lv;if(dir>0&&L>=4||dir<0&&L<=0){if(done)done();return}
+ st.busy=true;st.tr=dir>0?L:L-1;ui();const t0=performance.now(),dur=(st.tr==0?3600:3000)*(fast?.3:1);   // fast: an in-between step of a multi-stage jump
  (function step(now){const q=Math.min(1,(now-t0)/dur);st.p=dir>0?ease(q):1-ease(q);frame();
-  if(q<1)requestAnimationFrame(step);else{st.lv=L+dir;st.tr=null;st.busy=false;frame();ui();if(done)done()}})(t0)}
+  if(q<1)requestAnimationFrame(step);else{st.lv=L+dir;twSeen[st.lv]=false;st.tr=null;st.busy=false;frame();ui();if(done)done()}})(t0)}
 // jump to any level by zooming one level at a time (each step shows how one level is built from the one below)
-function goTo(n,done){if(st.lv===n){if(done)done();return}go(n>st.lv?1:-1,()=>goTo(n,done))}
+// jump to any stage: the zooms on the way are sped up, the final zoom into the chosen stage plays at normal speed
+function goTo(n,done){if(st.lv===n){if(done)done();return}go(n>st.lv?1:-1,()=>goTo(n,done),Math.abs(n-st.lv)>1)}
 // tour: start at the sarcomere, twitch, then build up one level at a time with a twitch at each scale
 let touring=false,tourTimer=0;
 function stopTour(){if(!touring)return;touring=false;clearTimeout(tourTimer);tourBtn.textContent='▶ Tour'}

@@ -20,7 +20,9 @@ h1{font-size:34px;margin:0 0 4px;letter-spacing:.01em}
 .ctl b{min-width:62px;text-align:right;font-variant-numeric:tabular-nums}
 .ctl .note{color:var(--mut)}
 .ctl button{font:inherit;font-size:13px;padding:5px 12px;border-radius:16px;border:1px solid #bbb;background:#fff;cursor:pointer}
-svg.g{width:100%;height:auto;display:block;background:#fcfbf9;border:1px solid #ececec;border-radius:10px}
+.defn{margin:2px 0 8px;padding:6px 10px;border-left:4px solid currentColor;border-radius:6px;background:rgba(0,0,0,.03);font-size:14px;line-height:1.45}
+.defn b{margin-right:4px}
+svg.g{width:85%;margin:0 auto;height:auto;display:block;background:#fcfbf9;border:1px solid #ececec;border-radius:10px}
 svg.g text{font-family:inherit}
 .ro{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0 4px}
 .ro div{background:#f6f6f4;border-radius:8px;padding:6px 8px}
@@ -38,7 +40,7 @@ dl{margin:0}dt{font-weight:700;margin-top:6px}dd{margin:0 0 2px 0;color:#333;fon
 .key i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
 </style></head><body><div class="wrap">
 <h1>Temporal summation</h1>
-<p class="lead">One motor unit, one stimulus strength, but a different number of action potentials per second. Because each new impulse arrives before the fibre has finished relaxing, the twitches build on each other and tension rises. Compare a single twitch, an unfused tetanus and a fused tetanus.</p>
+<p class="lead">A person can control the amount of force exerted by a single motor unit by controlling the frequency at which the brain signals the muscle fibres to contract. This is done by releasing pulsing action potentials.</p>
 <div class="key"><span><i style="background:var(--ten)"></i>tension</span><span><i style="background:var(--ap);height:10px;width:3px"></i>action potential (stimulus)</span><span><i style="background:none;border-top:2px dashed #888;height:0"></i>single-twitch peak</span><span><i style="background:none;border-top:2px dotted #a8232b;height:0"></i>maximum (fused tetanic) tension</span></div>
 
 <div class="grid">
@@ -46,10 +48,10 @@ dl{margin:0}dt{font-weight:700;margin-top:6px}dd{margin:0 0 2px 0;color:#333;fon
 <section class="card c1">
  <h2>1 · Single twitch</h2><div class="sub">one action potential → one contraction</div>
  <div class="ctl"><span class="note">1 stimulus</span><span style="flex:1"></span><button data-replay="0">▶ Replay</button></div>
+ <p class="defn" style="color:var(--acc1)"><b>Twitch:</b><span style="color:var(--fg)">one brief contraction of a muscle fibre in response to a single action potential.</span></p>
  <svg class="g" id="g0" viewBox="0 0 400 250" role="img" aria-label="Tension versus time for a single twitch"></svg>
  <div class="ro"><div><span>stimuli</span><b>1</b></div><div><span>peak tension</span><b id="pk0"></b></div><div><span>× twitch</span><b>1.0×</b></div></div>
  <div class="sec"><h3>Key terms</h3><dl>
-  <dt>Twitch</dt><dd>The brief contraction of a muscle fibre (or motor unit) in response to a single action potential.</dd>
   <dt>Latent period</dt><dd>The few milliseconds between the action potential and the first rise in tension, while excitation–contraction coupling happens (AP down the T-tubules, Ca²⁺ released from the SR).</dd>
   <dt>Contraction phase</dt><dd>Tension rises as Ca²⁺ binds troponin and cross-bridges cycle.</dd>
   <dt>Relaxation phase</dt><dd>SERCA pumps Ca²⁺ back into the SR, cross-bridges detach and tension falls back to zero.</dd>
@@ -65,11 +67,11 @@ dl{margin:0}dt{font-weight:700;margin-top:6px}dd{margin:0 0 2px 0;color:#333;fon
 <section class="card c2">
  <h2>2 · Unfused tetanus</h2><div class="sub">repeated impulses, partial relaxation between them</div>
  <div class="ctl"><span>Frequency</span><input type="range" id="f1" min="5" max="35" step="1" value="15" aria-label="stimulation frequency for unfused tetanus"><b id="fv1"></b><button data-replay="1">▶ Replay</button></div>
+ <p class="defn" style="color:var(--acc2)"><b>Unfused tetanus:</b><span style="color:var(--fg)">a wavy, sustained contraction from repeated impulses that arrive before the fibre has fully relaxed.</span></p>
  <svg class="g" id="g1" viewBox="0 0 400 250" role="img" aria-label="Tension versus time for an unfused tetanus"></svg>
  <div class="ro"><div><span>interval</span><b id="iv1"></b></div><div><span>peak tension</span><b id="pk1"></b></div><div><span>× twitch</span><b id="xt1"></b></div></div>
  <div class="sec"><h3>Key terms</h3><dl>
   <dt>Temporal (wave) summation</dt><dd>When a second action potential arrives before the fibre has relaxed, the new twitch adds on top of the remaining tension.</dd>
-  <dt>Unfused (incomplete) tetanus</dt><dd>A sustained but wavy contraction from a train of impulses at a moderate rate; the fibre partly relaxes between impulses.</dd>
   <dt>Stimulation (firing) frequency</dt><dd>Number of action potentials per second (Hz); the interval between them is 1000 ÷ frequency ms.</dd>
  </dl></div>
  <div class="sec"><h3>What is happening</h3>
@@ -84,10 +86,10 @@ dl{margin:0}dt{font-weight:700;margin-top:6px}dd{margin:0 0 2px 0;color:#333;fon
 <section class="card c3">
  <h2>3 · Fused tetanus</h2><div class="sub">impulses so fast there is no relaxation at all</div>
  <div class="ctl"><span>Frequency</span><input type="range" id="f2" min="40" max="100" step="1" value="60" aria-label="stimulation frequency for fused tetanus"><b id="fv2"></b><button data-replay="2">▶ Replay</button></div>
+ <p class="defn" style="color:var(--acc3)"><b>Fused tetanus:</b><span style="color:var(--fg)">a smooth, maximal contraction; impulses arrive so fast that the fibre never relaxes between them.</span></p>
  <svg class="g" id="g2" viewBox="0 0 400 250" role="img" aria-label="Tension versus time for a fused tetanus"></svg>
  <div class="ro"><div><span>interval</span><b id="iv2"></b></div><div><span>peak tension</span><b id="pk2"></b></div><div><span>× twitch</span><b id="xt2"></b></div></div>
  <div class="sec"><h3>Key terms</h3><dl>
-  <dt>Fused (complete) tetanus</dt><dd>A smooth, sustained maximal contraction: impulses arrive so often that there is no relaxation between them.</dd>
   <dt>Fusion frequency</dt><dd>The firing rate at which the ripples disappear, around 50 Hz and higher. Fast-twitch fibres need higher rates than slow-twitch fibres.</dd>
   <dt>Tetanic tension</dt><dd>The plateau tension of a fused tetanus, about 3–4 times a single twitch. This is the most force the fibres can make.</dd>
  </dl></div>

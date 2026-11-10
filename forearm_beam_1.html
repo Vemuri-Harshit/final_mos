@@ -48,6 +48,38 @@ code{background:var(--tint);padding:1px 5px;border-radius:4px;font-size:12.5px}
 #mohr3{display:block;width:100%;height:auto}
 @media(max-width:1000px){.top{grid-template-columns:1fr;height:auto}.top svg{height:auto}.v3grid{grid-template-columns:1fr}}
 @media(max-width:820px){.two{grid-template-columns:1fr}}
+.sl3{display:flex;flex-direction:column;font-size:13px;color:var(--mut);min-width:200px;flex:1}
+.sl3 output{color:var(--fg);font-weight:700}
+.sl3 select{font:inherit;font-size:13px;padding:3px 6px;border-radius:8px;border:1px solid var(--bd);background:#fff;color:var(--fg)}
+.mexp{font-size:13.5px;line-height:1.5;margin:6px 0 8px;padding:8px 12px;background:var(--tint);border-radius:10px}
+.mexp p{margin:0 0 4px}.mexp ul{margin:2px 0 0}
+.lk{display:inline-block;width:18px;height:4px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.lk.dash{height:0;border-top:2px dashed;margin-right:4px}
+/* glass pills and the panes they open */
+.gpill{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin:8px 0;padding:11px 16px;text-align:left;font:inherit;color:inherit;cursor:pointer;
+  background:rgba(255,255,255,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.95);border-radius:14px;
+  box-shadow:0 6px 20px rgba(163,18,47,.14),inset 0 1px 0 rgba(255,255,255,.9);transition:transform .25s,box-shadow .25s}
+.gpill:hover{transform:translateY(-1px);box-shadow:0 10px 26px rgba(163,18,47,.22);background:rgba(255,255,255,.7)}
+.gpill b{display:block;color:var(--crim);font-size:15px;font-weight:800}
+.gpill small{color:var(--mut);font-size:12.5px;font-weight:600}
+.gico{font-size:19px;color:var(--crim)}
+.gback{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:24px;background:rgba(58,21,32,.2);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;transition:opacity .25s}
+.gback[hidden]{display:none}
+.gback.show{opacity:1}
+.gdlg{position:relative;width:min(920px,100%);max-height:calc(100vh - 48px);overflow:auto;padding:26px 34px 26px;
+  background:rgba(255,250,250,.86);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);
+  border:1px solid rgba(255,255,255,.95);border-radius:22px;box-shadow:0 26px 70px rgba(58,21,32,.3);transform:scale(.92);transition:transform .3s cubic-bezier(.2,.8,.3,1.1)}
+.gback.show .gdlg{transform:scale(1)}
+.gdlg h2{font-size:25px;margin:0 0 4px}
+.gdlg h3{font-size:18.5px;margin:20px 0 8px;color:var(--fg);border-bottom:2px solid rgba(163,18,47,.15);padding-bottom:4px}
+.glist{margin:0;padding-left:26px;font-size:16.5px;line-height:1.62}
+.glist li{margin:0 0 11px;padding-left:4px}
+.glist li::marker{color:var(--crim);font-weight:800}
+.glist a{color:var(--crim);font-weight:700}
+.feq{display:block;width:max-content;max-width:100%;overflow-x:auto;margin:6px 0 4px;padding:6px 14px;font-family:"Cambria Math","Cambria","Times New Roman",serif;font-size:19px;color:#5c0f1d;
+  background:rgba(163,18,47,.08);border-left:4px solid var(--crim);border-radius:6px}
+#mohr3+.gpill{margin-top:14px}
+.gx{position:absolute;right:14px;top:12px;width:36px;height:36px;padding:0;border-radius:50%;font-size:22px;line-height:1}
 </style>
 </head>
 <body>
@@ -81,16 +113,26 @@ code{background:var(--tint);padding:1px 5px;border-radius:4px;font-size:12.5px}
   <h2>3D forearm: section view</h2>
   <div class="v3grid">
     <div>
-      <div class="cvw"><canvas id="cv3"></canvas><div class="hint3">Hold <b>Ctrl</b> for the move / rotate triad · drag: orbit · scroll: zoom</div></div>
+      <div class="cvw"><canvas id="cv3"></canvas><div class="hint3">Hold <b>Ctrl</b> (or tick "show handles"): the red arrow slides the plane along x, the three rings rotate it about x, y and z · drag: orbit · scroll: zoom</div></div>
       <div class="row3">
-        <button id="b_flip">Flip kept side</button><button id="b_x">Cut ⟂ x</button><button id="b_y">Cut ⟂ y</button><button id="b_z">Cut ⟂ z</button><button id="b_rs">Reset plane</button>
-        <span class="sm mut" id="v3info"></span>
+        <label class="sl3">Point P₀ on the section:
+          <select id="pp">
+            <option value="mt" selected>muscle side, halfway out (y = R/2)</option><option value="st">muscle-side surface (y = R)</option><option value="na">centre, on the neutral axis (y = 0)</option>
+            <option value="mb">far side, halfway out (y = −R/2)</option><option value="sb">far-side surface (y = −R)</option>
+          </select></label>
+        <label class="chk sm"><input type="checkbox" id="hsh"> show handles</label>
       </div>
-      <div class="sm mut" style="margin-top:6px">Pale pink: soft tissue envelope, 80 × 65 mm at the elbow tapering to 55 × 40 mm at the wrist, 32 cm long (not load-bearing in this model). Cream core: the bone section of the beam model, 37.5 × 25 mm. Arrows: the muscle force on its patch (red), the hand load (plum) and the elbow reaction (green), exactly as in the 2D beam. The triad (Ctrl): arrows slide the plane along x, y, z; rings rotate it about x, y, z.</div>
+      <div class="row3">
+        <button id="b_nx">Normal along x (cross-section)</button><button id="b_ny">Normal along y</button><button id="b_nz">Normal along z</button>
+        <button id="b_pr">Principal plane (σ₁)</button><button id="b_ms">Max-shear plane</button><button id="b_flip">Flip kept side</button><button id="b_rs">Reset</button>
+      </div>
+      <div class="sm mut" id="v3info" style="margin-top:6px"></div>
+      <div class="sm mut" style="margin-top:6px">The plane can rotate freely about x, y and z, but it only translates along the forearm axis x. Its position is the section slider at the top. Pink: soft tissue (drawn only, carries no load). Cream: the bone, one solid cylinder standing in for the radius and ulna. Arrows: muscle force on its patch (red), hand load (plum), elbow reaction (green), plane normal n (violet).</div>
+      <button class="gpill" data-open="dlgRead" aria-haspopup="dialog"><span><b>How to read the Mohr’s circles</b><small>what the three circles, the shaded area and the dotted arcs mean</small></span><span class="gico">⤢</span></button>
     </div>
     <div>
-      <h3 style="margin-top:0">Mohr’s circles at the plane origin</h3>
-      <svg id="mohr3" viewBox="0 0 480 338"></svg>
+      <h3 style="margin-top:0">Mohr’s circles at P₀</h3>
+      <svg id="mohr3" viewBox="0 0 480 446"></svg>
       <table id="rtab"></table>
     </div>
   </div>
@@ -98,30 +140,90 @@ code{background:var(--tint);padding:1px 5px;border-radius:4px;font-size:12.5px}
 
 <div class="two">
   <section class="card">
-    <h2>Assumptions</h2>
-    <ul class="sm">
-      <li><b>Geometry:</b> the forearm is one straight prismatic beam of length d (radius and ulna lumped), rectangular section b<sub>w</sub> × h. Sample 37.5 × 25 mm: replace with a realistic section.</li>
-      <li><b>Supports:</b> pin at the elbow (x = 0) and load W at the hand (x = d). Upper arm fixed and vertical.</li>
-      <li><b>Muscle force:</b> a uniform line load over the patch [x₁, x₂] on the muscle-side surface, centred on the insertion (x = a). Its direction is fixed along the line from the patch to the shoulder.</li>
-      <li><b>Eccentric axial part:</b> the axial component acts at y = h/2, not on the neutral axis, so it adds a distributed couple (checkbox above).</li>
-      <li><b>Statics:</b> the muscle force comes from the moment balance about the elbow, so the beam is in equilibrium.</li>
-      <li><b>Material and kinematics:</b> linear elastic isotropic bone (E ≈ 17 GPa, ν ≈ 0.30), small deflection, Euler–Bernoulli theory.</li>
-      <li><b>Stress state:</b> plane problem, σ<sub>yy</sub> ≈ σ<sub>zz</sub> ≈ 0 away from the loads.</li>
-      <li><b>Neglected:</b> forearm weight, muscle wrapping, tendon compliance, dynamics.</li>
-    </ul>
-    <h3>Equations used</h3>
-    <div class="sm">
-      <code>V(x) = R<sub>y</sub> + q<sub>t</sub>·⟨x−x₁⟩</code> (to x₂), <code>M(x) = R<sub>y</sub>x + ∫q<sub>t</sub>(x−s)ds + (h/2)·F<sub>a</sub> share</code>, <code>N(x) = −(R<sub>x</sub> + q<sub>a</sub>⟨x−x₁⟩)</code><br>
-      <code>σ<sub>xx</sub> = N/A − M y / I</code>, <code>τ<sub>xy</sub> = −V Q(y) / (I b<sub>w</sub>)</code><br>
-      Sign convention: x along the forearm, y toward the muscle side; N tension positive; V = sum of transverse forces left of the cut (up positive); M sagging positive.
-    </div>
+    <h2>Assumptions and equations</h2>
+    <button class="gpill" data-open="dlgAsm" aria-haspopup="dialog"><span><b>Open the assumptions and equations</b><small>geometry and its sources · loads · material · beam and stress equations</small></span><span class="gico">⤢</span></button>
   </section>
-
   <section class="card">
     <h2>Stress state at point P</h2>
-    <div class="sm mut">At the section x chosen above, at y = h/4 on the muscle side.</div>
+    <div class="sm mut">At the section x chosen above, on the muscle side of the bone, halfway out (y = R/2 = 4.2 mm).</div>
     <table id="ptab"></table>
   </section>
+</div>
+
+<!-- ===== glass panes (open from the pills above) ===== -->
+<div class="gback" id="dlgAsm" hidden>
+ <section class="gdlg" role="dialog" aria-modal="true" aria-labelledby="tAsm">
+  <button class="gx" aria-label="Close">×</button>
+  <h2 id="tAsm">Assumptions and equations</h2>
+
+  <h3>Geometry</h3>
+  <ol class="glist">
+   <li><b>One straight beam</b> from the elbow (x = 0) to the grip (x = d), with y towards the muscle side.
+    <div class="feq">d = 32 cm</div></li>
+   <li><b>One solid bone cylinder</b> on the beam axis stands in for the radius and ulna together. Its area equals their combined cortical bone area, so N/A is right. Its I is about 1.6 times that of the two hollow bones (2444 mm⁴), so bending stress is somewhat underestimated.
+    <div class="feq">R = 8.4 mm,&nbsp; A = πR² = 222 mm²,&nbsp; I = πR⁴/4 = 3910 mm⁴</div></li>
+   <li><b>Soft tissue</b> is drawn as a tapered ellipse and carries no load.
+    <div class="feq">elbow 11.0 × 8.6 cm,&nbsp; wrist 6.5 × 4.6 cm</div></li>
+  </ol>
+
+  <h3>Where the sizes come from</h3>
+  <ol class="glist">
+   <li><b>Length:</b> median adult male elbow-to-wrist length 28.7 cm and hand length 19.3 cm (<a href="https://ergoassessment.cam/ansur-2-data-explorer/" target="_blank" rel="noopener">ANSUR II, 2012 US Army survey</a>, 50th percentile). The grip centre is about 3 cm past the wrist, giving d = 32 cm.</li>
+   <li><b>Soft tissue:</b> forearm circumference 31.0 cm just below the elbow and wrist circumference 17.6 cm (same source). The ellipses above have these perimeters; their width-to-depth ratio is our estimate.</li>
+   <li><b>Bone area:</b> radius mid-shaft 13.66 × 11.56 mm in 133 adult male radii (<a href="https://www.biomedres.info/biomedical-research/determination-of-sex-from-the-shaft-and-tuberosity-of-radius-a-multivariate-discriminant-function-analysis.html" target="_blank" rel="noopener">Waghmare et al., Biomedical Research 2012</a>), i.e. a 12.6 mm shaft. Marrow canal 4.2 mm (<a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0232988" target="_blank" rel="noopener">Hopf et al., PLOS ONE 2020</a>). Taking the ulna the same size:
+    <div class="feq">A = 2 × π (6.3² − 2.1²) = 222 mm²</div></li>
+   <li><b>Estimates (no source):</b> the ulna is the same size as the radius, and the bone runs straight to the grip.</li>
+  </ol>
+
+  <h3>Loads, supports and material</h3>
+  <ol class="glist">
+   <li><b>Supports:</b> pin at the elbow (x = 0), load W at the grip (x = d). The upper arm is fixed and vertical.</li>
+   <li><b>Muscle force:</b> a uniform line load over the patch [x₁, x₂] on the muscle-side surface, centred on the insertion x = a. Its direction is fixed along the line from the patch to the shoulder (unit vector (eₓ, e_y)). From moment balance about the elbow:
+    <div class="feq">F<sub>m</sub> = W d sin θ / (a e_y − e e<sub>x</sub>)</div>
+    Here e = R when the eccentric part is switched on, and 0 otherwise.</li>
+   <li><b>Eccentric axial part:</b> the axial component acts on the bone surface (y = R), not on the neutral axis, so it adds a distributed couple.</li>
+   <li><b>Material:</b> linear elastic isotropic bone (E ≈ 17 GPa, ν ≈ 0.30), small deflection, Euler–Bernoulli beam theory.</li>
+   <li><b>Stress state:</b> σ<sub>yy</sub> = σ<sub>zz</sub> = τ<sub>yz</sub> = τ<sub>xz</sub> = 0 away from the loads. Only σ<sub>xx</sub> and τ<sub>xy</sub> act.</li>
+   <li><b>Neglected:</b> forearm weight, muscle wrapping, tendon compliance, dynamics.</li>
+  </ol>
+
+  <h3>Equations used</h3>
+  <ol class="glist">
+   <li><b>Section forces</b> (⟨ ⟩ is clipped to the patch length w):
+    <div class="feq">N(x) = −(R<sub>x</sub> + q<sub>a</sub>⟨x − x₁⟩)</div>
+    <div class="feq">V(x) = R<sub>y</sub> + q<sub>t</sub>⟨x − x₁⟩</div>
+    <div class="feq">M(x) = R<sub>y</sub> x + ∫ q<sub>t</sub>(x − s) ds + R · F<sub>a</sub> share</div></li>
+   <li><b>Stresses at height y</b> in the bone:
+    <div class="feq">σ<sub>xx</sub> = N/A − M y / I</div>
+    <div class="feq">τ<sub>xy</sub> = −V Q(y) / (I t(y)) = −V (R² − y²) / (3I)</div></li>
+   <li><b>Stress on any plane</b> with unit normal n:
+    <div class="feq">t = σ n,&nbsp;&nbsp; σₙ = n · σ n,&nbsp;&nbsp; τ = √(|t|² − σₙ²)</div></li>
+   <li><b>Principal stresses:</b>
+    <div class="feq">σ₁, σ₃ = σ<sub>xx</sub>/2 ± √((σ<sub>xx</sub>/2)² + τ<sub>xy</sub>²),&nbsp;&nbsp; σ₂ = 0</div></li>
+   <li><b>Sign convention:</b> N is tension-positive; V is the sum of transverse forces left of the cut (up positive); M is sagging-positive.</li>
+  </ol>
+ </section>
+</div>
+
+<div class="gback" id="dlgRead" hidden>
+ <section class="gdlg" role="dialog" aria-modal="true" aria-labelledby="tRead">
+  <button class="gx" aria-label="Close">×</button>
+  <h2 id="tRead">How to read the Mohr’s circles</h2>
+  <ol class="glist">
+   <li><b>One point per plane.</b> Every plane through P₀ has a normal stress σₙ and a shear stress τ. The red dot is your plane, plotted at (σₙ, τ) with τ ≥ 0, the size of the shear.</li>
+   <li><b>Principal stresses.</b> There are three planes with no shear: σ₁ (largest), σ₂ and σ₃ (smallest). Here σ₂ = 0 because no stress acts on planes facing z.
+    <div class="feq">σ₁, σ₃ = σ<sub>xx</sub>/2 ± √((σ<sub>xx</sub>/2)² + τ<sub>xy</sub>²)</div></li>
+   <li><b>Large solid circle (σ₁ to σ₃).</b> All planes whose normal is perpendicular to the σ₂ direction (z), i.e. planes turned only about z. "Normal along x" and "Normal along y" lie on it, at X = (σ<sub>xx</sub>, |τ<sub>xy</sub>|) and Y = (0, |τ<sub>xy</sub>|).</li>
+   <li><b>Dashed circles.</b> The σ₁–σ₂ circle holds the planes turned only about the σ₃ direction. The σ₂–σ₃ circle holds the planes turned only about the σ₁ direction. "Normal along z" is the point σ₂ = 0 itself.</li>
+   <li><b>Shaded area.</b> Any other orientation, after rotating about two or three axes, lands inside the large circle and outside both small ones. Nothing lies outside the large circle, so the largest shear on any plane is
+    <div class="feq">τ<sub>max</sub> = (σ₁ − σ₃) / 2</div></li>
+   <li><b>Where exactly your dot sits (the dotted arcs).</b> Let l₁, l₂, l₃ be the cosines of the angles between n and the three principal directions. The dot is where two arcs cross:
+    <div class="feq">(σₙ − (σ₂+σ₃)/2)² + τ² = ((σ₂−σ₃)/2)² + l₁² (σ₁−σ₂)(σ₁−σ₃)</div>
+    <div class="feq">(σₙ − (σ₁+σ₂)/2)² + τ² = ((σ₁−σ₂)/2)² + l₃² (σ₃−σ₁)(σ₃−σ₂)</div>
+    The table checks this: σₙ = Σ σᵢ lᵢ² and τ² = Σ σᵢ² lᵢ² − σₙ² give the same values as t = σn.</li>
+   <li><b>Try it.</b> "Principal plane" puts the dot on σ₁ with zero shear. "Max-shear plane" puts it on top of the large circle. Rotating about y or x moves it into the shaded area.</li>
+  </ol>
+ </section>
 </div>
 
 </main>
@@ -316,13 +418,19 @@ function drawDiagram(m) {
   return { draw };
 })();
 
-const CFG={a:.05,b:.30,d:.32,bw:.0375,h:.025,g:9.81};
+// Beam: elbow to grip d = 32 cm. Section: the radius and ulna together approximated by ONE solid circular cylinder of
+// radius Rb on the beam axis (y = 0 is the neutral axis). Its area equals the combined cortical area of the two bones.
+const CFG={a:.05,b:.30,d:.32,g:9.81,Rb:.0084,xw:.287,
+  env:{a0:.055,b0:.043,aw:.0325,bw:.023,ah:.044,bh:.015}};   // envelope half-width (z) and half-depth (y): elbow, wrist, grip
+// solid circle: A = πR², I = πR⁴/4, and τxy(y) = −V·Q(y)/(I·t(y)) with Q/t = (R² − y²)/3
+const SEC=(function(){const R=CFG.Rb,A=Math.PI*R*R,I=Math.PI*R**4/4;
+  return{A,I,tau:(V,y)=>Math.abs(y)>=R?0:-V*(R*R-y*y)/(3*I)}})();
 const RAD=Math.PI/180,$=id=>document.getElementById(id);
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 
 function solve(){
-  const {a,b,d,bw,h,g}=CFG, th=+$('th').value*RAD, W=+$('m').value*g, w=+$('w').value/100;
-  const ecc=$('ecc').checked?h/2:0;
+  const {a,b,d,g}=CFG, th=+$('th').value*RAD, W=+$('m').value*g, w=+$('w').value/100;
+  const ecc=$('ecc').checked?CFG.Rb:0;
   const l=Math.sqrt(a*a+b*b-2*a*b*Math.cos(th));
   const ex=(b*Math.cos(th)-a)/l, ey=b*Math.sin(th)/l;
   const Fm=W*d*Math.sin(th)/(a*ey-ecc*ex), Fa=Fm*ex, Ft=Fm*ey;
@@ -389,11 +497,11 @@ function draw(S){
 
 function readouts(S){
   // point P
-  const {bw,h}=CFG,A=bw*h,I=bw*h**3/12,y=h/4,x=+$('sx').value/100;
-  const N=S.N(x),V=S.V(x),M=S.M(x),Q=bw/2*(h*h/4-y*y);
-  const sxx=(N/A-M*y/I)/1e6,tau=(-V*Q/(I*bw))/1e6,c=sxx/2,R=Math.hypot(c,tau);
+  const y=CFG.Rb/2,x=+$('sx').value/100,A=SEC.A,I=SEC.I;
+  const N=S.N(x),V=S.V(x),M=S.M(x);
+  const sxx=(N/A-M*y/I)/1e6,tau=SEC.tau(V,y)/1e6,c=sxx/2,R=Math.hypot(c,tau);
   const r=[['Section forces at x = '+(x*100).toFixed(1)+' cm','N = '+N.toFixed(1)+' N, V = '+V.toFixed(1)+' N, M = '+M.toFixed(2)+' N·m'],
-   ['σxx, τxy',sxx.toFixed(2)+' MPa, '+tau.toFixed(3)+' MPa','N/A − My/I and −VQ/(I b\u1d65)'],
+   ['σxx, τxy',sxx.toFixed(2)+' MPa, '+tau.toFixed(3)+' MPa','N/A − My/I and −VQ/(I t) = −V(R² − y²)/(3I)'],
    ['Principal σ₁, σ₂',(c+R).toFixed(2)+' MPa, '+(c-R).toFixed(3)+' MPa'],
    ['Principal angle θp',(0.5*Math.atan2(2*tau,sxx)/RAD).toFixed(1)+'°'],
    ['Max in-plane shear',R.toFixed(2)+' MPa'],
@@ -406,91 +514,101 @@ function update(){
   $('o_w').textContent=(+$('w').value).toFixed(1)+' cm';$('o_x').textContent=(+$('sx').value).toFixed(1)+' cm';
   const S=solve();draw(S);readouts(S);ARM.draw(+$('th').value,+$('m').value);V3.render(S);
 }
-// ================= 3D SECTION VIEW (SolidWorks-style cut) =================
+// ================= 3D SECTION VIEW =================
+// Geometry (see the Assumptions pane for sources): tapered elliptical soft-tissue envelope; the radius and ulna
+// approximated by one solid circular cylinder of bone on the beam axis. The cutting plane rotates freely about x, y
+// and z, and translates only along x (its point P0 sits at the section chosen with the x slider).
 const V3=(function(){
-  const cv=$('cv3'),ctx=cv.getContext('2d'),d=CFG.d,hh=CFG.h/2,bz=CFG.bw/2,FONT='700 12px Nunito,system-ui,sans-serif';
-  let W=600,H=400,SC=900,ctrl=false,keep=1,hot=null,drag=null,lastS=null;
-  const view={az:1.05,el:.42,zoom:1},P0=[.12,0,0];let nrm=[1,0,0];
+  const cv=$('cv3'),ctx=cv.getContext('2d'),d=CFG.d,FONT='700 12px Nunito,system-ui,sans-serif';
+  const Rb=CFG.Rb,XW=CFG.xw;
+  let W=600,H=400,SC=900,ctrl=false,keep=-1,hot=null,drag=null,lastS=null,nrm=[1,0,0];
+  const view={az:2.09,el:.42,zoom:1},P0=[.05,Rb/2,0];
   const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],ad=(a,b,s=1)=>[a[0]+b[0]*s,a[1]+b[1]*s,a[2]+b[2]*s],cr=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],un=a=>{const n=Math.hypot(a[0],a[1],a[2])||1;return[a[0]/n,a[1]/n,a[2]/n]};
   const E=[[1,0,0],[0,1,0],[0,0,1]],COL=['#d12b3f','#2a9d6a','#3567c9'],LIGHT=un([.3,.8,.5]);
-  const env=x=>{const t=x/d;return{a:.040-.0125*t,b:.0325-.0125*t}};   // tissue half-width (z) and half-depth (y)
-  // ---- meshes: tapered elliptical tissue envelope (solid 0) and rectangular bone core (solid 1) ----
-  const faces=[],NX=20,NV=28,TC=[226,120,134];
-  const ring=i=>{const x=d*i/NX,e=env(x);return Array.from({length:NV},(_,j)=>{const f=2*Math.PI*j/NV;return[x,e.b*Math.cos(f),e.a*Math.sin(f)]})};
-  let pr=ring(0);
-  for(let i=1;i<=NX;i++){const cu=ring(i);for(let j=0;j<NV;j++){const k=(j+1)%NV;faces.push({p:[pr[j],pr[k],cu[k],cu[j]],c:TC,al:.36,s:0})}pr=cu}
-  faces.push({p:ring(0),c:TC,al:.36,s:0},{p:ring(NX),c:TC,al:.36,s:0});
-  const BV=[[0,-hh,-bz],[d,-hh,-bz],[d,hh,-bz],[0,hh,-bz],[0,-hh,bz],[d,-hh,bz],[d,hh,bz],[0,hh,bz]];
-  [[0,1,2,3],[4,5,6,7],[0,1,5,4],[3,2,6,7],[0,3,7,4],[1,2,6,5]].forEach(q=>faces.push({p:q.map(i=>BV[i]),c:[236,214,170],al:1,s:1}));
+  const pbasis=()=>{const h=Math.abs(nrm[2])<.9?[0,0,1]:[0,1,0],e2=un(cr(nrm,h));return[cr(e2,nrm),e2]};   // two in-plane unit vectors
+  // soft-tissue envelope: half-width a (z) and half-depth b (y), elbow → wrist → grip
+  const lerp=(p,q,t)=>p+(q-p)*t;
+  const env=x=>{const E0=CFG.env;if(x<=XW){const t=x/XW;return{a:lerp(E0.a0,E0.aw,t),b:lerp(E0.b0,E0.bw,t)}}
+    const t=clamp((x-XW)/(d-XW),0,1);return{a:lerp(E0.aw,E0.ah,t),b:lerp(E0.bw,E0.bh,t)}};
+  // ---- meshes: solid 0 = soft tissue, solid 1 = bone cylinder ----
+  const faces=[],NV=32,TC=[226,120,134],BC=[236,214,170];
+  const xs=[];for(let i=0;i<=26;i++)xs.push(i<=20?XW*i/20:XW+(d-XW)*(i-20)/6);
+  const tring=x=>{const e=env(x);return Array.from({length:NV},(_,j)=>{const f=2*Math.PI*j/NV;return[x,e.b*Math.cos(f),e.a*Math.sin(f)]})};
+  for(let i=1;i<xs.length;i++){const p=tring(xs[i-1]),q=tring(xs[i]);for(let j=0;j<NV;j++){const k=(j+1)%NV;faces.push({p:[p[j],p[k],q[k],q[j]],c:TC,al:.3,s:0})}}
+  faces.push({p:tring(0),c:TC,al:.3,s:0,end:-1},{p:tring(d),c:TC,al:.3,s:0,end:1});
+  const NB=36,brg=x=>Array.from({length:NB},(_,j)=>{const f=2*Math.PI*j/NB;return[x,Rb*Math.cos(f),Rb*Math.sin(f)]});
+  for(let i=1;i<=16;i++){const p=brg(d*(i-1)/16),q=brg(d*i/16);for(let j=0;j<NB;j++){const k=(j+1)%NB;faces.push({p:[p[j],p[k],q[k],q[j]],c:BC,al:1,s:1})}}
+  faces.push({p:brg(0),c:BC,al:1,s:1,end:-1},{p:brg(d),c:BC,al:1,s:1,end:1});
+  const cen=ps=>ps.reduce((a,p)=>[a[0]+p[0]/ps.length,a[1]+p[1]/ps.length,a[2]+p[2]/ps.length],[0,0,0]);
+  faces.forEach(f=>{const c=cen(f.p);let n=un(cr(sub(f.p[1],f.p[0]),sub(f.p[2],f.p[0])));const out=f.end?[f.end,0,0]:[0,c[1],c[2]];if(dot(n,out)<0)n=n.map(v=>-v);f.no=n});
   // ---- projection ----
   const bas=()=>{const ce=Math.cos(view.el),cam=[ce*Math.cos(view.az),Math.sin(view.el),ce*Math.sin(view.az)],right=un([cam[2],0,-cam[0]]);return{cam,right,up:cr(cam,right)}};
   let Bs=bas();const C0=[d/2,0,0],pj=p=>{const q=sub(p,C0);return[W/2+SC*dot(q,Bs.right),H/2-SC*dot(q,Bs.up)]};
-  const cen=ps=>ps.reduce((a,p)=>[a[0]+p[0]/ps.length,a[1]+p[1]/ps.length,a[2]+p[2]/ps.length],[0,0,0]);
-  faces.forEach(f=>{let n=un(cr(sub(f.p[1],f.p[0]),sub(f.p[2],f.p[0])));if(dot(n,sub(cen(f.p),[d/2,0,0]))<0)n=[-n[0],-n[1],-n[2]];f.no=n});   // outward normal of each face
-  const pbasis=()=>{const h=Math.abs(nrm[1])>.9?[1,0,0]:[0,1,0],e1=un(cr(nrm,h));return[e1,cr(nrm,e1)]};
-  // keep the part with keep*dot(n,p-P0) <= 0; collect the points where faces meet the plane
+  // keep the part with keep*dot(n,p-P0) <= 0, collecting the points where the faces meet the plane (for the cut face)
   function clip(poly,capPts){const f=p=>keep*dot(nrm,sub(p,P0)),out=[];
     for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length],fa=f(a),fb=f(b);
-      if(fa<=0)out.push(a);if(Math.abs(fa)<1e-9)capPts.push(a);
+      if(fa<=0)out.push(a);if(Math.abs(fa)<1e-12)capPts.push(a);
       if((fa<0&&fb>0)||(fa>0&&fb<0)){const t=fa/(fa-fb),q=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];out.push(q);capPts.push(q)}}
     return out}
-  function order(pts){if(pts.length<3)return[];const[e1,e2]=pbasis(),c=cen(pts);
-    const s=pts.map(p=>{const v=sub(p,c);return{p,t:Math.atan2(dot(v,e2),dot(v,e1))}}).sort((a,b)=>a.t-b.t).map(o=>o.p);
-    return s.filter((p,i)=>{const q=s[(i+1)%s.length];return Math.hypot(p[0]-q[0],p[1]-q[1],p[2]-q[2])>1e-6})}
+  // the cut face of a convex solid = convex hull of those points, in plane coordinates
+  function hull(pts){if(pts.length<3)return[];const[e1,e2]=pbasis(),P=pts.map(p=>{const v=sub(p,P0);return{p,u:dot(v,e1),v:dot(v,e2)}}).sort((a,b)=>a.u-b.u||a.v-b.v);
+    const crs=(o,a,b)=>(a.u-o.u)*(b.v-o.v)-(a.v-o.v)*(b.u-o.u),lo=[],up=[];
+    for(const q of P){while(lo.length>1&&crs(lo[lo.length-2],lo[lo.length-1],q)<=0)lo.pop();lo.push(q)}
+    for(let i=P.length-1;i>=0;i--){const q=P[i];while(up.length>1&&crs(up[up.length-2],up[up.length-1],q)<=0)up.pop();up.push(q)}
+    lo.pop();up.pop();return lo.concat(up).map(o=>o.p)}
   function poly(ps,fill,stroke,lw){ctx.beginPath();ps.forEach((p,i)=>{const q=pj(p);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw||1;ctx.lineJoin='round';ctx.stroke()}}
-  function arrow(p0,p1,col,lw,lab){if(keep*dot(nrm,sub(p0,P0))>1e-6)return;const a=pj(p0),b=pj(p1),dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy);if(L<3)return;const ux=dx/L,uy=dy/L,hs=8+lw;
+  function arrow(p0,p1,col,lw,lab,force){if(!force&&keep*dot(nrm,sub(p0,P0))>1e-6)return;const a=pj(p0),b=pj(p1),dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy);if(L<3)return;const ux=dx/L,uy=dy/L,hs=8+lw;
     ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=lw;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0]-ux*hs*.7,b[1]-uy*hs*.7);ctx.stroke();
     ctx.beginPath();ctx.moveTo(b[0],b[1]);ctx.lineTo(b[0]-ux*hs-uy*hs*.4,b[1]-uy*hs+ux*hs*.4);ctx.lineTo(b[0]-ux*hs+uy*hs*.4,b[1]-uy*hs-ux*hs*.4);ctx.closePath();ctx.fill();
     if(lab){ctx.font=FONT;ctx.fillText(lab,b[0]+6,b[1]-6)}}
-  // ---- stress at the plane origin from the 2D beam results (bone section only) ----
-  function stressAt(S){const x=clamp(P0[0],0,d),y=P0[1],z=P0[2],A=CFG.bw*CFG.h,I=CFG.bw*CFG.h**3/12,inB=Math.abs(y)<=hh&&Math.abs(z)<=bz,N=S.N(x),V=S.V(x),M=S.M(x);
-    let sx=0,tx=0;if(inB){sx=(N/A-M*y/I)/1e6;tx=(-V*(CFG.bw/2*(hh*hh-y*y))/(I*CFG.bw))/1e6}
-    return{x,y,z,A,I,inB,N,V,M,sx,tx}}
-  function render(S){lastS=S||lastS;S=lastS;if(!S)return;Bs=bas();ctx.clearRect(0,0,W,H);
-    // Both solids are convex, so after the cut their front faces never overlap each other (nor do their back faces).
-    // That gives an exact painter order without sorting: tissue back faces, bone sides, tissue front faces, bone cut face.
-    const cap=[[],[]],cam=Bs.cam,fr=[[],[]],bk=[[],[]];
-    for(const f of faces){const p=clip(f.p,cap[f.s]);if(p.length<3)continue;const sh=.62+.38*Math.abs(dot(f.no,LIGHT));
-      const cc=f.c.map(v=>Math.round(v*sh));(dot(f.no,cam)>0?fr:bk)[f.s].push({p,col:cc,al:f.al,st:f.s?'rgba(120,90,50,.6)':`rgba(${cc[0]},${cc[1]},${cc[2]},.2)`})}
-    const capItem=[0,1].map(q=>{const p=order(cap[q]);return p.length>=3?{p,col:q?[222,190,128]:[240,168,178],al:q?1:.9,st:'#8a1c3a',lw:2.2}:null});
-    const capFront=keep*dot(nrm,cam)>0;
-    if(capItem[0])(capFront?fr:bk)[0].push(capItem[0]);
-    const paint=l=>l.forEach(o=>poly(o.p,`rgba(${o.col[0]},${o.col[1]},${o.col[2]},${o.al})`,o.st,o.lw||.8));
-    paint(bk[0]);paint(fr[1]);paint(fr[0]);if(capItem[1]&&capFront)paint([capItem[1]]);
-    // cutting plane outline
-    const[e1,e2]=pbasis(),pc=(u,v)=>ad(ad(P0,e1,u),e2,v);poly([pc(-.1,-.07),pc(.1,-.07),pc(.1,.07),pc(-.1,.07)],'rgba(163,18,47,0.07)','rgba(163,18,47,.55)',1.2);
-    // forces: the same ones as in the 2D beam
+  // ---- stress at P0 from the beam results (only the bone carries stress) ----
+  function stressAt(S){const x=P0[0],y=P0[1],N=S.N(x),V=S.V(x),M=S.M(x),inB=Math.hypot(P0[1],P0[2])<=Rb+1e-9;let sx=0,tx=0;
+    if(inB){sx=(N/SEC.A-M*y/SEC.I)/1e6;tx=SEC.tau(V,y)/1e6}return{x,y,inB,N,V,M,sx,tx}}
+  function render(S){lastS=S||lastS;S=lastS;if(!S)return;P0[0]=+$('sx').value/100;Bs=bas();ctx.clearRect(0,0,W,H);
+    const cam=Bs.cam,tb=[],tf=[],bone=[],cap=[[],[]];
+    for(const f of faces){const p=clip(f.p,cap[f.s]);if(p.length<3)continue;const sh=.62+.38*Math.abs(dot(f.no,LIGHT)),cc=f.c.map(v=>Math.round(v*sh)),vis=dot(f.no,cam)>0;
+      if(f.s===0)(vis?tf:tb).push({p,col:cc,al:f.al});else if(vis)bone.push({p,col:cc,al:1,z:dot(cen(p),cam)})}
+    const paint=(l,st,lw)=>l.forEach(o=>poly(o.p,`rgba(${o.col[0]},${o.col[1]},${o.col[2]},${o.al})`,st||`rgba(${o.col[0]},${o.col[1]},${o.col[2]},.25)`,lw||.7));
+    const capFront=keep*dot(nrm,cam)>0,ct=hull(cap[0]),cb=hull(cap[1]);
+    const caps=()=>{if(ct.length>2)poly(ct,'rgba(240,168,178,.92)','#8a1c3a',2);if(cb.length>2)poly(cb,'rgb(222,190,128)','#7a5a2c',1.6)};
+    paint(tb);if(!capFront)caps();
+    bone.sort((a,b)=>a.z-b.z);paint(bone,'rgba(120,90,50,.4)',.5);
+    if(capFront)caps();
+    paint(tf);
+    const[e1,e2]=pbasis(),pc=(u,v)=>ad(ad(P0,e1,u),e2,v);poly([pc(-.07,-.07),pc(.07,-.07),pc(.07,.07),pc(-.07,.07)],'rgba(163,18,47,0.06)','rgba(163,18,47,.55)',1.2);
     ctx.fillStyle='#d1283f';for(let i=0;i<6;i++){const x=S.x1+(S.x2-S.x1)*(i+.5)/6,s0=[x,env(x).b,0];arrow(s0,ad(s0,[S.ex,S.ey,0],.07),'#d1283f',2,i===0?'Fm '+S.Fm.toFixed(0)+' N':'')}
     ctx.fillStyle='#7b2a5e';arrow([d,0,0],ad([d,0,0],un([S.Wx,S.Wy,0]),.07),'#7b2a5e',3,'W '+S.W.toFixed(0)+' N');
     const rl=Math.hypot(S.Rx,S.Ry)||1;ctx.fillStyle='#1f8a70';arrow([0,0,0],ad([0,0,0],[S.Rx/rl,S.Ry/rl,0],.07),'#1f8a70',3,'R '+rl.toFixed(0)+' N');
-    // axes of the beam and the plane origin
-    const o=pj(P0);ctx.fillStyle='#a3122f';ctx.beginPath();ctx.arc(o[0],o[1],4,0,7);ctx.fill();
-    if(ctrl||(drag&&drag.h))triad();
-    results(S);$('v3info').textContent='Plane origin: x = '+(P0[0]*100).toFixed(1)+' cm, y = '+(P0[1]*1000).toFixed(0)+' mm, z = '+(P0[2]*1000).toFixed(0)+' mm'}
-  // ---- move / rotate triad (Ctrl) ----
-  const LA=.055,RR=.035;
+    ctx.fillStyle='#7b3fe4';arrow(P0,ad(P0,nrm,.045),'#7b3fe4',2.4,'n',true);
+    const o=pj(P0);ctx.fillStyle='#a3122f';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(o[0],o[1],5,0,7);ctx.fill();ctx.stroke();
+    ctx.font=FONT;ctx.fillStyle='#a3122f';ctx.fillText('P₀',o[0]+8,o[1]+14);
+    if(ctrl||$('hsh').checked||(drag&&drag.h))triad();
+    results(S);
+    const ang=k=>(Math.acos(clamp(Math.abs(nrm[k]),0,1))/RAD).toFixed(1);
+    $('v3info').textContent='P₀: x = '+(P0[0]*100).toFixed(1)+' cm, y = '+(P0[1]*1000).toFixed(1)+' mm · normal n = ('+nrm.map(v=>v.toFixed(3)).join(', ')+'), angle to x '+ang(0)+'°, to y '+ang(1)+'°, to z '+ang(2)+'°'}
+  // ---- triad: one arrow (slide along x) and three rings (rotate about x, y, z through P0) ----
+  const LA=.05,RR=.032;
   const ringPts=k=>{const i=(k+1)%3,j=(k+2)%3;return Array.from({length:49},(_,t)=>{const a=2*Math.PI*t/48;return ad(ad(P0,E[i],Math.cos(a)*RR),E[j],Math.sin(a)*RR)})};
-  function triad(){const kk=keep;keep=-1e9;try{triadDraw()}finally{keep=kk}}
-  function triadDraw(){for(let k=0;k<3;k++){const on=hot&&hot.k===k,hr=on&&hot.t==='r',ha=on&&hot.t==='a';
-      ctx.strokeStyle=COL[k];ctx.lineWidth=hr?4:2.2;ctx.beginPath();ringPts(k).forEach((p,i)=>{const q=pj(p);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.stroke();
-      ctx.fillStyle=COL[k];arrow(P0,ad(P0,E[k],LA),COL[k],ha?5:3,['x','y','z'][k])}}
+  function triad(){for(let k=0;k<3;k++){ctx.strokeStyle=COL[k];ctx.lineWidth=hot&&hot.t==='r'&&hot.k===k?4.2:2.2;ctx.beginPath();ringPts(k).forEach((p,i)=>{const q=pj(p);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.stroke()}
+    ctx.fillStyle=COL[0];arrow(P0,ad(P0,E[0],LA),COL[0],hot&&hot.t==='a'?5:3,'x',true);
+    ctx.font='700 11px Nunito,system-ui,sans-serif';[['about x',0],['about y',1],['about z',2]].forEach(([t,k])=>{const p=pj(ringPts(k)[6]);ctx.fillStyle=COL[k];ctx.fillText(t,p[0]+4,p[1]-4)})}
   const segD=(p,a,b)=>{const vx=b[0]-a[0],vy=b[1]-a[1],l2=vx*vx+vy*vy;let t=l2?((p[0]-a[0])*vx+(p[1]-a[1])*vy)/l2:0;t=Math.max(0,Math.min(1,t));return Math.hypot(p[0]-a[0]-t*vx,p[1]-a[1]-t*vy)};
   function pick(mx,my){let best=null,bd=1e9;const m=[mx,my],c=pj(P0);
-    for(let k=0;k<3;k++){const da=segD(m,c,pj(ad(P0,E[k],LA)));if(da<10&&da<bd){bd=da;best={t:'a',k}}
-      const rp=ringPts(k).map(pj);for(let i=0;i<rp.length-1;i++){const dr=segD(m,rp[i],rp[i+1]);if(dr<8&&dr<bd-2){bd=dr;best={t:'r',k}}}}
+    const da=segD(m,c,pj(ad(P0,E[0],LA)));if(da<10){bd=da;best={t:'a'}}
+    for(let k=0;k<3;k++){const rp=ringPts(k).map(pj);for(let i=0;i<rp.length-1;i++){const dr=segD(m,rp[i],rp[i+1]);if(dr<8&&dr<bd-2){bd=dr;best={t:'r',k}}}}
     return best}
-  function rot(v,ax,th){const c=Math.cos(th),s=Math.sin(th);return ad(ad([v[0]*c,v[1]*c,v[2]*c],cr(ax,v),s),ax,dot(ax,v)*(1-c))}
-  const wrap=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a};
+  const rot=(v,ax,th)=>{const c=Math.cos(th),s=Math.sin(th);return ad(ad([v[0]*c,v[1]*c,v[2]*c],cr(ax,v),s),ax,dot(ax,v)*(1-c))};
   const xy=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]};
+  const handles=()=>ctrl||$('hsh').checked;
   cv.addEventListener('contextmenu',e=>e.preventDefault());
-  cv.addEventListener('pointerdown',e=>{const[mx,my]=xy(e);let h=null;if(e.ctrlKey||ctrl)h=pick(mx,my);
+  cv.addEventListener('pointerdown',e=>{const[mx,my]=xy(e);const h=(e.ctrlKey||handles())?pick(mx,my):null;
     drag=h?{h,last:[mx,my],ang:Math.atan2(-(my-pj(P0)[1]),mx-pj(P0)[0])}:{last:[mx,my]};cv.setPointerCapture(e.pointerId);render()});
   cv.addEventListener('pointermove',e=>{const[mx,my]=xy(e);
-    if(!drag){if(ctrl){const h=pick(mx,my);if(JSON.stringify(h)!==JSON.stringify(hot)){hot=h;cv.style.cursor=h?'pointer':'grab';render()}}return}
-    if(drag.h){const{t,k}=drag.h;
-      if(t==='a'){const c=pj(P0),s=pj(ad(P0,E[k],LA)),vx=s[0]-c[0],vy=s[1]-c[1],l2=vx*vx+vy*vy||1,mv=((mx-drag.last[0])*vx+(my-drag.last[1])*vy)/l2*LA;P0[k]+=mv;
-        P0[0]=clamp(P0[0],0,d);P0[1]=clamp(P0[1],-.045,.045);P0[2]=clamp(P0[2],-.05,.05)}
-      else{const c=pj(P0),a1=Math.atan2(-(my-c[1]),mx-c[0]),sg=dot(E[k],Bs.cam)>=0?1:-1;nrm=un(rot(nrm,E[k],sg*wrap(a1-drag.ang)));drag.ang=a1}}
+    if(!drag){if(handles()){const h=pick(mx,my);if(JSON.stringify(h)!==JSON.stringify(hot)){hot=h;cv.style.cursor=h?'pointer':'grab';render()}}return}
+    if(drag.h){if(drag.h.t==='a'){const c=pj(P0),s=pj(ad(P0,E[0],LA)),vx=s[0]-c[0],vy=s[1]-c[1],l2=vx*vx+vy*vy||1,mv=((mx-drag.last[0])*vx+(my-drag.last[1])*vy)/l2*LA;
+        $('sx').value=clamp(P0[0]+mv,0,d)*100;drag.last=[mx,my];update();return}
+      const k=drag.h.k,c=pj(P0),a1=Math.atan2(-(my-c[1]),mx-c[0]),sg=dot(E[k],Bs.cam)>=0?1:-1;let da=a1-drag.ang;while(da>Math.PI)da-=2*Math.PI;while(da<-Math.PI)da+=2*Math.PI;
+      nrm=un(rot(nrm,E[k],sg*da));drag.ang=a1}
     else{view.az-=(mx-drag.last[0])*.008;view.el=clamp(view.el+(my-drag.last[1])*.008,-1.4,1.4)}
     drag.last=[mx,my];render()});
   ['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,()=>{drag=null;render()}));
@@ -498,73 +616,79 @@ const V3=(function(){
   addEventListener('keydown',e=>{if(e.key==='Control'&&!ctrl){ctrl=true;render()}});
   addEventListener('keyup',e=>{if(e.key==='Control'){ctrl=false;hot=null;render()}});
   addEventListener('blur',()=>{ctrl=false;hot=null;render()});
-  const setN=v=>{nrm=v;render()};
-  $('b_flip').onclick=()=>{keep=-keep;render()};$('b_x').onclick=()=>setN([1,0,0]);$('b_y').onclick=()=>setN([0,1,0]);$('b_z').onclick=()=>setN([0,0,1]);
-  $('b_rs').onclick=()=>{P0[0]=.12;P0[1]=0;P0[2]=0;nrm=[1,0,0];keep=1;view.az=1.05;view.el=.42;view.zoom=1;size();render()};
-  // ---- results: tensor, traction on the plane, principal stresses, 3-circle Mohr diagram ----
-  const f2=(v,n=2)=>(Math.abs(v)<5e-5?0:v).toFixed(n);
-  function results(S){const st=stressAt(S),sx=st.sx,tx=st.tx,T=[[sx,tx,0],[tx,0,0],[0,0,0]],t=T.map(r=>dot(r,nrm)),sn=dot(t,nrm),tn=Math.sqrt(Math.max(0,dot(t,t)-sn*sn)),
-      c=sx/2,R=Math.hypot(c,tx),th2=Math.atan2(tx,sx-sx/2),pr=[c+R,c-R,0].sort((a,b)=>b-a),vm=Math.sqrt(sx*sx+3*tx*tx);
+  // ---- controls ----
+  const PTS={st:Rb,mt:Rb/2,na:0,mb:-Rb/2,sb:-Rb};
+  $('pp').addEventListener('change',()=>{P0[1]=PTS[$('pp').value];P0[2]=0;render()});
+  $('hsh').addEventListener('change',()=>{hot=null;render()});
+  // principal directions of σ = [[sx,tx,0],[tx,0,0],[0,0,0]]: e1 (σ1) and e3 (σ3) lie in x–y, e2 (σ2 = 0) is z
+  const princ=st=>{const tp=.5*Math.atan2(2*st.tx,st.sx);return{e1:[Math.cos(tp),Math.sin(tp),0],e2:[0,0,1],e3:[-Math.sin(tp),Math.cos(tp),0],tp}};
+  const setN=v=>{nrm=un(v);render()};
+  $('b_nx').onclick=()=>setN([1,0,0]);$('b_ny').onclick=()=>setN([0,1,0]);$('b_nz').onclick=()=>setN([0,0,1]);
+  $('b_pr').onclick=()=>setN(princ(stressAt(lastS)).e1);
+  $('b_ms').onclick=()=>{const p=princ(stressAt(lastS));setN(ad(p.e1,p.e3))};
+  $('b_flip').onclick=()=>{keep=-keep;render()};
+  $('b_rs').onclick=()=>{nrm=[1,0,0];keep=-1;view.az=2.09;view.el=.42;view.zoom=1;size();render()};
+  // ---- results and the 3D Mohr diagram ----
+  const f2=(v,n=2)=>(Math.abs(v)<5e-6?0:v).toFixed(n);
+  function results(S){const st=stressAt(S),sx=st.sx,tx=st.tx,n=nrm,c=sx/2,R=Math.hypot(c,tx),s1=c+R,s2=0,s3=c-R;
+    const t=[sx*n[0]+tx*n[1],tx*n[0],0],sn=dot(t,n),tau=Math.sqrt(Math.max(0,dot(t,t)-sn*sn));
+    const P=princ(st),l=[dot(n,P.e1),n[2],dot(n,P.e3)],snM=s1*l[0]**2+s2*l[1]**2+s3*l[2]**2,tauM=Math.sqrt(Math.max(0,s1*s1*l[0]**2+s3*s3*l[2]**2-snM*snM));
     const rows=[['Section forces at x = '+(st.x*100).toFixed(1)+' cm','N = '+f2(st.N,1)+' N, V = '+f2(st.V,1)+' N, M = '+f2(st.M)+' N·m'],
-      ['Bone section A, I',(st.A*1e6).toFixed(0)+' mm², '+(st.I*1e12/1e3).toFixed(0)+' ×10³ mm⁴'],
-      ['Point '+(st.inB?'(inside the bone section)':'(outside the bone: tissue only, no stress carried)'),'σxx = '+f2(sx)+' MPa, τxy = '+f2(tx,3)+' MPa'],
-      ['Principal σ₁, σ₂, σ₃',pr.map(v=>f2(v)).join(', ')+' MPa'],['Max shear, von Mises',f2((pr[0]-pr[2])/2)+' MPa, '+f2(vm)+' MPa'],
-      ['x–y circle: centre C, radius R = τmax',f2(c,3)+' MPa, '+f2(R,3)+' MPa'],['Principal plane angle θp (σa, CCW from x)',R>1e-7?f2(th2/2*180/Math.PI,1)+'°  (2θp = '+f2(th2*180/Math.PI,1)+'°)':'not defined (no stress)'],
-      ['Invariants I₁, I₂, I₃',f2(sx)+', '+f2(-tx*tx,3)+', 0 (MPa units)'],
-      ['Plane normal n','('+nrm.map(v=>f2(v,3)).join(', ')+')'],['Traction t = σ·n','('+t.map(v=>f2(v,3)).join(', ')+') MPa'],
-      ['On the cut plane: σₙ, τ',f2(sn,3)+' MPa, '+f2(tn,3)+' MPa']];
+      ['Stress at P₀ (σxx, τxy)',st.inB?f2(sx)+' MPa, '+f2(tx,3)+' MPa':'0 (outside the bone)'],
+      ['Principal stresses σ₁, σ₂, σ₃',f2(s1,3)+', 0, '+f2(s3,3)+' MPa'],
+      ['σ₁ direction (in the x–y plane)',f2(P.tp/RAD,1)+'° from x'],
+      ['Largest shear on any plane, (σ₁ − σ₃)/2',f2(R,3)+' MPa'],
+      ['Plane normal n','('+n.map(v=>f2(v,3)).join(', ')+')'],
+      ['Traction t = σ n','('+t.map(v=>f2(v,3)).join(', ')+') MPa'],
+      ['On the plane, from t: σₙ, τ',f2(sn,3)+' MPa, '+f2(tau,3)+' MPa'],
+      ['Direction cosines to σ₁, σ₂, σ₃: l₁, l₂, l₃',l.map(v=>f2(v,3)).join(', ')],
+      ['Check from Mohr: σₙ = Σσᵢlᵢ², τ² = Σσᵢ²lᵢ² − σₙ²',f2(snM,3)+' MPa, '+f2(tauM,3)+' MPa '+(Math.abs(snM-sn)<1e-6&&Math.abs(tauM-tau)<1e-5?'✓ same':'✗')]];
     $('rtab').innerHTML='<tr><th>Quantity</th><th>Value</th></tr>'+rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
-    // ---- Mohr's circles (plane stress in x-y: sigma_x = sx, sigma_y = 0, tau_xy = tx, and sigma_z = 0) ----
-    // Beer-Johnston convention, tau axis up: X = (sigma_x, -tau_xy), Y = (sigma_y, +tau_xy). Equal scale on both axes.
-    const sa=c+R,sb=c-R;                  // sa >= sb, th2 = 2*theta_p
-    let lo=Math.min(pr[2],0,sn),hi=Math.max(pr[0],0,sn),tm=Math.max((pr[0]-pr[2])/2,tn);
-    if(hi-lo<1e-6){lo=-.05;hi=.05}if(tm<.025)tm=.025;
-    const L0=50,R0=464,T0=26,B0=262,YC=(T0+B0)/2,pw=R0-L0,ph=(B0-T0)/2,pad=Math.max(hi-lo,2*tm*.6)*.13;
-    const k=Math.min(pw/(hi-lo+2*pad),ph/(tm*1.3)),X0=L0+(pw-(hi-lo)*k)/2,X=v=>X0+(v-lo)*k,Y=v=>YC-v*k;
+    drawMohr(st,sx,tx,c,R,s1,s3,sn,tau,l)}
+  function drawMohr(st,sx,tx,c,R,s1,s3,sn,tau,l){
+    // 3D Mohr diagram: full circles (the lower half mirrors the upper); the plane is plotted at (σₙ, τ) with τ ≥ 0
+    const L0=54,R0=468,T0=14,B0=394,YC=(T0+B0)/2,pw=R0-L0,HALO='paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round',FS='font-size:11px';
+    if(R<1e-7){$('mohr3').innerHTML=`<rect x="${L0}" y="${T0}" width="${pw}" height="${B0-T0}" fill="#fffdfd" stroke="#e6c4ca" rx="6"/><line x1="${L0}" x2="${R0}" y1="${YC}" y2="${YC}" stroke="#85505c" stroke-width="1.3"/><text x="${(L0+R0)/2}" y="${(T0+YC)/2-8}" text-anchor="middle" style="font-size:13px;font-weight:700;fill:#85505c">No stress at P₀: every circle shrinks to the origin.</text><text x="${(L0+R0)/2}" y="${(T0+YC)/2+14}" text-anchor="middle" style="${FS};fill:#85505c">No load at all, or a point where both vanish (e.g. the bone surface at the grip end, where M = 0 and τxy = 0).</text>`;return}
+    const k=Math.min(pw/(2*R*1.2),(YC-T0)/(R*1.22)),XC0=(L0+R0)/2,X=v=>XC0+(v-c)*k,Y=v=>YC-v*k;
     const nice=v=>{const e=Math.pow(10,Math.floor(Math.log10(v))),f=v/e;return(f<1.5?1:f<3.5?2:f<7.5?5:10)*e};
-    const vmin=lo-(X0-L0)/k,vmax=vmin+pw/k,step=nice((vmax-vmin)/6),dec=clamp(-Math.floor(Math.log10(step)),0,4),fm=v=>(Math.abs(v)<step*1e-6?0:v).toFixed(dec);
-    const HALO='paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round',FS='font-size:10.5px';
-    let g=`<rect x="${L0}" y="${T0}" width="${pw}" height="${2*ph}" fill="#fffdfd" stroke="#e6c4ca"/>`;
-    for(let v=Math.ceil(vmin/step)*step;v<=vmax+1e-12;v+=step)g+=`<line x1="${X(v)}" x2="${X(v)}" y1="${T0}" y2="${B0}" stroke="#f1dde0"/><text x="${X(v)}" y="${B0+13}" text-anchor="middle" style="${FS}" class="t2">${fm(v)}</text>`;
-    for(let v=-Math.floor(ph/k/step)*step;v<=ph/k+1e-12;v+=step)g+=`<line x1="${L0}" x2="${R0}" y1="${Y(v)}" y2="${Y(v)}" stroke="#f1dde0"/><text x="${L0-5}" y="${Y(v)+3.5}" text-anchor="end" style="${FS}" class="t2">${fm(v)}</text>`;
-    g+=`<line x1="${L0}" x2="${R0}" y1="${YC}" y2="${YC}" stroke="#85505c" stroke-width="1.3"/><line x1="${X(0)}" x2="${X(0)}" y1="${T0}" y2="${B0}" stroke="#85505c" stroke-width="1.3"/>`;
-    g+=`<text x="${R0}" y="${B0+27}" text-anchor="end" style="${FS};font-weight:700" class="t2">σ (MPa)</text><text x="${L0-5}" y="${T0-8}" text-anchor="end" style="${FS};font-weight:700" class="t2">τ (MPa)</text>`;
-    // the three circles; the shaded region is where the state on any plane can lie
-    const circ=(a,b)=>{const rr=Math.abs(a-b)/2*k;return rr>.6?`M${X((a+b)/2)-rr} ${YC}a${rr} ${rr} 0 1 0 ${2*rr} 0a${rr} ${rr} 0 1 0 ${-2*rr} 0z`:''};
-    g+=`<path d="${circ(sa,sb)}${circ(sa,0)}${circ(sb,0)}" fill="rgba(209,40,63,.09)" fill-rule="evenodd" stroke="none"/>`;
-    [[sa,0,'#d9822b',1.6],[sb,0,'#1f8a70',1.6],[sa,sb,'#a3122f',2.6]].forEach(([a,b,col,w])=>{const q=circ(a,b);if(q)g+=`<path d="${q}" fill="none" stroke="${col}" stroke-width="${w}"/>`});
-    let mergeTag='';
-    if(R>1e-7){
-      const xx=X(sx),xy_=Y(-tx),yx=X(0),yy=Y(tx),cx=X(c);
-      g+=`<line x1="${xx}" y1="${xy_}" x2="${yx}" y2="${yy}" stroke="#5b3a42" stroke-width="1.4" stroke-dasharray="5 3"/>`;
-      const ar=Math.min(.42*R*k,34),aX=Math.atan2(-tx,sx-c),sw=aX>0?1:0;                // arc from CX to the sigma_a axis = 2*theta_p
-      g+=`<path d="M${cx+ar*Math.cos(aX)} ${YC-ar*Math.sin(aX)}A${ar} ${ar} 0 0 ${sw} ${cx+ar} ${YC}" fill="none" stroke="#5b3a42" stroke-width="1.4"/>`;
-      const bm=aX/2;g+=`<text x="${cx+(ar+13)*Math.cos(bm)}" y="${YC-(ar+13)*Math.sin(bm)+3.5}" text-anchor="middle" style="${FS};font-weight:700;fill:#5b3a42;${HALO}">2θp</text>`;
-      [[xx,xy_,'X'],[yx,yy,'Y']].forEach(([px,py,nm])=>{const ux=px-cx,uy=py-YC,ul=Math.hypot(ux,uy)||1;
-        if(Math.hypot(px-X(sn),py-Y(tn))<12){g+=`<circle cx="${px}" cy="${py}" r="4" fill="#fff" stroke="#5b3a42" stroke-width="2"/>`;mergeTag=nm;return}
-        g+=`<circle cx="${px}" cy="${py}" r="4" fill="#fff" stroke="#5b3a42" stroke-width="2"/><text x="${px+ux/ul*13}" y="${py+uy/ul*13+4}" text-anchor="middle" style="font-size:12px;font-weight:800;fill:#5b3a42;${HALO}">${nm}</text>`});
-      g+=`<circle cx="${cx}" cy="${YC}" r="2.5" fill="#5b3a42"/><text x="${cx}" y="${YC-6}" text-anchor="middle" style="${FS};fill:#5b3a42;${HALO}">C</text>`;
-      g+=`<circle cx="${cx}" cy="${Y(R)}" r="3" fill="#a3122f"/><circle cx="${cx}" cy="${Y(-R)}" r="3" fill="#a3122f"/>`;
-    }
-    // principal stresses on the sigma axis, labels staggered so they never overlap
-    const lv=[-1e9,-1e9,-1e9];
-    pr.map((v,i)=>({v,n:i+1})).sort((p,q)=>p.v-q.v).forEach(o=>{let l=0;while(l<2&&X(o.v)-lv[l]<80)l++;lv[l]=X(o.v);
-      g+=`<circle cx="${X(o.v)}" cy="${YC}" r="3.4" fill="#a3122f"/><text x="${X(o.v)}" y="${YC+15+l*12}" text-anchor="middle" style="${FS};font-weight:700;fill:#a3122f;${HALO}">σ${'₁₂₃'[o.n-1]} = ${f2(o.v,3)}</text>`});
-    // the state on the cut plane
-    const dx=X(sn),dy=Y(tn),left=dx>R0-90;
-    g+=`<line x1="${dx}" y1="${dy}" x2="${dx}" y2="${YC}" stroke="#d1283f" stroke-dasharray="3 3"/><circle cx="${dx}" cy="${dy}" r="5.5" fill="#d1283f" stroke="#fff" stroke-width="1.5"/>`+
-       `<text x="${dx+(left?-9:9)}" y="${dy-8}" text-anchor="${left?'end':'start'}" style="${FS};font-weight:800;fill:#d1283f;${HALO}">cut plane${mergeTag?' = point '+mergeTag:''}</text>`;
-    if(!st.inB)g+=`<text x="${(L0+R0)/2}" y="${T0+18}" text-anchor="middle" style="font-size:11px;font-weight:700;fill:#85505c">No stress here: the point is outside the bone section</text>`;
-    // legend
-    const lg=(x,y,col,w,t)=>`<line x1="${x}" x2="${x+20}" y1="${y}" y2="${y}" stroke="${col}" stroke-width="${w}"/><text x="${x+25}" y="${y+3.5}" style="${FS}" class="t2">${t}</text>`;
-    g+=lg(50,296,'#a3122f',2.6,'x–y plane circle (σa, σb)')+lg(50,311,'#d9822b',1.6,'circle (σa, σz = 0)')+lg(270,296,'#1f8a70',1.6,'circle (σb, σz = 0)')+
-       `<circle cx="280" cy="311" r="4.5" fill="#d1283f"/><text x="295" y="314.5" style="${FS}" class="t2">state on the cut plane (|τ|)</text>`+
-       `<circle cx="60" cy="326" r="3" fill="#a3122f"/><text x="75" y="329.5" style="${FS}" class="t2">τmax = R (in-plane max shear)</text>`+
-       `<line x1="270" x2="290" y1="326" y2="326" stroke="#5b3a42" stroke-width="1.4" stroke-dasharray="5 3"/><text x="295" y="329.5" style="${FS}" class="t2">X–Y line, 2θp from σa</text>`;
+    const vmin=c-(XC0-L0)/k,vmax=c+(R0-XC0)/k,step=nice((vmax-vmin)/7),dec=clamp(-Math.floor(Math.log10(step)),0,4),fm=v=>(Math.abs(v)<step*1e-6?0:v).toFixed(dec);
+    let g=`<rect x="${L0}" y="${T0}" width="${pw}" height="${B0-T0}" fill="#fffdfd" stroke="#e6c4ca" rx="6"/>`;
+    for(let v=Math.ceil(vmin/step)*step;v<=vmax+1e-12;v+=step)g+=`<line x1="${X(v)}" x2="${X(v)}" y1="${T0}" y2="${B0}" stroke="#f3e3e6"/><line x1="${X(v)}" x2="${X(v)}" y1="${YC-3}" y2="${YC+3}" stroke="#85505c"/><text x="${X(v)}" y="${B0+14}" text-anchor="middle" style="font-size:10px" class="t2">${fm(v)}</text>`;
+    for(let v=-Math.floor((B0-YC)/k/step)*step;v<=(YC-T0)/k+1e-12;v+=step)if(Math.abs(v)>step*1e-6)g+=`<line x1="${L0}" x2="${R0}" y1="${Y(v)}" y2="${Y(v)}" stroke="#f3e3e6"/><text x="${L0-5}" y="${Y(v)+3.5}" text-anchor="end" style="font-size:10px" class="t2">${fm(v)}</text>`;
+    g+=`<text x="${L0-5}" y="${YC+3.5}" text-anchor="end" style="font-size:10px" class="t2">0</text>`;
+    g+=`<line x1="${L0}" x2="${R0}" y1="${YC}" y2="${YC}" stroke="#85505c" stroke-width="1.4"/><line x1="${X(0)}" x2="${X(0)}" y1="${T0}" y2="${B0}" stroke="#85505c" stroke-width="1.3"/>`;
+    g+=`<text x="${R0}" y="${B0+28}" text-anchor="end" style="${FS};font-weight:800" class="t2">σₙ (MPa)</text><text x="${X(0)+5}" y="${T0+12}" style="${FS};font-weight:800" class="t2">τ (MPa)</text>`;
+    // full circles between two points on the σ axis
+    const half=(a,b)=>{const rr=Math.abs(a-b)/2*k,cx=X((a+b)/2);return rr>.6?`M${cx-rr} ${YC}a${rr} ${rr} 0 1 0 ${2*rr} 0a${rr} ${rr} 0 1 0 ${-2*rr} 0Z`:""};
+    const arcOnly=half;
+    g+=`<path d="${half(s1,s3)}${half(s1,0)}${half(0,s3)}" fill="rgba(209,40,63,.12)" fill-rule="evenodd"/>`;
+    g+=`<path d="${arcOnly(s1,0)}" fill="none" stroke="#d9822b" stroke-width="1.7" stroke-dasharray="6 4"/><path d="${arcOnly(0,s3)}" fill="none" stroke="#1f8a70" stroke-width="1.7" stroke-dasharray="6 4"/><path d="${arcOnly(s1,s3)}" fill="none" stroke="#a3122f" stroke-width="2.8"/>`;
+    // the two construction arcs (fixed l1 and fixed l3) whose crossing is the plane's point
+    const tol=1e-6*R*R,inRegion=(s,t)=>(s-c)**2+t*t<=R*R+tol&&(s-s1/2)**2+t*t>=(s1/2)**2-tol&&(s-s3/2)**2+t*t>=(s3/2)**2-tol;
+    const arc=(cc,rr,col)=>{if(!(rr>0))return'';let dd='',on=false;for(let i=0;i<=360;i++){const a=Math.PI*i/360,s=cc+rr*Math.cos(a),t=rr*Math.sin(a);if(inRegion(s,t)){dd+=(on?'L':'M')+X(s).toFixed(1)+' '+Y(t).toFixed(1);on=true}else on=false}
+      return dd?`<path d="${dd}" fill="none" stroke="${col}" stroke-width="1.6" stroke-dasharray="2 3"/>`:''};
+    const r1=Math.sqrt(Math.max(0,(s3/2)**2+l[0]**2*s1*(s1-s3))),r3=Math.sqrt(Math.max(0,(s1/2)**2+l[2]**2*s3*(s3-s1)));
+    g+=arc(s3/2,r1,'#7b3fe4')+arc(s1/2,r3,'#7b3fe4');
+    // reference faces: X (normal along x) and Y (normal along y), both on the large circle
+    const ref=(s,t,nm,dx)=>`<circle cx="${X(s)}" cy="${Y(t)}" r="4" fill="#fff" stroke="#5b3a42" stroke-width="1.8"/><text x="${X(s)+dx}" y="${Y(t)-7}" text-anchor="middle" style="font-size:11.5px;font-weight:800;fill:#5b3a42;${HALO}">${nm}</text>`;
+    g+=ref(sx,Math.abs(tx),'X',sx>=0?9:-9)+ref(0,Math.abs(tx),'Y',sx>=0?-9:9);
+    // your plane (drawn last); its position decides where the τmax label goes so the two never overlap
+    const px=X(sn),py=Math.min(YC,Y(tau)),nearTop=Math.hypot(px-X(c),py-Y(R))<42;
+    g+=`<circle cx="${X(c)}" cy="${Y(R)}" r="3" fill="#a3122f"/><text x="${X(c)}" y="${nearTop?Y(R)+30:Y(R)-7}" text-anchor="middle" style="${FS};font-weight:700;fill:#a3122f;${HALO}">τmax = ${f2(R,3)}</text>`;
+    // principal stresses under the axis: σ₃ and σ₁ written inwards from their dots (so they stay inside the panel), σ₂ on a second row
+    [[s3,'σ₃ = '+f2(s3,3),'start',-6,16],[0,'σ₂ = 0','middle',0,31],[s1,'σ₁ = '+f2(s1,3),'end',6,16]].forEach(([v,t,an,dx,dy])=>{g+=`<circle cx="${X(v)}" cy="${YC}" r="3.6" fill="#a3122f"/><text x="${X(v)+dx}" y="${YC+dy}" text-anchor="${an}" style="${FS};font-weight:800;fill:#a3122f;${HALO}">${t}</text>`});
+    g+=`<circle cx="${px}" cy="${py}" r="6.5" fill="#d1283f" stroke="#fff" stroke-width="2"/><text x="${px}" y="${py-12}" text-anchor="middle" style="font-size:12px;font-weight:800;fill:#d1283f;${HALO}">your plane</text>`;
+    const lg=(x,y,col,w,dash,t)=>`<line x1="${x}" x2="${x+20}" y1="${y}" y2="${y}" stroke="${col}" stroke-width="${w}"${dash?` stroke-dasharray="${dash}"`:''}/><text x="${x+25}" y="${y+3.5}" style="font-size:10.5px" class="t2">${t}</text>`;
+    g+=lg(54,438,'#a3122f',2.6,'','σ₁–σ₃ (turn about z)')+lg(190,438,'#d9822b',1.7,'6 4','σ₁–σ₂')+lg(268,438,'#1f8a70',1.7,'6 4','σ₂–σ₃')+lg(346,438,'#7b3fe4',1.6,'2 3','fixed l₁, l₃ arcs');
     $('mohr3').innerHTML=g}
-  function size(){const dpr=window.devicePixelRatio||1,r=cv.getBoundingClientRect();W=r.width;H=r.height;SC=Math.min(W/.44,H/.27)*view.zoom;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0)}
+  // ---- glass panes ----
+  document.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>{const bk=$(b.dataset.open);bk.hidden=false;bk._from=b;requestAnimationFrame(()=>bk.classList.add('show'));bk.querySelector('.gx').focus()}));
+  const closeDlg=bk=>{bk.classList.remove('show');setTimeout(()=>{bk.hidden=true},250);if(bk._from)bk._from.focus()};
+  document.querySelectorAll('.gback').forEach(bk=>{bk.addEventListener('click',e=>{if(e.target===bk)closeDlg(bk)});bk.querySelector('.gx').addEventListener('click',()=>closeDlg(bk))});
+  addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.gback:not([hidden])').forEach(closeDlg)});
+  function size(){const dpr=window.devicePixelRatio||1,r=cv.getBoundingClientRect();W=r.width;H=r.height;SC=Math.min(W/.42,H/.27)*view.zoom;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0)}
   addEventListener('resize',()=>{size();render()});size();
-  return{render};
+  return{render,setN};
 })();
 
 ['th','m','w','sx','ecc'].forEach(i=>$(i).addEventListener('input',update));

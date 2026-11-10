@@ -82,70 +82,122 @@ select{font:inherit;font-size:13.5px;padding:4px 6px;border-radius:8px;border:1p
 .dash{display:grid;grid-template-columns:1.25fr 1fr 1fr;grid-template-areas:"xs gp ga" "xs gb st";gap:10px;margin-top:10px}
 .dash .p{padding:8px 10px}
 .dash .gt{font-size:12.5px;margin-bottom:4px}
-#xsC{grid-area:xs;display:flex;flex-direction:column;justify-content:center}#gpC{grid-area:gp}#gaC{grid-area:ga}#gbC{grid-area:gb}#stC{grid-area:st}
+#xsC{grid-area:xs;display:flex;flex-direction:column;justify-content:flex-start}#gpC{grid-area:gp}#gaC{grid-area:ga}#gbC{grid-area:gb}#stC{grid-area:st}
 @media(max-width:980px){.ctlbar{grid-template-columns:1fr 1fr}.dash{grid-template-columns:1fr;grid-template-areas:"xs" "gp" "ga" "gb" "st"}}
+/* top section: diagram left, definition + glass panes right */
+html,body{overflow-x:clip}
+.split{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start;isolation:isolate}
+.split:before,.split:after{content:"";position:absolute;z-index:-1;border-radius:50%;filter:blur(60px);opacity:.35;pointer-events:none}
+.split:before{width:46%;height:70%;right:-4%;top:8%;background:#9fe0d6}
+.split:after{width:34%;height:50%;right:26%;bottom:-6%;background:#f8d2a8}
+.lcol{position:sticky;top:14px}
+.lcol .card{padding:10px}
+.lcol .legend{font-size:12.5px;gap:6px 14px}
+.rcol{display:grid;gap:14px}
+.defbox{background:#fff;border:1px solid var(--ln);border-radius:12px;padding:12px 16px;font-size:15px;line-height:1.6;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.glass{background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.9);border-radius:16px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 8px 26px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.8);transition:transform .35s ease,box-shadow .35s ease,background .35s ease}
+.glass:hover{box-shadow:0 12px 32px rgba(0,0,0,.11)}
+.glass.open{transform:scale(1.02);background:rgba(255,255,255,.8);box-shadow:0 18px 44px rgba(0,0,0,.14)}
+.ghead{all:unset;box-sizing:border-box;width:100%;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:16px 20px}
+.ghead:focus-visible{outline:2px solid var(--A);outline-offset:-4px;border-radius:16px}
+.gt1{font-size:19px;font-weight:700}
+.gsub{grid-column:1;font-size:13px;color:var(--mut)}
+.chev{grid-column:2;grid-row:1/3;align-self:center;font-size:20px;color:var(--mut);transition:transform .35s ease}
+.glass.open .chev{transform:rotate(180deg)}
+.gbody{display:grid;grid-template-rows:0fr;transition:grid-template-rows .4s ease}
+.glass.open .gbody{grid-template-rows:1fr}
+.gin{overflow:hidden;padding:0 20px;font-size:14.5px}
+.glass.open .gin{padding-bottom:18px}
+.rcol .asm{gap:6px}
+.rcol .asm li{background:rgba(255,255,255,.75);font-size:14px}
+.fx{font-family:"Cambria Math","Cambria","Times New Roman",serif;font-size:16px;margin:4px 0 4px 12px}
+.left{font-size:13.5px;color:#444;margin:12px 0 0}
+.math p{margin:6px 0;color:#222}
+.math .m{font-family:"Cambria Math","Cambria","Times New Roman",serif;font-size:17px;margin:4px 0 8px 24px}
+.math .sym{font-size:13px;color:#444;border-top:1px solid #ddd;padding-top:8px;margin-top:12px}
+@media(max-width:960px){.split{grid-template-columns:1fr}.lcol{position:static}}
+/* part 3 sized to fit one screen */.dash .p svg.g{max-height:calc(50vh - 105px);width:auto;max-width:100%;margin:0 auto}.dash #xs{max-height:calc(62vh - 120px)}
 </style></head><body><div class="wrap">
 
 <h1>Motor unit recruitment</h1>
-<p class="lead">How the nervous system grades the force of a whole muscle by choosing <b>how many motor units</b> to switch on. First we look at what a motor unit is, then we set up a simple mechanical model that turns the number of recruited units into a muscle force.</p>
+<p class="lead">Each muscle fibre exists in one of two states, activated and inactivated. Each have their own stress-strain curves with an activated fibre exerting higher stress at a given value of strain. The total force exerted by the muscle is the sum of the forces exerted by both the activated and inactivated muscle fibres. By increasing the number of fibres activated, the muscle can exert more force.</p>
 
-<!-- ===================== 1. WHAT IS A MOTOR UNIT ===================== -->
-<h2>1 · What is a motor unit?</h2>
-<div class="card">
-<svg id="mu" viewBox="0 0 1200 600" role="img" aria-label="Angled section of a muscle showing its fascicles and fibres, with two motor neurons in the spinal cord whose axons enter the muscle and branch to their own scattered fibres"></svg>
-<div class="legend"><span><i style="background:#9fe0d6;border:2px solid var(--A)"></i>Motor unit A: one motor neuron + every fibre it supplies</span><span><i style="background:#f8d2a8;border:2px solid var(--B)"></i>Motor unit B (a smaller unit)</span><span><i style="background:#efc4c4;border:2px solid #c48d8d"></i>Fibres belonging to other motor units</span></div>
+<!-- ===================== 1 + 2. MOTOR UNIT (left) · DEFINITION, ASSUMPTIONS, DERIVATION (right) ===================== -->
+<h2>1 · What is a motor unit? &nbsp;·&nbsp; 2 · A quasi-static model</h2>
+<div class="split">
+ <div class="lcol">
+  <div class="card">
+   <svg id="mu" viewBox="0 0 1200 600" role="img" aria-label="Angled section of a muscle showing its fascicles and fibres, with two motor neurons in the spinal cord whose axons enter the muscle and branch to their own scattered fibres"></svg>
+   <div class="legend"><span><i style="background:#9fe0d6;border:2px solid var(--A)"></i>Motor unit A: one motor neuron + every fibre it supplies</span><span><i style="background:#f8d2a8;border:2px solid var(--B)"></i>Motor unit B (a smaller unit)</span><span><i style="background:#efc4c4;border:2px solid #c48d8d"></i>Fibres belonging to other motor units</span></div>
+  </div>
+ </div>
+
+ <div class="rcol">
+  <div class="defbox"><b>Motor unit:</b> one motor neuron together with all of the muscle fibres it innervates. It is the smallest unit of force that the nervous system can switch on: when the neuron fires, every one of its fibres contracts together (all-or-none).</div>
+
+  <!-- ---------- Assumptions pane ---------- -->
+  <section class="glass" id="paneA">
+   <button class="ghead" aria-expanded="false" aria-controls="bodyA"><span class="gt1">Assumptions</span><span class="gsub">11 assumptions, with the constants and slider limits used</span><span class="chev">▾</span></button>
+   <div class="gbody" id="bodyA"><div class="gin">
+   <ol class="asm">
+    <li><b>No viscoelastic or time-dependent behaviour.</b> We ignore force–velocity effects, stress relaxation, creep, activation and deactivation dynamics, fatigue and potentiation. The muscle is treated as quasi-static: every state is an equilibrium (isometric or very slow).</li>
+    <li><b>Two stress–strain curves only.</b> Every muscle fibre follows exactly one of two curves, and all fibres share the same two curves (ε = 0 is the optimal length; stresses in kPa):
+     <div class="fx">passive (inactive fibre):&nbsp; σ<sub>p</sub>(ε) = K<sub>p</sub> (e<sup>ε/ε<sub>0</sub></sup> − 1) for ε &gt; 0,&nbsp; σ<sub>p</sub>(ε) = 0 for ε ≤ 0</div>
+     <div class="fx">active isometric part:&nbsp; σ<sub>iso</sub>(ε) = σ<sub>max</sub> e<sup>−(ε/w)²</sup></div>
+     <div class="fx">active (activated fibre):&nbsp; σ<sub>a</sub>(ε) = σ<sub>p</sub>(ε) + σ<sub>iso</sub>(ε)</div>
+     Constants: K<sub>p</sub> = 3.1 kPa, ε<sub>0</sub> = 0.12, σ<sub>max</sub> = 225 kPa (22.5 N/cm², the peak at ε = 0), w = 0.35. These are illustrative values, to be replaced by values from the literature.</li>
+    <li><b>All-or-none recruitment of motor units.</b> A motor unit is either fully off (all its fibres on σ<sub>p</sub>) or fully on (all its fibres on σ<sub>a</sub>, i.e. fused tetanus). Rate coding and partial (unfused) activation are not modelled.</li>
+    <li><b>Fibres are ropes (uniaxial).</b> Each fibre carries only a tensile force along its own axis. There is no transverse normal stress, no shear stress and no bending. Fibres cannot push, so they carry no compression: the passive stress is zero below slack length (ε ≤ 0).</li>
+    <li><b>No lateral force transmission.</b> Fibres do not pass force sideways to each other or to the surrounding connective tissue; their axial forces simply add up at the tendon. The connective tissue carries no load of its own (its contribution, if any, is lumped into the passive curve).</li>
+    <li><b>Parallel, full-length fibres with equal strain.</b> All fibres run parallel to the line of pull (pennation angle θ = 0) and span the muscle from tendon to tendon, so they all have the same strain ε as the muscle. For a pennate muscle each force would be multiplied by cos θ.</li>
+    <li><b>Rigid tendon.</b> Series elasticity is ignored, so the muscle strain is set directly by the joint position.</li>
+    <li><b>Constant volume: the area changes with strain.</b> Muscle tissue is nearly incompressible, so its current area is A(L) = V/L = PCSA<sub>0</sub>/(1 + ε). The two curves give true (Cauchy) stress on this current area. The calculator can switch this off (constant area, A = PCSA<sub>0</sub>) for comparison. If the cross-section also varies along the length, the area becomes A(x, ε) and is handled slice by slice (step 6 of the derivation).</li>
+    <li><b>Fibre areas add up to the physiological cross-sectional area (PCSA).</b> Because fibre forces add linearly (assumptions 4–6), only the total area of a group of fibres matters. The muscle has N = 10 motor units; unit k owns the share
+     <div class="fx">a<sub>k</sub> = r<sup>k−1</sup> / (1 + r + … + r<sup>9</sup>),&nbsp; r = 1.45,&nbsp; k = 1, …, 10,&nbsp; Σ a<sub>k</sub> = 1</div>
+     so a<sub>1</sub> ≈ 0.011 and a<sub>10</sub> ≈ 0.318: the largest unit is about 28 times (1.45<sup>9</sup>) the smallest. The fibres of each unit are scattered through the cross-section.</li>
+    <li><b>Recruitment by the size principle.</b> The nervous system switches units on from smallest to largest (k = 1, 2, 3, …), stopping at the smallest set whose force meets the required external force.</li>
+    <li><b>Ranges of the inputs (calculator sliders).</b>
+     <div class="fx">strain ε: −0.30 to +0.45 (step 0.01, starts at 0)</div>
+     <div class="fx">required force F<sub>req</sub>: 0 to 520 N (step 1 N, starts at 150 N)</div>
+     <div class="fx">resting area PCSA<sub>0</sub>: 5 to 40 cm² (step 1 cm², starts at 20 cm²)</div>
+     Units: 1 kPa · 1 cm² = 0.1 N. For example, with PCSA<sub>0</sub> = 20 cm² at ε = 0 the largest possible force is 20 × 225 × 0.1 = 450 N.</li>
+   </ol>
+   <p class="left"><b>Left out on purpose:</b> twitch dynamics and temporal summation (see the Temporal summation page), rate coding, force–velocity, fatigue, pennation, tendon stretch and lateral force transmission.</p>
+   </div></div>
+  </section>
+
+  <!-- ---------- Derivation pane ---------- -->
+  <section class="glass" id="paneD">
+   <button class="ghead" aria-expanded="false" aria-controls="bodyD"><span class="gt1">Derivation</span><span class="gsub">from fibre forces to F(f, ε) and the recruited fraction f<sub>req</sub></span><span class="chev">▾</span></button>
+   <div class="gbody" id="bodyD"><div class="gin math">
+    <p>1. Force in one fibre (assumption 4):</p>
+    <p class="m">F<sub>i</sub> = σ(ε) A<sub>i</sub>(L)</p>
+    <p>2. Equilibrium at the tendon (assumptions 4–6), with 𝒜 the activated fibres and ℐ the inactive fibres:</p>
+    <p class="m">F = Σ<sub>i∈𝒜</sub> σ<sub>a</sub>(ε) A<sub>i</sub>(L) + Σ<sub>j∈ℐ</sub> σ<sub>p</sub>(ε) A<sub>j</sub>(L)</p>
+    <p>3. Equal strain and identical curves (assumptions 2, 6):</p>
+    <p class="m">F = σ<sub>a</sub>(ε) A<sub>act</sub>(L) + σ<sub>p</sub>(ε) A<sub>inact</sub>(L)</p>
+    <p>4. Constant volume (assumption 8) and PCSA (assumption 9):</p>
+    <p class="m">A<sub>i</sub>(L) L = A<sub>0,i</sub> L<sub>0</sub> &nbsp;⇒&nbsp; A<sub>i</sub>(L) = A<sub>0,i</sub> / (1 + ε)</p>
+    <p class="m">f = Σ<sub>k recruited</sub> a<sub>k</sub></p>
+    <p class="m">A<sub>act</sub>(L) = f PCSA<sub>0</sub> / (1 + ε)</p>
+    <p class="m">A<sub>inact</sub>(L) = (1 − f) PCSA<sub>0</sub> / (1 + ε)</p>
+    <p>5. Substituting, with σ<sub>a</sub> = σ<sub>p</sub> + σ<sub>iso</sub>:</p>
+    <p class="m">F(f, ε) = [PCSA<sub>0</sub> / (1 + ε)] [ f σ<sub>a</sub>(ε) + (1 − f) σ<sub>p</sub>(ε) ]</p>
+    <p class="m">F(f, ε) = A(L) [ σ<sub>p</sub>(ε) + f σ<sub>iso</sub>(ε) ]</p>
+    <p>F is linear in f. For nominal stress (force per resting area), drop the factor 1/(1 + ε).</p>
+    <p>6. Area varying along the muscle, A(x). The same F acts at every section (dF/dx = 0). For slices m = 1, …, n of resting length Δx<sub>m</sub>:</p>
+    <p class="m">F = [A<sub>0</sub>(x<sub>m</sub>) / (1 + ε<sub>m</sub>)] [ σ<sub>p</sub>(ε<sub>m</sub>) + f σ<sub>iso</sub>(ε<sub>m</sub>) ] &nbsp; for every m</p>
+    <p class="m">ΔL = Σ<sub>m</sub> ε<sub>m</sub> Δx<sub>m</sub></p>
+    <p>F is adjusted until the slice elongations add up to the imposed ΔL. For uniform area this reduces to step 5.</p>
+    <p>7. Recruited fraction for a required force F<sub>req</sub>, from step 5:</p>
+    <p class="m">f<sub>req</sub> = [ F<sub>req</sub> (1 + ε) / PCSA<sub>0</sub> − σ<sub>p</sub>(ε) ] / σ<sub>iso</sub>(ε)</p>
+    <p class="m">recruit k = 1, 2, 3, … until a<sub>1</sub> + … + a<sub>k</sub> ≥ f<sub>req</sub></p>
+    <p>If f<sub>req</sub> ≤ 0 the passive tissue alone is enough; if f<sub>req</sub> &gt; 1 the force cannot be produced at this length.</p>
+    <p class="sym">Symbols: F tendon force (N); ε = (L − L<sub>0</sub>)/L<sub>0</sub> strain, L<sub>0</sub> optimal length; σ<sub>p</sub>, σ<sub>a</sub> passive and active true stress (kPa); σ<sub>iso</sub> = σ<sub>a</sub> − σ<sub>p</sub>; PCSA<sub>0</sub> resting physiological cross-sectional area; A(L) = PCSA<sub>0</sub>/(1 + ε) current area; a<sub>k</sub> share of the PCSA owned by unit k; f recruited fraction.</p>
+   </div></div>
+  </section>
+ </div>
 </div>
-<h3>Definitions and notes</h3>
-<div class="notes" id="notes" contenteditable="true" spellcheck="true" aria-label="Definitions and notes (editable)"></div>
-<div class="tools"><span class="hint">Click in the box to write · what you type is saved in this browser</span><button id="resetNotes">Reset to the default text</button></div>
-
-<!-- ===================== 2. MODEL ===================== -->
-<h2>2 · A quasi-static model: from recruited units to muscle force</h2>
-<p class="lead">From this point onwards we deliberately simplify the muscle so that its force can be written down directly. Each assumption is listed separately so it can later be checked against published research and refined.</p>
-
-<h3>Assumptions</h3>
-<ol class="asm">
- <li><b>No viscoelastic or time-dependent behaviour.</b> We ignore force–velocity effects, stress relaxation, creep, activation and deactivation dynamics, fatigue and potentiation. The muscle is treated as quasi-static: every state is an equilibrium (isometric or very slow).
-  <span class="src">To substantiate: conditions under which a quasi-static (isometric) description is acceptable.</span></li>
- <li><b>Two stress–strain curves only.</b> Every muscle fibre follows exactly one of two curves. An inactive fibre follows the <b>passive</b> curve <var>σ</var><sub>p</sub>(<var>ε</var>). An activated fibre follows the <b>active</b> curve <var>σ</var><sub>a</sub>(<var>ε</var>) = <var>σ</var><sub>p</sub>(<var>ε</var>) + <var>σ</var><sub>iso</sub>(<var>ε</var>), where <var>σ</var><sub>iso</sub> is the active isometric (force–length) contribution. All fibres share the same two curves.
-  <span class="src">To substantiate: passive and active force–length relations of skeletal muscle fibres.</span></li>
- <li><b>All-or-none recruitment of motor units.</b> A motor unit is either fully off (all its fibres on <var>σ</var><sub>p</sub>) or fully on (all its fibres on <var>σ</var><sub>a</sub>, i.e. fused tetanus). Rate coding and partial (unfused) activation are not modelled.
-  <span class="src">To substantiate: link between maximal firing rate and the active curve.</span></li>
- <li><b>Fibres are ropes (uniaxial).</b> Each fibre carries only a tensile force along its own axis (tangential to the fibre). There is no transverse normal stress, no shear stress and no bending. Fibres cannot push, so they carry no compression: stress is zero below slack length.</li>
- <li><b>No lateral force transmission.</b> Fibres do not pass force sideways to each other or to the surrounding connective tissue; their axial forces simply add up at the tendon. The connective tissue carries no load of its own (its contribution, if any, is lumped into the passive curve).
-  <span class="src">To substantiate: size of lateral (myofascial) force transmission.</span></li>
- <li><b>Parallel, full-length fibres with equal strain.</b> All fibres run parallel to the line of pull (pennation angle <var>θ</var> = 0) and span the muscle from tendon to tendon. They therefore all experience the same strain <var>ε</var> as the muscle. For a pennate muscle each force would be multiplied by cos <var>θ</var>.</li>
- <li><b>Rigid tendon.</b> Series elasticity is ignored, so the muscle strain is set directly by the joint position.</li>
- <li><b>Constant volume: the area changes with strain.</b> Muscle tissue is nearly incompressible, so a fibre that is stretched gets thinner and one that shortens gets fatter. Its current area is <var>A</var>(<var>L</var>) = <var>V</var>/<var>L</var> = <var>A</var><sub>0</sub>/(1 + <var>ε</var>). The two curves give <b>true (Cauchy) stress</b> on this current area. If the muscle's cross-section also varies along its length (e.g. a fusiform belly), the area becomes a function <var>A</var>(<var>x</var>, <var>ε</var>) of position <var>x</var> and is handled numerically, slice by slice (step 6 of the derivation).
-  <span class="src">To substantiate: incompressibility of muscle; whether published stress–strain data are nominal or true stress.</span></li>
- <li><b>Fibre areas add up to the physiological cross-sectional area (PCSA).</b> Because the fibre forces add linearly (A4–A6), only the <i>total</i> area of a group of fibres matters. We therefore use the muscle's PCSA, the area cut perpendicular to the fibres, instead of individual fibre areas. Each motor unit owns a fraction <var>a</var><sub><var>k</var></sub> of the PCSA, and Σ<var>a</var><sub><var>k</var></sub> = 1.
-  <span class="src">To substantiate: estimating PCSA from muscle volume and fibre length; fraction of PCSA occupied by fibres.</span></li>
- <li><b>Recruitment by the size principle.</b> The nervous system switches units on from smallest to largest, stopping at the smallest set whose force meets the required external force.
-  <span class="src">To substantiate: Henneman's size principle.</span></li>
-</ol>
-
-<h3>Derivation</h3>
-<div class="deriv">
- <div class="st"><b class="k">1 · Force in one fibre.</b> By A4 a fibre is a rope: it carries only an axial tension, equal to its stress times its current area.
-  <div class="f"><var>F</var><sub><var>i</var></sub> = <var>σ</var>(<var>ε</var>) · <var>A</var><sub><var>i</var></sub>(<var>L</var>)</div></div>
- <div class="st"><b class="k">2 · Equilibrium at the tendon.</b> With no shear, no transverse stress and no lateral transfer (A4, A5), and all fibres parallel to the line of pull (A6), the muscle force is just the sum of the fibre forces. Split the fibres into the activated set 𝒜 (active curve) and the inactive set ℐ (passive curve):
-  <div class="f"><var>F</var> = Σ<sub><var>i</var>∈𝒜</sub> <var>σ</var><sub>a</sub>(<var>ε</var>) · <var>A</var><sub><var>i</var></sub>(<var>L</var>) + Σ<sub><var>j</var>∈ℐ</sub> <var>σ</var><sub>p</sub>(<var>ε</var>) · <var>A</var><sub><var>j</var></sub>(<var>L</var>)</div></div>
- <div class="st"><b class="k">3 · Equal strain.</b> All fibres have the same strain (A6) and the same two curves (A2), so the stresses come out of each sum:
-  <div class="f"><var>F</var> = <var>σ</var><sub>a</sub>(<var>ε</var>) · <var>A</var><sub>act</sub>(<var>L</var>) + <var>σ</var><sub>p</sub>(<var>ε</var>) · <var>A</var><sub>inact</sub>(<var>L</var>)</div></div>
- <div class="st"><b class="k">4 · Area: constant volume.</b> Each fibre keeps its volume (A8): <var>A</var><sub><var>i</var></sub>(<var>L</var>) · <var>L</var> = <var>A</var><sub>0,<var>i</var></sub> · <var>L</var><sub>0</sub>, so <var>A</var><sub><var>i</var></sub>(<var>L</var>) = <var>A</var><sub>0,<var>i</var></sub>/(1 + <var>ε</var>). The resting areas add up to the resting PCSA (A9), and the recruited units own the fraction <var>f</var> = Σ<sub><var>k</var> recruited</sub> <var>a</var><sub><var>k</var></sub> of it:
-  <div class="f"><var>A</var><sub>act</sub>(<var>L</var>) = <var>f</var> · <var>PCSA</var><sub>0</sub>/(1 + <var>ε</var>),&nbsp;&nbsp; <var>A</var><sub>inact</sub>(<var>L</var>) = (1 − <var>f</var>) · <var>PCSA</var><sub>0</sub>/(1 + <var>ε</var>)</div></div>
- <div class="st"><b class="k">5 · Muscle force.</b> Substituting, and using <var>σ</var><sub>a</sub> = <var>σ</var><sub>p</sub> + <var>σ</var><sub>iso</sub>:
-  <div class="f big"><var>F</var>(<var>f</var>, <var>ε</var>) = [<var>PCSA</var><sub>0</sub>/(1 + <var>ε</var>)] · [ <var>f</var> · <var>σ</var><sub>a</sub>(<var>ε</var>) + (1 − <var>f</var>) · <var>σ</var><sub>p</sub>(<var>ε</var>) ] = <var>A</var>(<var>L</var>) · [ <var>σ</var><sub>p</sub>(<var>ε</var>) + <var>f</var> · <var>σ</var><sub>iso</sub>(<var>ε</var>) ]</div>
-  The force is linear in the recruited fraction <var>f</var>, which is why the total PCSA is enough and individual fibre areas are not needed. If the curves are given as nominal stress (force per <i>resting</i> area), drop the factor 1/(1 + <var>ε</var>).</div>
- <div class="st"><b class="k">6 · Area that varies along the muscle, <var>A</var>(<var>x</var>).</b> If the cross-section changes with position <var>x</var> along the muscle, the rope assumption still gives the same force at every cross-section (d<var>F</var>/d<var>x</var> = 0). The stress, and so the strain, then varies with <var>x</var>. Cut the muscle into <var>n</var> thin slices of resting length Δ<var>x</var><sub><var>m</var></sub> and solve each one numerically:
-  <div class="f"><var>F</var> = [<var>A</var><sub>0</sub>(<var>x</var><sub><var>m</var></sub>)/(1 + <var>ε</var><sub><var>m</var></sub>)] · [ <var>σ</var><sub>p</sub>(<var>ε</var><sub><var>m</var></sub>) + <var>f</var> · <var>σ</var><sub>iso</sub>(<var>ε</var><sub><var>m</var></sub>) ]&nbsp;&nbsp; for every slice <var>m</var>,&nbsp;&nbsp; Δ<var>L</var> = Σ<sub><var>m</var></sub> <var>ε</var><sub><var>m</var></sub> · Δ<var>x</var><sub><var>m</var></sub></div>
-  For a given muscle length, adjust <var>F</var> until the slice elongations add up to the imposed Δ<var>L</var>. For a uniform area this collapses back to step 5.</div>
- <div class="st"><b class="k">7 · How the brain picks the number of units.</b> Rearranging step 5 for a required external force <var>F</var><sub>req</sub> at the current strain gives the recruited fraction needed:
-  <div class="f"><var>f</var><sub>req</sub> = [ <var>F</var><sub>req</sub> · (1 + <var>ε</var>)/<var>PCSA</var><sub>0</sub> − <var>σ</var><sub>p</sub>(<var>ε</var>) ] / <var>σ</var><sub>iso</sub>(<var>ε</var>)</div>
-  The nervous system recruits units in size order, 1, 2, 3, …, until Σ<var>a</var><sub><var>k</var></sub> ≥ <var>f</var><sub>req</sub> (A10). If <var>f</var><sub>req</sub> ≤ 0 the passive tissue alone is enough; if <var>f</var><sub>req</sub> &gt; 1 the force is beyond what the muscle can produce at this length. Small units come first, so force can be adjusted finely at low effort, and big jumps come only when high force is needed.</div>
- <div class="where"><b>Symbols:</b> <var>F</var> force on the tendon (N) · <var>ε</var> = (<var>L</var> − <var>L</var><sub>0</sub>)/<var>L</var><sub>0</sub> muscle (= fibre) strain, <var>L</var><sub>0</sub> optimal length · <var>σ</var><sub>p</sub>, <var>σ</var><sub>a</sub> passive and active true stress (kPa), <var>σ</var><sub>iso</sub> = <var>σ</var><sub>a</sub> − <var>σ</var><sub>p</sub> · <var>PCSA</var><sub>0</sub> resting physiological cross-sectional area · <var>A</var>(<var>L</var>) = <var>PCSA</var><sub>0</sub>/(1 + <var>ε</var>) current area · <var>a</var><sub><var>k</var></sub> share of the PCSA owned by motor unit <var>k</var> · <var>f</var> recruited fraction.</div>
-</div>
-<div class="warn"><b>What this model leaves out (on purpose):</b> twitch dynamics and temporal summation (see the Temporal summation page), rate coding, force–velocity, fatigue, pennation, tendon stretch and lateral force transmission. These can be added back once the base model is checked against data.</div>
 
 <!-- ===================== 3. TRY IT ===================== -->
 <h2>3 · Try it: recruiting motor units to meet a required force</h2>
@@ -161,7 +213,7 @@ select{font:inherit;font-size:13.5px;padding:4px 6px;border-radius:8px;border:1p
  <div class="card p" id="gpC"><div class="gt">Inactivated fibres: passive curve <var>σ</var><sub>p</sub>(<var>ε</var>)</div><svg class="g" id="gp" viewBox="0 0 380 270" role="img" aria-label="Passive stress-strain curve"></svg></div>
  <div class="card p" id="gaC"><div class="gt">Activated fibres: active curve <var>σ</var><sub>a</sub>(<var>ε</var>)</div><svg class="g" id="ga" viewBox="0 0 380 270" role="img" aria-label="Active stress-strain curve"></svg></div>
  <div class="card p" id="gbC"><div class="gt">Both, plus the muscle average for the recruited fraction <var>f</var></div><svg class="g" id="gb" viewBox="0 0 380 270" role="img" aria-label="Passive, active and average stress-strain curves"></svg></div>
- <div class="card p" id="stC"><div class="gt">Force vs number of units recruited</div><svg class="g" id="steps" viewBox="0 0 440 260" role="img" aria-label="Force versus number of recruited motor units"></svg></div>
+ <div class="card p" id="stC"><div class="gt">Fraction of motor units recruited vs required force</div><svg class="g" id="steps" viewBox="0 0 440 260" role="img" aria-label="Recruited fraction versus required force"></svg></div>
 </div>
 <p class="foot">Illustrative numbers, to be replaced by values from the literature: active isometric stress peaks at 225 kPa (22.5 N/cm²) at <var>ε</var> = 0 with a bell-shaped force–length curve; passive stress rises exponentially above <var>ε</var> = 0 and is zero below slack. The muscle has 10 motor units whose share of the PCSA grows geometrically (about 30× from smallest to largest). Fibres of each unit are scattered through the cross-section.</p>
 </div>
@@ -239,12 +291,8 @@ lab('Each fibre runs the <tspan font-weight="700">full length</tspan> of the mus
 lab('<tspan font-weight="700">Motor unit A</tspan> = neuron A + all of its fibres',1185,580,far(FIBA,1,.4),'end');
 document.getElementById('mu').innerHTML=h;
 
-/* ============ definitions and notes (one free-text area, saved in this browser) ============ */
-{const KEY='mu-notes-v1',DEF='Motor unit: one motor neuron together with all of the muscle fibres it innervates. It is the smallest unit of force that the nervous system can switch on: when the neuron fires, every one of its fibres contracts together (all-or-none).';
- const el=document.getElementById('notes');let s=null;try{s=localStorage.getItem(KEY)}catch(e){}
- el.textContent=s!=null&&s.trim()?s:DEF;
- el.addEventListener('input',()=>{try{localStorage.setItem(KEY,el.innerText)}catch(e){}});
- document.getElementById('resetNotes').onclick=()=>{if(!confirm('Replace your notes with the default text?'))return;el.textContent=DEF;try{localStorage.setItem(KEY,DEF)}catch(e){}}}
+/* ============ glass panes: click to expand / collapse ============ */
+document.querySelectorAll(".glass .ghead").forEach(b=>b.addEventListener("click",()=>{const p=b.parentElement,on=!p.classList.contains("open");p.classList.toggle("open",on);b.setAttribute("aria-expanded",on)}));
 
 /* ============ 3. recruitment calculator ============ */
 const SMAX=225,W0=.35,KP=3.1,E0=.12;                                  // kPa; illustrative
@@ -296,15 +344,17 @@ function drawXS(k){
  FIB.forEach(f=>{const p=xm(f.x,f.y),on=f.u<k;s+=`<ellipse cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" rx="${(6.2*xsc).toFixed(2)}" ry="${(6.2*ysc).toFixed(2)}" transform="rotate(-8 ${p[0].toFixed(1)} ${p[1].toFixed(1)})" fill="${on?HUE(f.u):'#f6dede'}" stroke="${on?'#333':'#d4a9a9'}" stroke-width="${on?.8:.6}"/>`});
  s+=`<text x="260" y="408" text-anchor="middle" font-size="13" fill="#444">${k} of ${NU} motor units recruited · coloured fibres are active (one colour per unit)</text>`;
  $('xs').innerHTML=s}
-function drawSteps(k,Fk,Fr){const X0=52,X1=430,Y0=14,Y1=200,Fm=Math.max(Fk(NU),Fr)*1.06||1,px=i=>X0+i/NU*(X1-X0),py=v=>Y1-v/Fm*(Y1-Y0);
+function drawSteps(k,Fk,Fr){const X0=52,X1=430,Y0=14,Y1=200,Fm=Math.max(Fk(NU),Fr)*1.06||1,px=v=>X0+Math.max(0,v)/Fm*(X1-X0),py=q=>Y1-q*(Y1-Y0);
  let s=`<path d="M${X0},${Y0}V${Y1}H${X1}" fill="none" stroke="#555" stroke-width="1.3"/>`;
- for(let i=0;i<=NU;i++)s+=`<text x="${px(i)}" y="${Y1+16}" text-anchor="middle" font-size="11" fill="#666">${i}</text>`;
- for(const v of[0,.25,.5,.75,1].map(q=>q*Fm/1.06))s+=`<text x="${X0-6}" y="${py(v)+4}" text-anchor="end" font-size="10.5" fill="#666">${Math.round(v)}</text>`;
- let d=`M${px(0)},${py(Fk(0))}`;for(let i=1;i<=NU;i++)d+=`H${px(i)}V${py(Fk(i))}`;d+=`H${X1}`;
+ for(const q of[0,.25,.5,.75,1])s+=`<path d="M${X0},${py(q)}H${X1}" stroke="#eee"/><text x="${X0-6}" y="${py(q)+4}" text-anchor="end" font-size="10.5" fill="#666">${q.toFixed(2)}</text>`;
+ const st=Fm/1.06>300?100:50;for(let v=0;v<=Fm;v+=st)s+=`<path d="M${px(v)},${Y1}v5" stroke="#555"/><text x="${px(v)}" y="${Y1+16}" text-anchor="middle" font-size="10.5" fill="#666">${v}</text>`;
+ // staircase: for a required force between F(k−1) and F(k) the brain recruits k units, i.e. fraction a1+…+ak
+ let d=`M${px(0)},${py(0)}H${px(Fk(0))}`;for(let i=1;i<=NU;i++)d+=`V${py(cum[i-1])}H${px(Fk(i))}`;
  s+=`<path d="${d}" fill="none" stroke="#b8250f" stroke-width="2.6"/>`;
- s+=`<path d="M${X0},${py(Fr)}H${X1}" stroke="#555" stroke-dasharray="5 4"/><text x="${X1-2}" y="${py(Fr)-5}" text-anchor="end" font-size="11" fill="#444">required force</text>`;
- s+=`<circle cx="${px(k)}" cy="${py(Fk(k))}" r="6" fill="#b8250f" stroke="#fff" stroke-width="2"/>`;
- s+=`<text x="${(X0+X1)/2}" y="${Y1+38}" text-anchor="middle" font-size="12" fill="#444">number of motor units recruited (smallest first)</text><text transform="translate(14 ${(Y0+Y1)/2}) rotate(-90)" text-anchor="middle" font-size="12" fill="#444">force (N)</text>`;
+ s+=`<path d="M${px(Fk(0))},${py(0)}L${px(Fk(NU))},${py(1)}" stroke="#6b2fa0" stroke-dasharray="4 4" stroke-width="1.4"/><text x="${px(Fk(NU))-4}" y="${py(1)+16}" text-anchor="end" font-size="10.5" fill="#6b2fa0">f_req (exact fraction)</text>`;
+ s+=`<path d="M${px(Fr)},${Y0}V${Y1}" stroke="#555" stroke-dasharray="5 4"/><text x="${px(Fr)+(px(Fr)>X1-90?-4:4)}" y="${Y0+12}" text-anchor="${px(Fr)>X1-90?'end':'start'}" font-size="11" fill="#444">required force</text>`;
+ const f=k?cum[k-1]:0;s+=`<circle cx="${px(Math.min(Fr,Fk(NU)))}" cy="${py(f)}" r="6" fill="#b8250f" stroke="#fff" stroke-width="2"/>`;
+ s+=`<text x="${(X0+X1)/2}" y="${Y1+38}" text-anchor="middle" font-size="12" fill="#444">required force F (N)</text><text transform="translate(14 ${(Y0+Y1)/2}) rotate(-90)" text-anchor="middle" font-size="12" fill="#444">fraction recruited f</text>`;
  $('steps').innerHTML=s}
 [eps,freq,pcsa,amod].forEach(el=>el.oninput=calc);amod.onchange=calc;calc();
 </script></body></html>
