@@ -116,6 +116,13 @@ html,body{overflow-x:clip}
 .math .m{font-family:"Cambria Math","Cambria","Times New Roman",serif;font-size:17px;margin:4px 0 8px 24px}
 .math .sym{font-size:13px;color:#444;border-top:1px solid #ddd;padding-top:8px;margin-top:12px}
 @media(max-width:960px){.split{grid-template-columns:1fr}.lcol{position:static}}
+/* each column carries its own title, so both titles start at the same height above their own column */
+.split{margin-top:34px}
+.colh{margin:0 0 10px}
+.lcol .colh{margin-bottom:10px}
+.rcol .colh{margin-bottom:-4px}
+.ref{font-size:12.5px;color:#555;margin:6px 0 0 0;padding-left:1.2em}
+.ref li{margin:3px 0}
 /* part 3 sized to fit one screen */.dash .p svg.g{max-height:calc(50vh - 105px);width:auto;max-width:100%;margin:0 auto}.dash #xs{max-height:calc(62vh - 120px)}
 </style></head><body><div class="wrap">
 
@@ -123,9 +130,9 @@ html,body{overflow-x:clip}
 <p class="lead">Each muscle fibre exists in one of two states, activated and inactivated. Each have their own stress-strain curves with an activated fibre exerting higher stress at a given value of strain. The total force exerted by the muscle is the sum of the forces exerted by both the activated and inactivated muscle fibres. By increasing the number of fibres activated, the muscle can exert more force.</p>
 
 <!-- ===================== 1 + 2. MOTOR UNIT (left) · DEFINITION, ASSUMPTIONS, DERIVATION (right) ===================== -->
-<h2>1 · What is a motor unit? &nbsp;·&nbsp; 2 · A quasi-static model</h2>
 <div class="split">
  <div class="lcol">
+  <h2 class="colh">1 · What is a motor unit?</h2>
   <div class="card">
    <svg id="mu" viewBox="0 0 1200 600" role="img" aria-label="Angled section of a muscle showing its fascicles and fibres, with two motor neurons in the spinal cord whose axons enter the muscle and branch to their own scattered fibres"></svg>
    <div class="legend"><span><i style="background:#9fe0d6;border:2px solid var(--A)"></i>Motor unit A: one motor neuron + every fibre it supplies</span><span><i style="background:#f8d2a8;border:2px solid var(--B)"></i>Motor unit B (a smaller unit)</span><span><i style="background:#efc4c4;border:2px solid #c48d8d"></i>Fibres belonging to other motor units</span></div>
@@ -133,6 +140,7 @@ html,body{overflow-x:clip}
  </div>
 
  <div class="rcol">
+  <h2 class="colh">2 · A quasi-static model</h2>
   <div class="defbox"><b>Motor unit:</b> one motor neuron together with all of the muscle fibres it innervates. It is the smallest unit of force that the nervous system can switch on: when the neuron fires, every one of its fibres contracts together (all-or-none).</div>
 
   <!-- ---------- Assumptions pane ---------- -->
@@ -145,7 +153,10 @@ html,body{overflow-x:clip}
      <div class="fx">passive (inactive fibre):&nbsp; σ<sub>p</sub>(ε) = K<sub>p</sub> (e<sup>ε/ε<sub>0</sub></sup> − 1) for ε &gt; 0,&nbsp; σ<sub>p</sub>(ε) = 0 for ε ≤ 0</div>
      <div class="fx">active isometric part:&nbsp; σ<sub>iso</sub>(ε) = σ<sub>max</sub> e<sup>−(ε/w)²</sup></div>
      <div class="fx">active (activated fibre):&nbsp; σ<sub>a</sub>(ε) = σ<sub>p</sub>(ε) + σ<sub>iso</sub>(ε)</div>
-     Constants: K<sub>p</sub> = 3.1 kPa, ε<sub>0</sub> = 0.12, σ<sub>max</sub> = 225 kPa (22.5 N/cm², the peak at ε = 0), w = 0.35. These are illustrative values, to be replaced by values from the literature.</li>
+     Constants, taken from the literature:
+     <div class="fx">σ<sub>max</sub> = 268 kPa (26.8 N/cm², the peak at ε = 0): the value recommended for human muscle by a systematic review of 30 in-vivo studies [1]</div>
+     <div class="fx">w = √0.45 = 0.67: the Gaussian shape factor γ = 0.45 of the Thelen (2003) model, σ<sub>iso</sub> = σ<sub>max</sub> e<sup>−ε²/γ</sup> [2]</div>
+     <div class="fx">ε<sub>0</sub> = ε<sub>0</sub><sup>M</sup>/k<sup>PE</sup> = 0.6/5 = 0.12 and K<sub>p</sub> = σ<sub>max</sub>/(e<sup>5</sup> − 1) = 1.82 kPa: Thelen's passive curve for young adults, k<sup>PE</sup> = 5, ε<sub>0</sub><sup>M</sup> = 0.6, so the passive stress equals σ<sub>max</sub> at ε = 0.6 [2]</div></li>
     <li><b>All-or-none recruitment of motor units.</b> A motor unit is either fully off (all its fibres on σ<sub>p</sub>) or fully on (all its fibres on σ<sub>a</sub>, i.e. fused tetanus). Rate coding and partial (unfused) activation are not modelled.</li>
     <li><b>Fibres are ropes (uniaxial).</b> Each fibre carries only a tensile force along its own axis. There is no transverse normal stress, no shear stress and no bending. Fibres cannot push, so they carry no compression: the passive stress is zero below slack length (ε ≤ 0).</li>
     <li><b>No lateral force transmission.</b> Fibres do not pass force sideways to each other or to the surrounding connective tissue; their axial forces simply add up at the tendon. The connective tissue carries no load of its own (its contribution, if any, is lumped into the passive curve).</li>
@@ -153,16 +164,23 @@ html,body{overflow-x:clip}
     <li><b>Rigid tendon.</b> Series elasticity is ignored, so the muscle strain is set directly by the joint position.</li>
     <li><b>Constant volume: the area changes with strain.</b> Muscle tissue is nearly incompressible, so its current area is A(L) = V/L = PCSA<sub>0</sub>/(1 + ε). The two curves give true (Cauchy) stress on this current area. The calculator can switch this off (constant area, A = PCSA<sub>0</sub>) for comparison. If the cross-section also varies along the length, the area becomes A(x, ε) and is handled slice by slice (step 6 of the derivation).</li>
     <li><b>Fibre areas add up to the physiological cross-sectional area (PCSA).</b> Because fibre forces add linearly (assumptions 4–6), only the total area of a group of fibres matters. The muscle has N = 10 motor units; unit k owns the share
-     <div class="fx">a<sub>k</sub> = r<sup>k−1</sup> / (1 + r + … + r<sup>9</sup>),&nbsp; r = 1.45,&nbsp; k = 1, …, 10,&nbsp; Σ a<sub>k</sub> = 1</div>
-     so a<sub>1</sub> ≈ 0.011 and a<sub>10</sub> ≈ 0.318: the largest unit is about 28 times (1.45<sup>9</sup>) the smallest. The fibres of each unit are scattered through the cross-section.</li>
+     <div class="fx">a<sub>k</sub> = r<sup>k−1</sup> / (1 + r + … + r<sup>9</sup>),&nbsp; r = 100<sup>1/9</sup> = 1.668,&nbsp; k = 1, …, 10,&nbsp; Σ a<sub>k</sub> = 1</div>
+     so a<sub>1</sub> ≈ 0.004 and a<sub>10</sub> ≈ 0.403: the largest unit is 100 times the smallest. This is the exponential distribution of motor-unit forces with a 100-fold range used in the Fuglevand, Winter &amp; Patla (1993) motor-unit pool model [3]; with one specific tension for all fibres, force share and area share are the same. A real elbow flexor has hundreds of units (that model uses 120); 10 are used here so each step can be seen. The fibres of each unit are scattered through the cross-section.</li>
     <li><b>Recruitment by the size principle.</b> The nervous system switches units on from smallest to largest (k = 1, 2, 3, …), stopping at the smallest set whose force meets the required external force.</li>
     <li><b>Ranges of the inputs (calculator sliders).</b>
-     <div class="fx">strain ε: −0.30 to +0.45 (step 0.01, starts at 0)</div>
-     <div class="fx">required force F<sub>req</sub>: 0 to 520 N (step 1 N, starts at 150 N)</div>
-     <div class="fx">resting area PCSA<sub>0</sub>: 5 to 40 cm² (step 1 cm², starts at 20 cm²)</div>
-     Units: 1 kPa · 1 cm² = 0.1 N. For example, with PCSA<sub>0</sub> = 20 cm² at ε = 0 the largest possible force is 20 × 225 × 0.1 = 450 N.</li>
+     <div class="fx">strain ε: −0.40 to +0.60 (step 0.01, starts at 0); +0.60 is Thelen's passive strain at σ<sub>max</sub></div>
+     <div class="fx">required force F<sub>req</sub>: 0 to 700 N (step 1 N, starts at 150 N)</div>
+     <div class="fx">resting area PCSA<sub>0</sub>: 1 to 25 cm² (step 0.1 cm², starts at 11.2 cm²)</div>
+     The starting area is the sum of the main elbow flexors measured in cadavers by Murray, Buchanan &amp; Delp (2000) [4]: biceps long head 2.5 cm², biceps short head 2.1 cm², brachialis 5.4 cm², brachioradialis 1.2 cm². Units: 1 kPa · 1 cm² = 0.1 N, so at ε = 0 the largest force is 11.2 × 268 × 0.1 ≈ 300 N.</li>
    </ol>
    <p class="left"><b>Left out on purpose:</b> twitch dynamics and temporal summation (see the Temporal summation page), rate coding, force–velocity, fatigue, pennation, tendon stretch and lateral force transmission.</p>
+   <p class="left"><b>Sources</b></p>
+   <ol class="ref">
+    <li>Persad LS, Wang Z, Pino PA, Binder-Markey BI, Kaufman KR, Lieber RL (2024). Specific tension of human muscle in vivo: a systematic review. <i>J Appl Physiol</i> 137(4): 945–962. doi:10.1152/japplphysiol.00296.2024</li>
+    <li>Thelen DG (2003). Adjustment of muscle mechanics model parameters to simulate dynamic contractions in older adults. <i>J Biomech Eng</i> 125(1): 70–77. (Parameters as implemented in OpenSim's Thelen2003Muscle.)</li>
+    <li>Fuglevand AJ, Winter DA, Patla AE (1993). Models of recruitment and rate coding organization in motor-unit pools. <i>J Neurophysiol</i> 70(6): 2470–2488.</li>
+    <li>Murray WM, Buchanan TS, Delp SL (2000). The isometric functional capacity of muscles that cross the elbow. <i>J Biomech</i> 33(8): 943–952.</li>
+   </ol>
    </div></div>
   </section>
 
@@ -202,9 +220,9 @@ html,body{overflow-x:clip}
 <!-- ===================== 3. TRY IT ===================== -->
 <h2>3 · Try it: recruiting motor units to meet a required force</h2>
 <div class="card ctlbar">
- <label><span>Strain <var>ε</var></span><input type="range" id="eps" min="-0.3" max="0.45" step="0.01" value="0"><b id="epsv"></b></label>
- <label><span>Required <var>F</var><sub>req</sub></span><input type="range" id="freq" min="0" max="520" step="1" value="150"><b id="freqv"></b></label>
- <label><span><var>PCSA</var><sub>0</sub></span><input type="range" id="pcsa" min="5" max="40" step="1" value="20"><b id="pcsav"></b></label>
+ <label><span>Strain <var>ε</var></span><input type="range" id="eps" min="-0.4" max="0.6" step="0.01" value="0"><b id="epsv"></b></label>
+ <label><span>Required <var>F</var><sub>req</sub></span><input type="range" id="freq" min="0" max="700" step="1" value="150"><b id="freqv"></b></label>
+ <label><span><var>PCSA</var><sub>0</sub></span><input type="range" id="pcsa" min="1" max="25" step="0.1" value="11.2"><b id="pcsav"></b></label>
  <label><span>Area</span><select id="amod"><option value="v" selected>constant volume A = PCSA₀/(1+ε)</option><option value="n">constant area A = PCSA₀</option></select><b id="av"></b></label>
  <div class="res"><span>units recruited <b id="nu"></b></span><span>recruited fraction <var>f</var> <b id="ff"></b></span><span>muscle force <var>F</var> <b id="fo"></b></span><span id="live"></span></div>
 </div>
@@ -215,7 +233,7 @@ html,body{overflow-x:clip}
  <div class="card p" id="gbC"><div class="gt">Both, plus the muscle average for the recruited fraction <var>f</var></div><svg class="g" id="gb" viewBox="0 0 380 270" role="img" aria-label="Passive, active and average stress-strain curves"></svg></div>
  <div class="card p" id="stC"><div class="gt">Fraction of motor units recruited vs required force</div><svg class="g" id="steps" viewBox="0 0 440 260" role="img" aria-label="Recruited fraction versus required force"></svg></div>
 </div>
-<p class="foot">Illustrative numbers, to be replaced by values from the literature: active isometric stress peaks at 225 kPa (22.5 N/cm²) at <var>ε</var> = 0 with a bell-shaped force–length curve; passive stress rises exponentially above <var>ε</var> = 0 and is zero below slack. The muscle has 10 motor units whose share of the PCSA grows geometrically (about 30× from smallest to largest). Fibres of each unit are scattered through the cross-section.</p>
+<p class="foot">Values used, from the literature: active isometric stress peaks at 268 kPa (26.8 N/cm², human specific tension, Persad et al. 2024) at <var>ε</var> = 0, with the Gaussian force–length curve of Thelen (2003), γ = 0.45. Passive stress follows Thelen's exponential curve (k<sup>PE</sup> = 5, ε<sub>0</sub><sup>M</sup> = 0.6): zero below slack, reaching 268 kPa at <var>ε</var> = 0.6. The 10 motor units span a 100-fold range of size, as in the Fuglevand, Winter &amp; Patla (1993) motor-unit pool model. The starting area of 11.2 cm² is the summed PCSA of biceps, brachialis and brachioradialis (Murray, Buchanan &amp; Delp 2000). Fibres of each unit are scattered through the cross-section. Full references are in the Assumptions pane.</p>
 </div>
 <script>
 /* ============ 1. motor unit diagram: angled section of a muscle, with its motor neurons ============ */
@@ -295,9 +313,12 @@ document.getElementById('mu').innerHTML=h;
 document.querySelectorAll(".glass .ghead").forEach(b=>b.addEventListener("click",()=>{const p=b.parentElement,on=!p.classList.contains("open");p.classList.toggle("open",on);b.setAttribute("aria-expanded",on)}));
 
 /* ============ 3. recruitment calculator ============ */
-const SMAX=225,W0=.35,KP=3.1,E0=.12;                                  // kPa; illustrative
+// kPa. SMAX: human specific tension 26.8 N/cm² (Persad et al. 2024). W0 = √γ, γ = 0.45 (Thelen 2003).
+// Passive (Thelen 2003, young adults, kPE = 5, ε0M = 0.6): σp = SMAX (e^(5ε/0.6) − 1)/(e^5 − 1)
+const SMAX=268,W0=Math.sqrt(.45),E0=.6/5,KP=SMAX/(Math.exp(5)-1);
 const sIso=e=>SMAX*Math.exp(-((e/W0)**2)),sP=e=>e>0?KP*(Math.exp(e/E0)-1):0,sA=e=>sP(e)+sIso(e);
-const NU=10,RAT=1.45,raw=[...Array(NU)].map((_,k)=>Math.pow(RAT,k)),tot=raw.reduce((a,b)=>a+b,0),ak=raw.map(v=>v/tot);
+const NU=10,RAT=Math.pow(100,1/9),                                     // 100-fold size range (Fuglevand et al. 1993)
+raw=[...Array(NU)].map((_,k)=>Math.pow(RAT,k)),tot=raw.reduce((a,b)=>a+b,0),ak=raw.map(v=>v/tot);
 const cum=ak.reduce((o,v,k)=>(o.push((o[k-1]||0)+v),o),[]);
 const HUE=k=>`hsl(${(170+k*29)%360} 62% ${46+(k%2)*6}%)`;
 // fibres packed in a circular cross-section, each assigned to a motor unit (scattered), counts ∝ a_k
@@ -311,26 +332,26 @@ function calc(){
  const Fk=k=>Aeff*N*(sp+(k?cum[k-1]:0)*si);
  const fr=(Fr/(Aeff*N)-sp)/si;let k=0;while(k<NU&&Fk(k)<Fr)k++;
  const f=k?cum[k-1]:0,F=Fk(k),over=Fk(NU)<Fr;
- $('epsv').textContent=(e>=0?'+':'')+e.toFixed(2);$('freqv').textContent=Fr+' N';$('pcsav').textContent=P0+' cm²';$('av').textContent='A = '+Aeff.toFixed(1)+' cm²';
+ $('epsv').textContent=(e>=0?'+':'')+e.toFixed(2);$('freqv').textContent=Fr+' N';$('pcsav').textContent=P0.toFixed(1)+' cm²';$('av').textContent='A = '+Aeff.toFixed(1)+' cm²';
  $('nu').textContent=`${k} of ${NU}`;$('ff').textContent=f.toFixed(2);$('fo').textContent=Math.round(F)+' N'+(over?' (max)':'');
  $('live').innerHTML=`F = A·[σ<sub>p</sub> + f·σ<sub>iso</sub>] = ${vol?`(${P0} cm² / ${(1+e).toFixed(2)})`:`${P0} cm²`} × [${sp.toFixed(1)} + ${f.toFixed(2)} × ${si.toFixed(1)}] kPa = <b>${Math.round(F)} N</b>`+
   `&nbsp;&nbsp;·&nbsp;&nbsp;f<sub>req</sub> = ${fr<=0?'≤ 0 (passive tissue is enough)':fr>1?fr.toFixed(2)+' &gt; 1 (beyond maximum at this length)':fr.toFixed(2)}`;
  graphs(e,f);drawXS(k);drawSteps(k,Fk,Fr)}
 // ---- the three stress–strain graphs ----
-const GX0=52,GX1=368,GY0=16,GY1=214,EM=-.3,EMX=.45,SM=320,gx=v=>GX0+(v-EM)/(EMX-EM)*(GX1-GX0),gy=v=>GY1-Math.min(v,SM)/SM*(GY1-GY0);
-function axes(){let s='';for(const v of[0,100,200,300])s+=`<path d="M${GX0},${gy(v)}H${GX1}" stroke="#eee"/><text x="${GX0-6}" y="${gy(v)+4}" text-anchor="end" font-size="11" fill="#666">${v}</text>`;
- for(const v of[-.3,-.15,0,.15,.3,.45])s+=`<path d="M${gx(v)},${GY1}v5" stroke="#555"/><text x="${gx(v)}" y="${GY1+17}" text-anchor="middle" font-size="11" fill="#666">${v}</text>`;
+const GX0=52,GX1=368,GY0=16,GY1=214,EM=-.4,EMX=.6,SM=400,gx=v=>GX0+(v-EM)/(EMX-EM)*(GX1-GX0),gy=v=>GY1-Math.min(v,SM)/SM*(GY1-GY0);
+function axes(){let s='';for(const v of[0,100,200,300,400])s+=`<path d="M${GX0},${gy(v)}H${GX1}" stroke="#eee"/><text x="${GX0-6}" y="${gy(v)+4}" text-anchor="end" font-size="11" fill="#666">${v}</text>`;
+ for(const v of[-.4,-.2,0,.2,.4,.6])s+=`<path d="M${gx(v)},${GY1}v5" stroke="#555"/><text x="${gx(v)}" y="${GY1+17}" text-anchor="middle" font-size="11" fill="#666">${v}</text>`;
  return s+`<path d="M${GX0},${GY0}V${GY1}H${GX1}" fill="none" stroke="#555" stroke-width="1.3"/><text x="${(GX0+GX1)/2}" y="${GY1+40}" text-anchor="middle" font-size="12" fill="#444">strain ε  (0 = optimal length)</text><text transform="translate(14 ${(GY0+GY1)/2}) rotate(-90)" text-anchor="middle" font-size="12" fill="#444">true stress σ (kPa)</text>`}
 const curve=(fn,col,w,dash)=>{let d='';for(let q=0;q<=150;q++){const v=EM+(EMX-EM)*q/150;d+=(q?'L':'M')+gx(v).toFixed(1)+','+gy(fn(v)).toFixed(1)}return`<path d="${d}" fill="none" stroke="${col}" stroke-width="${w}"${dash?' stroke-dasharray="6 4"':''}/>`};
 const mark=(e,v,col,txt,dy=-9)=>`<path d="M${gx(e)},${GY0}V${GY1}" stroke="#777" stroke-dasharray="3 3"/><circle cx="${gx(e)}" cy="${gy(v)}" r="5.5" fill="${col}" stroke="#fff" stroke-width="1.6"/>`+(txt?`<text x="${gx(e)+(e>.2?-8:8)}" y="${gy(v)+dy}" text-anchor="${e>.2?'end':'start'}" font-size="12" font-weight="700" fill="${col}">${txt}</text>`:'');
 function graphs(e,f){
  $('gp').innerHTML=axes()+curve(sP,'#2a5fd0',3)+mark(e,sP(e),'#2a5fd0',`σp = ${sP(e).toFixed(1)} kPa`)+
-  `<text x="${gx(-.28)}" y="${gy(290)}" font-size="11.5" fill="#2a5fd0">Inactive fibre: only the passive elastic</text><text x="${gx(-.28)}" y="${gy(290)+15}" font-size="11.5" fill="#2a5fd0">tissue resists stretch; zero below slack.</text>`;
+  `<text x="${gx(-.28)}" y="${gy(380)}" font-size="11.5" fill="#2a5fd0">Inactive fibre: only the passive elastic</text><text x="${gx(-.28)}" y="${gy(380)+15}" font-size="11.5" fill="#2a5fd0">tissue resists stretch; zero below slack.</text>`;
  $('ga').innerHTML=axes()+curve(sP,'#9db4e6',1.5,1)+curve(sIso,'#e9a596',1.8,1)+curve(sA,'#b8250f',3)+mark(e,sA(e),'#b8250f',`σa = ${sA(e).toFixed(1)} kPa`)+
-  `<text x="${gx(-.29)}" y="${gy(sIso(-.29))+18}" font-size="11" fill="#c47b6b">σiso (cross-bridges)</text><text x="${gx(.33)}" y="${gy(sP(.33))+16}" font-size="11" fill="#7d93c9">σp</text><text x="${gx(-.28)}" y="${gy(300)}" font-size="11.5" fill="#b8250f">Active fibre: σa = σp + σiso</text>`;
+  `<text x="${gx(-.29)}" y="${gy(sIso(-.29))+18}" font-size="11" fill="#c47b6b">σiso (cross-bridges)</text><text x="${gx(.33)}" y="${gy(sP(.33))+16}" font-size="11" fill="#7d93c9">σp</text><text x="${gx(-.28)}" y="${gy(385)}" font-size="11.5" fill="#b8250f">Active fibre: σa = σp + σiso</text>`;
  const av=v=>sP(v)+f*sIso(v);
  $('gb').innerHTML=axes()+curve(sP,'#2a5fd0',2.6)+curve(sA,'#b8250f',2.6)+curve(av,'#6b2fa0',3,1)+mark(e,sA(e),'#b8250f','')+mark(e,sP(e),'#2a5fd0','')+mark(e,av(e),'#6b2fa0',`average = ${av(e).toFixed(1)} kPa`,14)+
-  `<g font-size="11.5" font-weight="700"><text x="${gx(-.28)}" y="${gy(300)}" fill="#b8250f">— active σa</text><text x="${gx(-.28)}" y="${gy(300)+15}" fill="#2a5fd0">— passive σp</text><text x="${gx(-.28)}" y="${gy(300)+30}" fill="#6b2fa0">- - average σp + f·σiso  (f = ${f.toFixed(2)})</text></g>`}
+  `<g font-size="11.5" font-weight="700"><text x="${gx(-.28)}" y="${gy(385)}" fill="#b8250f">— active σa</text><text x="${gx(-.28)}" y="${gy(385)+15}" fill="#2a5fd0">— passive σp</text><text x="${gx(-.28)}" y="${gy(385)+30}" fill="#6b2fa0">- - average σp + f·σiso  (f = ${f.toFixed(2)})</text></g>`}
 // ---- angled cross-section of the muscle: recruited units' fibres light up ----
 const XC=[175,222],XA=[230,-62],xsc=.47,ysc=.76,xr=-8*Math.PI/180,cxr=Math.cos(xr),sxr=Math.sin(xr);
 const xm=(x,y)=>{const u=x*xsc,w=y*ysc;return[XC[0]+u*cxr-w*sxr,XC[1]+u*sxr+w*cxr]};
